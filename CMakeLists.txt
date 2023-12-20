@@ -22,7 +22,9 @@ include(ExternalProject)
 include(FetchContent)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-        ${PROJECT_SOURCE_DIR}/CMakeModules)
+        ${PROJECT_SOURCE_DIR}/cmake)
+
+include(cmake/CPM.cmake)
 
 #######################################################################################################################
 ## Useful stuff to set only if this is the main project and not included through add_subdirectory
@@ -48,6 +50,11 @@ endif ()
 #######################################################################################################################
 ## Load up vendors
 #######################################################################################################################
+CPMAddPackage(
+        NAME magic_enum
+        GITHUB_REPOSITORY Neargye/magic_enum
+        GIT_TAG v0.9.5
+)
 add_subdirectory(vendor)
 
 #######################################################################################################################

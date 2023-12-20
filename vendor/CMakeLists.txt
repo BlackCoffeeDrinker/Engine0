@@ -8,12 +8,6 @@ target_compile_definitions(lodepng PUBLIC LODEPNG_NO_COMPILE_ENCODER)
 source_group("Vendor: Lodepng" FILES lodepng/lodepng.cpp lodepng/lodepng.h)
 
 #######################################################################################################################
-## Magic Enum
-#######################################################################################################################
-add_library(magic_enum INTERFACE)
-target_include_directories(magic_enum SYSTEM INTERFACE magic_enum/include)
-
-#######################################################################################################################
 ## INI
 #######################################################################################################################
 add_library(ini OBJECT inih/ini.c inih/ini.h)
