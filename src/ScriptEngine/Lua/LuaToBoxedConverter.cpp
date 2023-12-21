@@ -55,11 +55,11 @@ BoxedValue BoolToX(BoxedValue &&original, const TypeInfo &target) {
 
 BoxedValue NullToX(BoxedValue &&original, const TypeInfo &target) {
   if (target.is_pointer()) return BoxedValue(nullptr, target);
-  if (target == user_type<int>()) return BoxedValue((int)0);
-  if (target == user_type<long>()) return BoxedValue(0l);
+  if (target == user_type<int>()) return BoxedValue(0);
+  if (target == user_type<long>()) return BoxedValue(0L);
   if (target == user_type<char>()) return BoxedValue((char)0);
   if (target == user_type<float>()) return BoxedValue(0.f);
-  if (target == user_type<double>()) return BoxedValue((double)0.);
+  if (target == user_type<double>()) return BoxedValue(0.);
   return std::move(original);
 }
 }// namespace
@@ -81,7 +81,7 @@ BoxedValue lua_to_boxed_value(lua_State *L, int n, const TypeInfo &info) {
     return StringToX(std::move(guessed), info);
   } else if (guessed.get_type_info() == user_type<bool>()) {
     return BoolToX(std::move(guessed), info);
-  } else if (guessed.get_type_info() == user_type<nullptr_t>()) {
+  } else if (guessed.get_type_info() == user_type<std::nullptr_t>()) {
     return NullToX(std::move(guessed), info);
   }
 
