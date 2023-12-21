@@ -57,8 +57,10 @@ CPMAddPackage(
 
 CPMAddPackage(
         NAME nlohmann_json
-        GITHUB_REPOSITORY nlohmann/json
         VERSION 3.9.1
+        GITHUB_REPOSITORY nlohmann/json
+        OPTIONS
+           "JSON_BuildTests OFF"
 )
 
 add_subdirectory(vendor)
@@ -196,7 +198,6 @@ target_link_libraries(Engine00 PUBLIC magic_enum)
 ## Add platform code
 #######################################################################################################################
 add_subdirectory(platforms)
-
 
 #######################################################################################################################
 ## Compiler specific options
