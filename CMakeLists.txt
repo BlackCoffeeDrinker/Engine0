@@ -5,25 +5,24 @@ project(Engine00
         DESCRIPTION "Small Engine"
         LANGUAGES CXX C)
 
+#######################################################################################################################
+## Global Project targeting
+#######################################################################################################################
+SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_EXTENSIONS OFF)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable position-independent code globally. This is needed because
 # some library targets are OBJECT libraries.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
-# We are targeting C++17
-SET(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_EXTENSIONS OFF)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-
 #######################################################################################################################
 ## CMake Module configuration
 #######################################################################################################################
-include(ExternalProject)
-include(FetchContent)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
         ${PROJECT_SOURCE_DIR}/cmake)
 
+include(ExternalProject)
+include(FetchContent)
 include(cmake/CPM.cmake)
 
 #######################################################################################################################
@@ -183,9 +182,7 @@ target_compile_definitions(Engine00
 )
 
 # Add third-party libraries
-#target_sources(Engine00 PRIVATE $<TARGET_OBJECTS:>)
-target_link_libraries(Engine00 PRIVATE Lua ini nlohmann_json lodepng)
-target_link_libraries(Engine00 PUBLIC magic_enum)
+target_link_libraries(Engine00 PRIVATE Lua ini magic_enum lodepng)
 
 #######################################################################################################################
 ## Add platform code

@@ -56,9 +56,3 @@ target_compile_definitions(Lua PUBLIC LUA_COMPAT_5_3)
 target_include_directories(Lua PUBLIC lua)
 
 
-
-#######################################################################################################################
-## nlohmann/json
-#######################################################################################################################
-set(JSON_MultipleHeaders OFF)
-add_subdirectory(json)

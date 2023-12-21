@@ -1,7 +1,8 @@
 #pragma once
 
-namespace e00 {
+#include <functional>
 
+namespace e00 {
 /**
  * The Property template represents a value, with the additional functionality
  * that it can raise an event whenever that value is changed.

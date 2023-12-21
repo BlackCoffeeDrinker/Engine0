@@ -1,9 +1,6 @@
 [submodule "vendor/inih"]
 	path = vendor/inih
 	url = https://github.com/benhoyt/inih.git
-[submodule "vendor/json"]
-	path = vendor/json
-	url = https://github.com/nlohmann/json.git
 [submodule "vendor/lodepng"]
 	path = vendor/lodepng
 	url = https://github.com/lvandeve/lodepng.git
