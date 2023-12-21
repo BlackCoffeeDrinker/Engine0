@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace e00 {
 template<typename T>
 struct Vec2D {

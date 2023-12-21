@@ -56,7 +56,7 @@ struct ResourcePtrT {
     return *this;
   }
 
-  ResourcePtrT &operator=(nullptr_t other) {
+  ResourcePtrT &operator=(std::nullptr_t other) {
     if (other != this) {
       RemoveRef();
     }
