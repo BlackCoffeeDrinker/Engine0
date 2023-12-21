@@ -54,6 +54,13 @@ CPMAddPackage(
         GITHUB_REPOSITORY Neargye/magic_enum
         GIT_TAG v0.9.5
 )
+
+CPMAddPackage(
+        NAME nlohmann_json
+        GITHUB_REPOSITORY nlohmann/json
+        VERSION 3.9.1
+)
+
 add_subdirectory(vendor)
 
 #######################################################################################################################
@@ -182,7 +189,8 @@ target_compile_definitions(Engine00
 )
 
 # Add third-party libraries
-target_link_libraries(Engine00 PRIVATE Lua ini magic_enum lodepng)
+target_link_libraries(Engine00 PRIVATE Lua ini lodepng nlohmann_json::nlohmann_json)
+target_link_libraries(Engine00 PUBLIC magic_enum)
 
 #######################################################################################################################
 ## Add platform code

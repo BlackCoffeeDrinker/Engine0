@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include "magic_enum.hpp"
+#include <magic_enum.hpp>
 
 namespace e00::fmt_lite {
 const char digit_pairs[201] = {
