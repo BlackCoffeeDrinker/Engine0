@@ -53,7 +53,7 @@ void Exit() {
   return platform::Exit();
 }
 
-const std::unique_ptr<ResourceManager>& GlobalResourceManager() {
+const std::unique_ptr<ResourceManager> &GlobalResourceManager() {
   return glb_resource_manager;
 }
 
@@ -93,7 +93,7 @@ void Run(Engine &engine) {
     // Render
     if (platform::HasFocus()) {
       // make sure we have the optimal tick rate
-      if (std::chrono::duration_cast<decltype(OPTIMAL_RENDER_DELAY)>(nowPoint - lastRenderTime) > OPTIMAL_RENDER_DELAY) {
+      if (std::chrono::duration_cast<std::remove_cv_t<decltype(OPTIMAL_RENDER_DELAY)>>(nowPoint - lastRenderTime) > OPTIMAL_RENDER_DELAY) {
         engine.Draw();
         platform::ProcessDraw(engine);
       }
