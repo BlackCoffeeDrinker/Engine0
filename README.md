@@ -29,7 +29,12 @@ First we need to check out the git repo:
 ```bash
 ❯ cmake -B build-dir
 ❯ cd build-dir
-❯ make
+❯ make -j 12
+```
+or 
+```bash
+❯ cmake -B build-dir
+❯ cmake --build build-dir -j 12
 ```
 
 ### Building in CLion
