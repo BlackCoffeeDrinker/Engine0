@@ -10,9 +10,6 @@ public:
   [[nodiscard]] std::string_view Name() const noexcept override {
     return "TestEngine";
   }
-
-protected:
-  std::error_code RealInit() override { return {}; }
 };
 
 
