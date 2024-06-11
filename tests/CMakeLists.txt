@@ -11,7 +11,6 @@ FetchContent_MakeAvailable(catch)
 list(APPEND CMAKE_MODULE_PATH ${catch_SOURCE_DIR}/contrib)
 # Adds Catch2::Catch2
 
-
 add_executable(Engine00_Tests
         tests.cpp
         catch_main.cpp
@@ -20,7 +19,7 @@ add_executable(Engine00_Tests
         test_engine.cpp
         test_map.cpp
         tests_script.cpp test_format.cpp test_sourcelocation.cpp test_data.cpp test_world.cpp)
-target_include_directories(Engine00_Tests PRIVATE ../src)
+target_include_directories(Engine00_Tests PRIVATE ../engine/src)
 target_link_libraries(Engine00_Tests
         PRIVATE Engine00
         PRIVATE Catch2::Catch2)

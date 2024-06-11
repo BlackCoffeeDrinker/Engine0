@@ -1,3 +1,16 @@
+CPMAddPackage(
+        NAME magic_enum
+        GITHUB_REPOSITORY Neargye/magic_enum
+        GIT_TAG v0.9.5
+)
+
+CPMAddPackage(
+        NAME nlohmann_json
+        VERSION 3.9.1
+        GITHUB_REPOSITORY nlohmann/json
+        OPTIONS
+        "JSON_BuildTests OFF"
+)
 
 #######################################################################################################################
 ## LodePNG
@@ -13,6 +26,13 @@ source_group("Vendor: Lodepng" FILES lodepng/lodepng.cpp lodepng/lodepng.h)
 add_library(ini OBJECT inih/ini.c inih/ini.h)
 target_include_directories(ini SYSTEM INTERFACE inih)
 target_compile_definitions(ini PUBLIC INI_STOP_ON_FIRST_ERROR=1)
+
+#######################################################################################################################
+## SDL
+#######################################################################################################################
+if (NOT DJGPP)
+        add_subdirectory(SDL ${CMAKE_BINARY_DIR}/SDLBuild EXCLUDE_FROM_ALL)
+endif ()
 
 #######################################################################################################################
 ## LUA
