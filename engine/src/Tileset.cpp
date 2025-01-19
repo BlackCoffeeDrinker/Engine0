@@ -1,4 +1,5 @@
 #include <Engine.hpp>
+#include "Engine/Resource/Tileset.hpp"
 
 namespace e00 {
 Tileset::Tileset(TileIdType nbTiles)
@@ -48,9 +49,9 @@ Tileset &Tileset::operator=(Tileset &&rhs) noexcept {
   return *this;
 }
 
-void Tileset::DrawTile(Tileset::TileIdType tileId, Bitmap &destination, const Vec2D<uint16_t> &position) const {
+RectT<uint16_t> Tileset::GetTileRect(TileIdType tileId) const {
   if (tileId >= _tiles.size()) {
-    return;
+    return { 0, 0, 0, 0 };
   }
 
   // TODO: Optimize this
@@ -64,12 +65,12 @@ void Tileset::DrawTile(Tileset::TileIdType tileId, Bitmap &destination, const Ve
   const auto x_spacing = x_pos > 0 ? (x_pos - 1) * _spacing : 0;
   const auto y_spacing = y_pos > 0 ? (y_pos - 1) * _spacing : 0;
 
-  const Vec2D<uint16_t> source {
+  const Vec2D source{
     static_cast<uint16_t>((x_pos * _tileset_size.x) + _margin + x_spacing),
     static_cast<uint16_t>((y_pos * _tileset_size.y) + _margin + y_spacing)
   };
 
-  destination.Blit(_tileset.Ref(), {source, _tileset_size}, position);
+  return { source, _tileset_size };
 }
 
 }// namespace e00

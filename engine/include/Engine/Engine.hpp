@@ -8,31 +8,53 @@
 #include <memory>
 #include <system_error>
 
-#include "Detail/CircularBuffer.hpp"
-
 #include "Action.hpp"
-#include "Binding.hpp"
 #include "InputEvent.hpp"
 
-#include "Scripting/ScriptEngine.hpp"
-
 namespace e00 {
-
-
 /**
  * Root engine class
  */
 class Engine {
+  friend class WorldWidget;
   class Data;
-  friend Data;
+  
+  Logger _main_logger;
 
-  std::unique_ptr<Data> _pImpl;               //< Actual Engine implementation (Opaque pointer, saves compilation time)
+  GameClock::time_point _current_game_time;//< Current game time
   std::map<InputEvent, Action> _input_binding;//< Input event to actions
-
-  detail::ControlBlock *MakeResourceContainer(const std::string &name, type_t type, const source_location &from);
+  std::unique_ptr<Data> _pImpl;                //< Impl data
 
 protected:
   explicit Engine();
+
+  /**
+   * Execute an action
+   *
+   * @param action the action to execute
+   */
+  virtual void ExecuteAction(const Action &action);
+
+  /**
+   * Perform INIT code (maybe load the main menu, fonts, ...)
+   * @return any error
+   */
+  virtual std::error_code OnInit() { return {}; }
+
+  /**
+   * Executed on first tick
+   */
+  virtual void OnFirstTick() {}
+
+  /**
+   * Called when the engine is set into pause
+   */
+  virtual void OnPause() {}
+
+  /**
+   * Called when the engine is resumed from pause
+   */
+  virtual void OnResume() {}
 
 public:
   NOT_COPYABLE(Engine);
@@ -45,15 +67,29 @@ public:
 
   /**
    *
+   * @return the build in "Toggle Pause" action
+   */
+  static Action BuiltInAction_PauseToggle();
+
+  /**
+   *
    */
   virtual ~Engine();
 
   /**
-   * Must be called by the platform code after
+   * Called to initialize this instance
    *
    * @return any error code
    */
   std::error_code Init() noexcept;
+
+  /**
+   * Sets this instance language code for text
+   *
+   * @param languageCode "en", "fr"
+   * @return true if a valid language code was passed
+   */
+  bool LanguageCode(const std::string &languageCode);
 
   /**
    * Returns the code name of the game
@@ -77,8 +113,7 @@ public:
    * @param event the input event associated
    * @return error, if any
    */
-  std::error_code BindInputEventToAction(const Action &action,
-                                         InputEvent event) noexcept;
+  std::error_code BindInputEventToAction(const Action &action, InputEvent event) noexcept;
 
   /**
    * Queries if this engine instance is valid
@@ -88,16 +123,24 @@ public:
   [[nodiscard]] bool IsRunning() const noexcept;
 
   /**
+   * Queries if this engine instance is in pause
+   *
+   * @return true if this engine instance is paused
+   */
+  [[nodiscard]] bool IsPaused() const noexcept;
+
+  /**
+   * Game time
+   * @return current game time
+   */
+  [[nodiscard]] GameClock::time_point Now() const noexcept { return _current_game_time; }
+
+  /**
    * Processes a delta tick
    *
    * @param delta time since last tick
    */
   void Tick(const std::chrono::milliseconds &delta) noexcept;
-
-  /**
-   * Draw the current state to the screen
-   */
-  void Draw() noexcept;
 
   /**
    * Informs this instance's engine that an Input has been received
@@ -107,7 +150,7 @@ public:
   void ProcessInputEvent(const InputEvent event) {
     if (const auto &event_binding = _input_binding.find(event);
         event_binding != _input_binding.end()) {
-      ExecuteAction(event_binding->second);
+      QueueActionForNextTick(event_binding->second);
     }
   }
 
@@ -116,7 +159,13 @@ public:
    *
    * @param action the action
    */
-  void ExecuteAction(Action action);
+  void QueueActionForNextTick(Action action);
+
+  /**
+   * 
+   * @return reference to the root widget
+   */
+  Widget & RootWidget();
 
   /**
    * Gets a resource
@@ -130,7 +179,7 @@ public:
   ResourcePtrT<T>
   LazyResource(const std::string &name,
                const source_location &from = source_location::current()) {
-    return ResourcePtrT<T>(MakeResourceContainer(name, type_id<T>(), from));
+    return ResourceManager::GlobalResourceManager().LazyResource<T>(name, from);
   }
 };
 }// namespace e00

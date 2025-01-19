@@ -2,8 +2,8 @@
 
 namespace e00 {
 World::World(std::string name, ResourcePtrT<e00::Map> &&map)
-    : _name(std::move(name)),
-      _map(std::move(map)) {
+  : _name(std::move(name)),
+    _map(std::move(map)) {
 }
 
 World::~World() = default;
@@ -26,7 +26,7 @@ World::NodeID World::Insert(Actor *actor, const Vec2D<WorldCoordinateType> &posi
     }
   }
 
-  _elements.push_back({actor, position});
+  _elements.push_back({ actor, position });
   return _elements.size() - 1;
 }
 
@@ -43,7 +43,11 @@ void World::Remove(NodeID element) {
   }
 }
 
-uint32_t World::NumActors() const {
+void World::ProcessAction(const ActionInstance &action) {
+  
+}
+
+auto World::NumActors() const {
   return std::count_if(std::begin(_elements), std::end(_elements), [](const auto &element) {
     return element.actor != nullptr;
   });
@@ -59,18 +63,6 @@ std::vector<World::NodeID> &World::Query(const RectT<e00::WorldCoordinateType> &
   }
 
   return output;
-}
-
-void World::Tick(const std::chrono::milliseconds &delta) noexcept {
-  // Update engine time
-  _current_time += delta;
-
-  // Process all actors
-  for (const auto &element: _elements) {
-    element.actor->Tick(delta);
-  }
-
-  //
 }
 
 }// namespace e00

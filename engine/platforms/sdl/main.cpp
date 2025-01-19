@@ -27,55 +27,42 @@ public:
   }
 };
 
-const SDL_KeyboardSystem keyboard_system{};
+constexpr SDL_KeyboardSystem keyboard_system{};
 
 e00::InputEvent MakeSDLKey(const SDL_KeyboardEvent &key_event) {
   return {keyboard_system, static_cast<uint16_t>(key_event.keysym.sym & 0xFFFF)};
 }
 
+e00::Logger &PlatformLogger() {
+  static std::unique_ptr<e00::Logger> logger(nullptr);
+  if (!logger) {
+    logger = std::make_unique<e00::Logger>(e00::CreateSink("Platform"));
+  }
+
+  return *logger;
+}
 }// namespace
 
-static void EventLoop(e00::Engine &engine, bool &hadFocus) {
-  SDL_Event e;
-  if (SDL_PollEvent(&e) != 0) {
-    const auto eventType = static_cast<SDL_EventType>(e.type);
-    switch (eventType) {
-      default:
-        break;
-
-      case SDL_QUIT:
-        engine.ExecuteAction(e00::Engine::BuiltInAction_Quit());
-        break;
-
-      case SDL_WINDOWEVENT:
-        switch (static_cast<SDL_WindowEventID>(e.window.event)) {
-          case SDL_WINDOWEVENT_FOCUS_GAINED:
-            hadFocus = true;
-            SDL_SetThreadPriority(SDL_THREAD_PRIORITY_NORMAL);
-            break;
-          case SDL_WINDOWEVENT_FOCUS_LOST:
-            hadFocus = false;
-            SDL_SetThreadPriority(SDL_THREAD_PRIORITY_LOW);
-            break;
-
-          default:
-            break;
-        }
-        break;
-
-      case SDL_KEYDOWN:
-        engine.ProcessInputEvent(MakeSDLKey(e.key));
-        break;
-
-      case SDL_KEYUP:
-        break;
-    }
-  }
-}
 
 namespace platform {
 std::string_view PlatformName() {
   return "SDL";
+}
+
+void SetSettings(std::string_view key,
+                 std::string_view value) {
+  PlatformLogger().Info(e00::source_location::current(), "Setting {} = {}", key, value);
+  if (key == "width") {
+    auto windowWidth = (int) strtol(value.data(), nullptr, 10);
+    int w, h;
+    SDL_GetWindowSize(sdlWindow, &w, &h);
+    SDL_SetWindowSize(sdlWindow, windowWidth, h);
+  } else if (key == "height") {
+    auto windowHeight = (int) strtol(value.data(), nullptr, 10);
+    int w, h;
+    SDL_GetWindowSize(sdlWindow, &w, &h);
+    SDL_SetWindowSize(sdlWindow, w, windowHeight);
+  }
 }
 
 std::error_code Init() {
@@ -108,7 +95,12 @@ std::error_code Init() {
     return std::make_error_code(std::errc::bad_file_descriptor);
   }
 
-  sdlWindow = nullptr;
+  sdlWindow = SDL_CreateWindow(
+      "Engine0",
+      SDL_WINDOWPOS_UNDEFINED,
+      SDL_WINDOWPOS_UNDEFINED,
+      640, 480,
+      SDL_WINDOW_SHOWN);
 
   return {};
 }
@@ -121,21 +113,57 @@ void Exit() {
   SDL_Quit();
 }
 
-std::unique_ptr<e00::Bitmap> CreatePlatformBitmap(e00::Vec2D<uint16_t> size, e00::Bitmap::BitDepth bpp) {
-  return std::make_unique<e00::platform::SDLBitmap>(size.x, size.y, bpp);
-}
-
 std::unique_ptr<e00::Stream> OpenStream(const std::string &name) {
   return e00::platform::StdFile::CreateFromFilename("resources/" + name);
 }
 
 void ProcessEvents(e00::Engine &engine) {
-  EventLoop(engine, hasFocus);
+  SDL_Event e;
+  if (SDL_PollEvent(&e) == 0)
+    return;
+
+  switch (static_cast<SDL_EventType>(e.type)) {
+    default:
+      break;
+
+    case SDL_QUIT:
+      engine.QueueActionForNextTick(e00::Engine::BuiltInAction_Quit());
+      break;
+
+    case SDL_WINDOWEVENT:
+      switch (static_cast<SDL_WindowEventID>(e.window.event)) {
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+          hasFocus = true;
+          SDL_SetThreadPriority(SDL_THREAD_PRIORITY_NORMAL);
+          break;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+          hasFocus = false;
+          SDL_SetThreadPriority(SDL_THREAD_PRIORITY_LOW);
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    case SDL_KEYDOWN:
+      engine.ProcessInputEvent(MakeSDLKey(e.key));
+      break;
+
+    case SDL_KEYUP:
+      break;
+  }
 }
 
 void ProcessDraw(e00::Engine &engine) {
   if (sdlWindow) {
     SDL_UpdateWindowSurface(sdlWindow);
+  }
+}
+
+void SetWindowTitle(const std::string_view &newTitle) {
+  if (sdlWindow) {
+    SDL_SetWindowTitle(sdlWindow, newTitle.data());
   }
 }
 

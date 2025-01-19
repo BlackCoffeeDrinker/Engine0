@@ -18,18 +18,15 @@
 #include <list>
 
 #define NOT_COPYABLE(CLASS_NAME) \
-    CLASS_NAME (const CLASS_NAME &) = delete; \
-    CLASS_NAME ( CLASS_NAME && ) = delete;    \
-    CLASS_NAME & operator=( const CLASS_NAME & ) = delete; \
-    CLASS_NAME & operator=( CLASS_NAME && ) = delete
+CLASS_NAME (const CLASS_NAME &) = delete; \
+CLASS_NAME ( CLASS_NAME && ) = delete;    \
+CLASS_NAME & operator=( const CLASS_NAME & ) = delete; \
+CLASS_NAME & operator=( CLASS_NAME && ) = delete
 
 #include <Engine/Config.hpp>
 
-#include <Engine/Detail/Property.hpp>
 #include <Engine/Detail/StringFormat.hpp>
 #include <Engine/Detail/TypeId.hpp>
-#include <Engine/Detail/Array.hpp>
-#include <Engine/Detail/CircularBuffer.hpp>
 
 #include <Engine/Logging/SourceLocation.hpp>
 #include <Engine/Logging/Logger.hpp>
@@ -40,30 +37,35 @@
 #include <Engine/Math/AABB.hpp>
 #include <Engine/Math/SpacePartition.hpp>
 
-#include <Engine/Resource.hpp>
-#include <Engine/ResourcePtr.hpp>
 #include <Engine/GameClock.hpp>
-#include <Engine/ComponentRegistry.hpp>
 #include <Engine/ActionCategory.hpp>
 #include <Engine/Action.hpp>
 #include <Engine/ActionInstance.hpp>
-#include <Engine/Binding.hpp>
 #include <Engine/InputSystem.hpp>
 #include <Engine/InputEvent.hpp>
 #include <Engine/Stream.hpp>
+#include <Engine/StreamFactory.hpp>
 
+#include <Engine/Resource.hpp>
+#include <Engine/ResourcePtr.hpp>
 #include <Engine/Resource/Bitmap.hpp>
 #include <Engine/Resource/Font.hpp>
 #include <Engine/Resource/Sprite.hpp>
 #include <Engine/Resource/Tileset.hpp>
 #include <Engine/Resource/Map.hpp>
 
-#include <Engine/Actor.hpp>
-#include <Engine/World.hpp>
+#include <Engine/ResourceLoader.hpp>
+#include <Engine/ResourceManager.hpp>
 
 #include <Engine/GUI/Widget.hpp>
+#include <Engine/GUI/WorldWidget.hpp>
 #include <Engine/GUI/Menu.hpp>
 #include <Engine/GUI/FontGlyph.hpp>
+
+#include <Engine/Painter.hpp>
+
+#include <Engine/Actor.hpp>
+#include <Engine/World.hpp>
 
 #include <Engine/Scripting/ScriptEngine.hpp>
 

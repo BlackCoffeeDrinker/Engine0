@@ -14,11 +14,11 @@ list(APPEND CMAKE_MODULE_PATH ${catch_SOURCE_DIR}/contrib)
 add_executable(Engine00_Tests
         tests.cpp
         catch_main.cpp
-        test_components.cpp
         test_action.cpp
         test_engine.cpp
         test_map.cpp
-        tests_script.cpp test_format.cpp test_sourcelocation.cpp test_data.cpp test_world.cpp)
+        tests_script.cpp test_format.cpp test_sourcelocation.cpp test_data.cpp test_world.cpp
+        test_widget.cpp)
 target_include_directories(Engine00_Tests PRIVATE ../engine/src)
 target_link_libraries(Engine00_Tests
         PRIVATE Engine00

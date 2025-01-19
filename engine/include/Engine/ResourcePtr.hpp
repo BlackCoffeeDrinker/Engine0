@@ -1,6 +1,5 @@
 #pragma once
 
-#include <type_traits>
 #include <cstddef>
 
 #include "Resource.hpp"
@@ -17,7 +16,7 @@ namespace detail {
 
     virtual Resource *resource() = 0;
 
-    [[nodiscard]] virtual std::string name() const = 0;
+    [[nodiscard]] virtual std::string_view name() const = 0;
     [[nodiscard]] virtual type_t type() const = 0;
   };
 }// namespace detail
@@ -56,7 +55,7 @@ struct ResourcePtrT {
     return *this;
   }
 
-  ResourcePtrT &operator=(std::nullptr_t other) {
+  ResourcePtrT &operator=(nullptr_t other) {
     if (other != this) {
       RemoveRef();
     }
@@ -71,7 +70,9 @@ struct ResourcePtrT {
     return cb == nullptr || cb != other.cb;
   }
 
-  [[nodiscard]] std::string Name() const {
+  explicit operator bool() const { return cb != nullptr; }
+
+  [[nodiscard]] std::string_view Name() const {
     return cb ? cb->name() : "";
   }
 
@@ -80,7 +81,8 @@ struct ResourcePtrT {
     return static_cast<T *>(cb->resource());
   }
 
-  pointer operator*() const { return Get(); }
+  const_reference operator*() const { return Get(); }
+  reference operator*() { return Get(); }
   pointer operator->() const { return Get(); }
 
   std::error_code EnsureLoad() {
@@ -91,7 +93,7 @@ struct ResourcePtrT {
   const_reference Ref() const { return *Get(); }
 
 private:
-  friend class e00::Engine;
+  friend class ResourceManager;
   detail::ControlBlock *cb;
 
   explicit ResourcePtrT(detail::ControlBlock *cb) : cb(cb) { AddRef(); }

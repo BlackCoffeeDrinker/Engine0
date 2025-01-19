@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Resource/ResourceLoader.hpp"
+#include "../../include/Engine/ResourceLoader.hpp"
 #include <Engine.hpp>
 
 namespace e00::impl {

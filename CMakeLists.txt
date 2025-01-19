@@ -5,15 +5,18 @@ project(Engine00
         DESCRIPTION "Small Engine"
         LANGUAGES CXX C)
 
+include(cmake/PreventInSourceBuilds.cmake)
+
 #######################################################################################################################
 ## Global Project targeting
 #######################################################################################################################
-SET(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_EXTENSIONS OFF)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Enable position-independent code globally. This is needed because
 # some library targets are OBJECT libraries.
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 #######################################################################################################################
 ## CMake Module configuration
@@ -21,17 +24,36 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
         ${PROJECT_SOURCE_DIR}/cmake)
 
+include(CMakeDependentOption)
+include(CheckCXXCompilerFlag)
 include(ExternalProject)
 include(FetchContent)
+
+include(cmake/SystemLink.cmake)
+include(cmake/LibFuzzer.cmake)
 include(cmake/CPM.cmake)
+
+include(ProjectOptions.cmake)
+
+#######################################################################################################################
+## Setup Env
+#######################################################################################################################
+e0_setup_options()
+e0_global_options()
+e0_local_options()
+
+set(GIT_SHA "Unknown" CACHE STRING "SHA this build was generated from")
+string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
+
+target_compile_features(e0_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+
+add_library(e0::e0_options ALIAS e0_options)
+add_library(e0::e0_warnings ALIAS e0_warnings)
 
 #######################################################################################################################
 ## Useful stuff to set only if this is the main project and not included through add_subdirectory
 #######################################################################################################################
 IF (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    # Make sure cmake uses -std=c++ and not -std=g++
-    set(CMAKE_CXX_EXTENSIONS OFF)
-
     # Folders in IDEs
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

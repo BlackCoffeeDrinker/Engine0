@@ -1,15 +1,13 @@
 #pragma once
 
 namespace e00 {
-class Engine;
 
 struct Resource {
+  Resource() = default;
+  Resource(const Resource &other) = default;
+
 
   virtual ~Resource() = default;
-
-  virtual void Tick(const std::chrono::milliseconds& delta) {
-    // Implemented when needed by resources
-  }
 
 private:
 };

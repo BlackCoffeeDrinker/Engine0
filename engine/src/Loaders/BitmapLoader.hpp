@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Resource/ResourceLoader.hpp"
 #include <Engine.hpp>
 
 namespace e00::impl {
@@ -16,6 +15,6 @@ public:
 
   bool CanLoad(Stream &stream) override;
 
-  ResourceLoader::Result ReadLoad(Stream &stream) override;
+  Result ReadLoad(Stream &stream) override;
 };
 }// namespace e00::impl

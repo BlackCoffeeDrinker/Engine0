@@ -1,47 +1,76 @@
-
 #pragma once
 
-#include "LoadedWorld.hpp"
 #include "PrivateInclude.hpp"
+#include <queue>
 
 namespace e00 {
-class ResourceManager;
-
 enum class EngineState {
-  INIT,
   FIRST_TICK,
   RUNNING_NORMAL,
   PAUSE,
-
   QUIT
 };
 
 class Engine::Data {
+  Engine *const _public_engine;
+
   Logger _main_logger;
-
   EngineState _state;
+  EngineState _old_state;
 
-  detail::CircularBuffer<ActionInstance, 254> _actions_to_process;//< Actions to be executed next tick
+  std::priority_queue<ActionInstance> _actions_to_execute;//< Actions in queue
+  std::unique_ptr<ScriptEngine> _script_engine;           //< Persistent script engine
+  std::unique_ptr<World> _current_world;                  //< Currently main world
+  std::unique_ptr<Widget> _root_widget;                   //< Root widget where we draw from
 
-  std::unique_ptr<ScriptEngine> _script_engine;                   //< Persistent script engine
-  std::unique_ptr<LoadedWorld> _current_world;                    //< Currently main world
+  void ProcessAction(const Action &action);
 
 public:
-  Data();
-  ~Data();
+  explicit Data(Engine *publicInterface);
+
+  ~Data() = default;
 
   [[nodiscard]] auto State() const { return _state; }
 
-  void SetState(EngineState engineState) { _state = engineState; }
+  [[nodiscard]] auto OldState() const { return _old_state; }
 
-  void ExecuteAction(Action action);
+  void ClearOldState() { _old_state = _state; }
 
-  std::error_code Init();
+  void SetState(const EngineState engineState) {
+    _old_state = _state;
+    _state = engineState;
+  }
 
-  void Tick(const std::chrono::milliseconds &delta) noexcept;
+  void TickWorld(const std::chrono::milliseconds &delta) {
+    if (_current_world) {
+      // TODO
+    }
+  }
 
-  void Draw();
+  void QueueAction(Action action, GameClock::time_point tp) {
+    _actions_to_execute.emplace(action, tp);
+  }
 
+  void ExecuteActionsAtTime(const GameClock::time_point &tp) {
+    // Drain the list until time_point tp
+    while (!_actions_to_execute.empty() && _actions_to_execute.top().when <= tp) {
+      const auto &topAction = _actions_to_execute.top();
+
+      // Is the root widget interested in this action?
+      const auto widgetProcessResult = RootWidget().ProcessAction(topAction);
+      if (widgetProcessResult != Widget::ActionProcessResult::HandledAndConsumed) {
+        if (_current_world) {
+          _current_world->ProcessAction(topAction);
+        }
+
+        ProcessAction(topAction.action);
+      }
+
+      _actions_to_execute.pop();
+    }
+  }
+
+  Widget &RootWidget();
 };
 
 }// namespace e00

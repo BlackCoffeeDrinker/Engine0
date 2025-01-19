@@ -9,7 +9,7 @@ public:
   using Position = Vec2D<WorldCoordinateType>;
 
 private:
-  struct TileOptions : public ComponentRegistry {};
+  struct TileOptions {};
 
   Vec2D<WorldCoordinateType> _size;
   std::vector<Tileset::TileIdType> _data;
@@ -31,12 +31,13 @@ private:
   }
 
 public:
-  Map() : _size(0, 0), _data(), _options() {}
+  Map() : _size(0, 0), _tileset() {}
 
   Map(WorldCoordinateType width, WorldCoordinateType height)
     : _size(width, height),
       _data(LayerSize()),
-      _options(LayerSize()) {}
+      _options(LayerSize()),
+      _tileset() {}
 
   Map(const Map &other) = default;
 
@@ -76,9 +77,9 @@ public:
 
   explicit operator bool() const noexcept { return _size.x > 0 && _size.y > 0; }
 
-  void SetTileset(Tileset&& set) { _tileset = std::move(set); }
+  void SetTileset(Tileset &&set) { _tileset = std::move(set); }
 
-  [[nodiscard]] const Tileset& Tileset() const { return _tileset; }
+  [[nodiscard]] const Tileset &Tileset() const { return _tileset; }
   [[nodiscard]] WorldCoordinateType Width() const { return _size.x; }
   [[nodiscard]] WorldCoordinateType Height() const { return _size.y; }
   [[nodiscard]] Vec2D<WorldCoordinateType> Size() const { return _size; }
@@ -94,8 +95,8 @@ public:
    * @return tileId or 0 if out of bound
    */
   [[nodiscard]] Tileset::TileIdType Get(const Position &position) const {
-    const auto i = PositionToLinear(position);
-    if (ValidDataPosition(i)) {
+    if (const auto i = PositionToLinear(position);
+      ValidDataPosition(i)) {
       return _data.at(i);
     }
 

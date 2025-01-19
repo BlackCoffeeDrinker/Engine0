@@ -2,16 +2,24 @@
 
 #include "InternalActions.hpp"
 
-
 namespace e00 {
 Action Engine::BuiltInAction_Quit() {
   return make_action(impl::EngineAction::Quit);
 }
 
-Engine::Engine() : _pImpl(std::make_unique<Engine::Data>()) {
+Action Engine::BuiltInAction_PauseToggle() {
+  return make_action(impl::EngineAction::PauseToggle);
+}
+
+Engine::Engine() : _main_logger(CreateSink("Engine")),
+                   _pImpl(std::make_unique<Data>(this)) {
 }
 
 Engine::~Engine() = default;
+
+bool Engine::LanguageCode(const std::string &languageCode) {
+  return true;
+}
 
 InputEvent Engine::InputBindingForAction(const Action &action) const noexcept {
   for (const auto &[inputEvent, inputAction]: _input_binding)
@@ -29,50 +37,62 @@ std::error_code Engine::BindInputEventToAction(const Action &action, InputEvent 
 }
 
 bool Engine::IsRunning() const noexcept {
-  const auto state = _pImpl->State();
-  return state != EngineState::QUIT && state != EngineState::INIT;
+  return _pImpl->State() != EngineState::QUIT;
+}
+
+bool Engine::IsPaused() const noexcept {
+  return _pImpl->State() == EngineState::PAUSE;
 }
 
 void Engine::Tick(const std::chrono::milliseconds &delta) noexcept {
   switch (_pImpl->State()) {
-    case EngineState::INIT:
-      if (const auto ec = _pImpl->Init()) {
-
-        _pImpl->SetState(EngineState::QUIT);
-      }
-      break;
-
     case EngineState::FIRST_TICK:
       _pImpl->SetState(EngineState::RUNNING_NORMAL);
+      OnFirstTick();
       [[fallthrough]];
 
     case EngineState::RUNNING_NORMAL:
-      _pImpl->Tick(delta);
+      if (_pImpl->OldState() == EngineState::PAUSE) {
+        OnResume();
+      }
+      _current_game_time += delta;
+      _pImpl->TickWorld(delta);
+      _pImpl->ExecuteActionsAtTime(Now());
+      
       break;
 
     case EngineState::PAUSE:
+      if (_pImpl->OldState() == EngineState::RUNNING_NORMAL) {
+        OnPause();
+      }
+      _pImpl->ExecuteActionsAtTime(Now());
       break;
 
     case EngineState::QUIT:
       break;
   }
+
+  _pImpl->ClearOldState();
 }
 
-void Engine::ExecuteAction(Action action) {
-  // TODO
-  _pImpl->ExecuteAction(action);
+void Engine::QueueActionForNextTick(Action action) {
+  _pImpl->QueueAction(action, Now());
 }
 
-void Engine::Draw() noexcept {
-  _pImpl->Draw();
+Widget &Engine::RootWidget() {
+  return _pImpl->RootWidget();
 }
 
 std::error_code Engine::Init() noexcept {
-  return _pImpl->Init();
+  _current_game_time = GameClock::time_point();
+  _pImpl->SetState(EngineState::FIRST_TICK);
+  _pImpl->ClearOldState();
+
+  return OnInit();
 }
 
-detail::ControlBlock *Engine::MakeResourceContainer(const std::string &name, e00::type_t type, const e00::source_location &from) {
-  return GlobalResourceManager()->MakeResourceContainer(name, type, from);
+void Engine::ExecuteAction(const Action &action) {
+
 }
 
 }// namespace e00

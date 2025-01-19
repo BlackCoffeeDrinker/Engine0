@@ -4,7 +4,8 @@
 
 namespace e00::impl {
 enum class EngineAction : int {
-  Quit = 1
+  Quit = 1,
+  PauseToggle,
 };
 
 Action make_action(EngineAction e);

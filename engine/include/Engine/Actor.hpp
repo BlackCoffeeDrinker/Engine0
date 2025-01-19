@@ -1,25 +1,16 @@
 #pragma once
 
 namespace e00 {
-class Sprite;
-
 /**
  * \brief Abstract class for all objects placed on a map.
  *
- * Example of entities include enemies, the hero,
+ * Example of entities includes enemies, the hero,
  * non-playing characters, doors, chests, etc.
- *
- * At the most fundamental level, an Actor is any Object that
- * you can place in a level.
  */
-class Actor : public ComponentRegistry {
+class Actor {
 public:
-  Actor() = default;
-
-  ~Actor() override = default;
-
   enum class BodyType {
-    Static,// Unmovable actor (A interactable tree for example)
+    Static,// Unmovable actor
     Dynamic,// Actor can move
   };
 
@@ -28,17 +19,6 @@ private:
   BodyType _type;
 
 public:
-  /**
-   * Called when spawned
-   */
-  virtual void OnSpawn() {}
-
-  /**
-   *
-   * @param delta
-   */
-  virtual void Tick(const std::chrono::milliseconds &delta) {}
-
   bool IsHero() const;
 
   void Size(const Vec2D<WorldCoordinateType> &newSize) { _size = newSize; }

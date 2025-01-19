@@ -1,7 +1,8 @@
 #######################################################################################################################
 ## Declare main target
 #######################################################################################################################
-add_library(Engine00 STATIC)
+add_library(Engine00 STATIC
+        src/Painter.cpp)
 
 set_target_properties(Engine00
         PROPERTIES
@@ -129,8 +130,6 @@ target_sources(Engine00 PUBLIC
         include/Engine/Config.hpp
         include/Engine/Action.hpp
         include/Engine/Actor.hpp
-        include/Engine/Binding.hpp
-        include/Engine/ComponentRegistry.hpp
         include/Engine/Engine.hpp
         include/Engine/ActionCategory.hpp
         include/Engine/ActionInstance.hpp
@@ -142,15 +141,16 @@ target_sources(Engine00 PUBLIC
         include/Engine/Resource.hpp
         include/Engine/ResourcePtr.hpp
         include/Engine/GameClock.hpp
+        include/Engine/Painter.hpp
+        include/Engine/ResourceManager.hpp
+        include/Engine/ResourceLoader.hpp
+        include/Engine/StreamFactory.hpp
 
         include/Engine/Math/Vec2D.hpp
         include/Engine/Math/Rect.hpp
         include/Engine/Math/Color.hpp
         include/Engine/Math/AABB.hpp
 
-        include/Engine/Detail/Property.hpp
-        include/Engine/Detail/Array.hpp
-        include/Engine/Detail/CircularBuffer.hpp
         include/Engine/Detail/StringFormat.hpp
         include/Engine/Detail/TypeId.hpp
 
@@ -163,6 +163,7 @@ target_sources(Engine00 PUBLIC
         include/Engine/GUI/FontGlyph.hpp
         include/Engine/GUI/Menu.hpp
         include/Engine/GUI/Widget.hpp
+        include/Engine/GUI/WorldWidget.hpp
 
         include/Engine/Logging/SourceLocation.hpp
         include/Engine/Logging/Logger.hpp
@@ -185,8 +186,6 @@ target_sources(Engine00 PUBLIC
 target_sources(Engine00 PRIVATE
         src/bootstrap.cpp
         src/Engine.cpp
-        src/LoadedWorld.cpp
-        src/LoadedWorld.hpp
         src/EngineData.cpp
         src/EngineData.hpp
         src/EngineError.cpp
@@ -201,9 +200,12 @@ target_sources(Engine00 PRIVATE
         src/Bitmap_Generic.cpp
         src/IniParser.cpp
         src/IniParser.hpp
+        src/ResourceManager.cpp
+        src/StreamFactory.cpp
 
         src/GUI/Widget.cpp
         src/GUI/Font.cpp
+        src/GUI/WorldWidget.cpp
 
         src/ScriptEngine/ScriptEngine.cpp
         src/ScriptEngine/Lua/Error.cpp
@@ -232,8 +234,5 @@ target_sources(Engine00 PRIVATE
         src/Loaders/BitmapLoader.cpp
         src/Loaders/BitmapLoader.hpp
 
-        src/Resource/ResourceManager.hpp
-        src/Resource/ResourceManager.cpp
         src/Resource/ResourceLoader.cpp
-        src/Resource/ResourceLoader.hpp
 )

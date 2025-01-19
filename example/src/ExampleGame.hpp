@@ -1,13 +1,22 @@
 
-#ifndef ENGINE00_EXAMPLEGAME_HPP
-#define ENGINE00_EXAMPLEGAME_HPP
+#pragma once
 
 #include <Engine.hpp>
 
 class ExampleGame : public e00::Engine {
+  e00::Logger _game_logger;
+
+protected:
+  void ExecuteAction(const e00::Action &action) override;
+
+  std::error_code OnInit() override;
+  void OnFirstTick() override;
+  void OnPause() override;
+  void OnResume() override;
+
 public:
-  std::string_view Name() const noexcept override;
+  ExampleGame();
+  ~ExampleGame() override;
+
+  [[nodiscard]] std::string_view Name() const noexcept override;
 };
-
-
-#endif//ENGINE00_EXAMPLEGAME_HPP

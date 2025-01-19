@@ -57,7 +57,7 @@ class FontMonochrome : public Font
 public:
   FontMonochrome();
 
-  ~FontMonochrome() override;
+  ~FontMonochrome() noexcept override;
 
   uint16_t CharLength(uint16_t ch) override;
   uint16_t RenderChar(std::string_view::value_type ch, Color fg, Color bg, Bitmap &bmp, const Vec2D<uint16_t> &position) override;

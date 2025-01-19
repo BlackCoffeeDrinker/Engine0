@@ -1,14 +1,20 @@
 #pragma once
 
-#include <cmath>
-
 namespace e00 {
 template<typename T>
 struct Vec2D {
   T x;
   T y;
 
-  constexpr Vec2D() noexcept : x{}, y{} {}
+  constexpr static Vec2D min() {
+    return Vec2D(std::numeric_limits<T>::min(), std::numeric_limits<T>::min());
+  }
+
+  constexpr static Vec2D max() {
+    return Vec2D(std::numeric_limits<T>::max(), std::numeric_limits<T>::max());
+  }
+
+  constexpr Vec2D() noexcept : x{0}, y{0} {}
   constexpr Vec2D(T x_, T y_) noexcept : x{ x_ }, y{ y_ } {}
 
   constexpr auto Area() const { return x * y; }

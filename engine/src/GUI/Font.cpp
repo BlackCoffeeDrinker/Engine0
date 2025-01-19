@@ -151,11 +151,9 @@ uint16_t Font::TextLength(const std::string_view &text) {
   return i;
 }
 
-FontMonochrome::FontMonochrome() {
-}
+FontMonochrome::FontMonochrome() = default;
 
-FontMonochrome::~FontMonochrome() noexcept {
-}
+FontMonochrome::~FontMonochrome() noexcept = default;
 
 const Font::Glyph &FontMonochrome::FindGlyph(uint16_t ch) const {
   if (const auto *p = _glyphs->FindInRange(ch)) {
