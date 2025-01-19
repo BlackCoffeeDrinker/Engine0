@@ -1,4 +1,4 @@
-#include <Engine.hpp>
+#include "PrivateInclude.hpp"
 
 namespace {
 uint16_t DepthEnumToBits(e00::Bitmap::BitDepth depth) {

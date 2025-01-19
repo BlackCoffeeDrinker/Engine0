@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Engine.hpp>
+#include "PrivateInclude.hpp"
 
 namespace e00::impl {
 enum class EngineAction : int {

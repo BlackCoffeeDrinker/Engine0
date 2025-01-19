@@ -1,8 +1,7 @@
 #######################################################################################################################
 ## Declare main target
 #######################################################################################################################
-add_library(Engine00 STATIC
-        src/Painter.cpp)
+add_library(Engine00 STATIC)
 
 set_target_properties(Engine00
         PROPERTIES
@@ -235,4 +234,9 @@ target_sources(Engine00 PRIVATE
         src/Loaders/BitmapLoader.hpp
 
         src/Resource/ResourceLoader.cpp
+
+        src/Painter.cpp
+        src/Painter_PaintDevice.hpp
+        src/Painter_PaintDevice.cpp
+        src/Painter_TargetBitmap.cpp
 )

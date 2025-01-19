@@ -1,8 +1,4 @@
-#include "Loaders/BitmapLoader.hpp"
-
-
-#include <Engine.hpp>
-#include <utility>
+#include "PrivateInclude.hpp"
 
 #include "Loaders/BitmapLoader.hpp"
 #include "Loaders/WorldLoader.hpp"

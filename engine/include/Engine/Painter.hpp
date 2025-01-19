@@ -8,7 +8,12 @@ namespace e00 {
  * simple lines to bitmaps.
  */
 class Painter {
+class PaintDevice;
+
+  PaintDevice* _target;
+  
 protected:
+  
   Painter();
 
 public:
@@ -22,6 +27,8 @@ public:
     SolidBrush,
     BitmapBrush,
   };
+
+  explicit Painter(const Bitmap &targetBitmap);
   
   ~Painter() = default;
 

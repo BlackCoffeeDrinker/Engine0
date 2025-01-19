@@ -24,7 +24,7 @@ private:
 public:
   NOT_COPYABLE(Bitmap);
 
-  Bitmap(const Vec2D<uint16_t> &size, BitDepth bit_depth, int numColorsInPalette);
+  Bitmap(const Vec2D<uint16_t> &size, BitDepth bit_depth, int numColorsInPalette = 0);
 
   ~Bitmap() override;
 

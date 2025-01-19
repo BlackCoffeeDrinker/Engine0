@@ -1,5 +1,4 @@
-#include <Engine.hpp>
-#include "Engine/Resource/Tileset.hpp"
+#include "PrivateInclude.hpp"
 
 namespace e00 {
 Tileset::Tileset(TileIdType nbTiles)

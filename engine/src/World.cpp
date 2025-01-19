@@ -1,9 +1,9 @@
-#include <Engine.hpp>
+#include "PrivateInclude.hpp"
 
 namespace e00 {
 World::World(std::string name, ResourcePtrT<e00::Map> &&map)
-  : _name(std::move(name)),
-    _map(std::move(map)) {
+    : _name(std::move(name)),
+      _map(std::move(map)) {
 }
 
 World::~World() = default;
@@ -26,7 +26,7 @@ World::NodeID World::Insert(Actor *actor, const Vec2D<WorldCoordinateType> &posi
     }
   }
 
-  _elements.push_back({ actor, position });
+  _elements.push_back({actor, position});
   return _elements.size() - 1;
 }
 
@@ -44,7 +44,6 @@ void World::Remove(NodeID element) {
 }
 
 void World::ProcessAction(const ActionInstance &action) {
-  
 }
 
 auto World::NumActors() const {
