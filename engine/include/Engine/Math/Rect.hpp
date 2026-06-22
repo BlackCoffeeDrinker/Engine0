@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/Math/Vec2D.hpp"
+
 namespace e00 {
 template<typename T>
 struct RectT {
@@ -32,6 +34,9 @@ struct RectT {
   constexpr Vec2D<T> GetTopRight() const { return { origin.x + size.x, origin.y }; }
   constexpr Vec2D<T> GetBottomLeft() const { return { origin.x, origin.y + size.y }; }
   constexpr Vec2D<T> GetBottomRight() const { return To(); }
+  
+  constexpr Vec2D<T> Size() const { return size; }
+  constexpr Vec2D<T> Origin() const { return origin; }
   
   constexpr Vec2D<T> Center() const {
     return {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Engine/Math/Vec2D.hpp>
+
 namespace e00 {
 template<typename T>
 struct AABB {

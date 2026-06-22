@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <system_error>
 #include <utility>
-#include <functional>
 #include <memory>
 
 #include "detail/NativeFunctionT.hpp"
@@ -21,7 +20,7 @@ protected:
 
   virtual void add_variable(const std::string &var_name, scripting::BoxedValue val) = 0;
 
-  virtual void add_type(const scripting::TypeInfo &type) = 0;
+  virtual void add_type(const TypeInfo &type) = 0;
 
 public:
   static std::unique_ptr<ScriptEngine> Create();
@@ -32,7 +31,7 @@ public:
 
   template<typename Type>
   void register_type() {
-    add_type(scripting::user_type<Type>());
+    add_type(user_type<Type>());
   }
 
   template<typename Fn>
@@ -53,11 +52,11 @@ public:
     add_variable(var_name, scripting::BoxedValue(var));
   }
 
-  virtual std::unique_ptr<scripting::ProxyFunction> get_function(const std::string &fn_name, scripting::TypeInfo preferred_return_type) = 0;
+  virtual std::unique_ptr<scripting::ProxyFunction> get_function(const std::string &fn_name, TypeInfo preferred_return_type) = 0;
 
   template<typename Ret, typename... Args>
   Ret call(const std::string &fn_name, Args &&...args) {
-    if (auto fn = get_function(fn_name, scripting::user_type<Ret>())) {
+    if (auto fn = get_function(fn_name, user_type<Ret>())) {
       auto ret = fn->operator()(std::forward<Args>(args)...);
 
       if constexpr (std::is_void<Ret>::value) {

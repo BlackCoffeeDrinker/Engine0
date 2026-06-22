@@ -15,8 +15,8 @@ std::unique_ptr<ScriptEngine> ScriptEngine::Create() {
 std::error_code ScriptEngine::parse(const std::unique_ptr<e00::Stream> &stream) {
   std::string script;
   if (stream) {
-    script.reserve(stream->stream_size());
-    if (auto stream_ec = stream->read(stream->stream_size(), script.data())) {
+    script.resize(stream->Size());
+    if (auto stream_ec = stream->Read(stream->Size(), script.data())) {
       return stream_ec;
     }
 

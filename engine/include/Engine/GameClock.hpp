@@ -8,6 +8,6 @@ struct GameClock {
   typedef duration::rep                      rep;
   typedef duration::period                   period;
   typedef std::chrono::time_point<GameClock> time_point;
-  static const bool                          is_steady = false;
+  static constexpr bool                      is_steady = false;
 };
 }

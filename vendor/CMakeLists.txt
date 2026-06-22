@@ -6,12 +6,20 @@ CPMAddPackage(
 
 CPMAddPackage(
         NAME nlohmann_json
-        VERSION 3.9.1
+        VERSION 3.12.0
         GITHUB_REPOSITORY nlohmann/json
         OPTIONS
         "JSON_BuildTests OFF"
 )
 
+# Add ZLIB
+CPMAddPackage(
+        NAME zlib
+        GIT_REPOSITORY "https://github.com/madler/zlib.git"
+        GIT_TAG "v1.3.1"
+        OPTIONS
+        "CMAKE_POSITION_INDEPENDENT_CODE True"
+)
 #######################################################################################################################
 ## LodePNG
 #######################################################################################################################

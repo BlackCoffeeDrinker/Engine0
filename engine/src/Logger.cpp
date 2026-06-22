@@ -1,42 +1,35 @@
 #include "PrivateInclude.hpp"
-#include <iostream>
+
+#include "Platform.hpp"
+
+#include <mutex>
 
 namespace {
-class DefaultSink : public e00::LoggerSink {
-
-  static std::string_view SeverityToString(e00::LoggingSeverity sev) {
-    switch (sev) {
-      case e00::L_VERBOSE: return "V";
-      case e00::L_INFO: return "I";
-      case e00::L_WARNING: return "W";
-      case e00::L_ERROR: return "E";
-      case e00::L_NONE: break;
-    }
-
-    return "";
-  }
-
-public:
-  void log(const e00::detail::LogMessage &msg) override {
-    std::cerr
-      << msg.location.file_name() << ":" << msg.location.line()
-      << " [" << SeverityToString(msg.level)
-      << "] " << msg.time.time_since_epoch().count()
-      << ": " << msg.payload << "\n";
-  }
-
-  void flush() override {
-  }
-
-};
-
-class E00Logger : public e00::Logger {
-  DefaultSink _defaultSink;
-
-public:
-  E00Logger() : e00::Logger() {
-    AddSink(&_defaultSink);
-  }
-};
+std::string make_name(const std::string &parent_name, const std::string &name) {
+  return parent_name.empty() ? name : parent_name + "." + name;
 }
 
+}// namespace
+
+namespace e00 {
+Logger::Logger(std::string name)
+    : _name(std::move(name)),
+      _unique_sink(platform::CreateSink(name)) {
+}
+
+Logger::Logger(const Logger &parentLogger, const std::string &name)
+    : _name(make_name(parentLogger._name, name)),
+      _unique_sink(platform::CreateSink(_name)) {
+}
+
+Logger &GetDefaultLogger() {
+  static std::once_flag flag;
+  static Logger *default_logger = nullptr;
+
+  std::call_once(flag, []() {
+    default_logger = new Logger({});
+  });
+
+  return *default_logger;
+}
+}// namespace e00

@@ -179,3 +179,11 @@ $RECYCLE.BIN/
 *.lnk
 
 example/SimpleGameTest
+
+# Don't polute this repo with this
+# Add any that I missed here
+AGENTS.md
+.ai-agents
+.claude/
+.github/copilot-instructions.md
+

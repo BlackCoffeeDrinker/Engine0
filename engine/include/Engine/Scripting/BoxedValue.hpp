@@ -2,7 +2,6 @@
 
 #include <memory>
 
-#include "TypeInfo.hpp"
 #include "detail/FunctionSignature.hpp"
 
 namespace e00::scripting {
@@ -106,7 +105,7 @@ public:
   /// Basic Boxed_Value constructor
   template<typename T, typename = std::enable_if_t<!std::is_same_v<BoxedValue, std::decay_t<T>>>>
   explicit BoxedValue(T &&t, bool t_return_value = false)
-    : _info(user_type<T>()),
+    : _info(user_type<std::remove_cvref_t<T>>()),
       _is_return(t_return_value),
       _data(DataBuilder::get(std::forward<T>(t))) {
   }
@@ -151,6 +150,7 @@ public:
   bool is_undef() const noexcept { return _info.is_undef(); }
   bool is_pointer() const noexcept { return _info.is_pointer(); }
   bool is_class() const noexcept { return _info.is_class(); }
+  bool is_integer() const noexcept { return _info.is_integer(); }
 
   const void *get_const_ptr() const noexcept { return (_data) ? _data->data() : nullptr; }
   void *get_ptr() const noexcept { return (_data) ? _data->data() : nullptr; }

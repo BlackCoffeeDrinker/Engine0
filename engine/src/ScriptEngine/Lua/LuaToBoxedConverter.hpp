@@ -12,7 +12,7 @@
  * @param info
  * @return
  */
-e00::scripting::BoxedValue lua_to_boxed_value(lua_State *L, int n, const e00::scripting::TypeInfo &info);
+e00::scripting::BoxedValue lua_to_boxed_value(lua_State *L, int n, const e00::TypeInfo &info);
 
 /**
  * Convert to closest matching contained_type

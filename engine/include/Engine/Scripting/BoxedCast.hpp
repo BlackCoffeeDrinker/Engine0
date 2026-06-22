@@ -16,6 +16,7 @@ bool try_cast(const BoxedValue &bv, UnBoxedFn &&fn) {
     fn(detail::CastHelper<Type>::cast(std::forward<decltype(bv)>(bv)));
     return true;
   }
+  
   return false;
 }
 }// namespace e00::scripting

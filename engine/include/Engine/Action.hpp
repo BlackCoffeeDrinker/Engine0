@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ActionCategory.hpp"
+
 #include <string_view>
 #include <type_traits>
 
@@ -55,4 +57,4 @@ public:
     return !(left == right);
   }
 };
-}
+}// namespace e00

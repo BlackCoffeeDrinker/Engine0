@@ -1,4 +1,5 @@
 #pragma once
+#include "sqrt.hpp"
 
 namespace e00 {
 template<typename T>
@@ -29,7 +30,7 @@ struct Vec2D {
   T DistanceTo(const Vec2D &other) const {
     const auto dx = other.x - x;
     const auto dy = other.y - y;
-    return std::sqrt(static_cast<double>(dx * dx + dy * dy));
+    return detail::sqrt(static_cast<double>(dx * dx + dy * dy));
   }
 
 
@@ -74,6 +75,10 @@ T distance2(const Vec2D<T> &a, const Vec2D<T> &b) {
 
 template<typename T>
 T distance(const Vec2D<T> &a, const Vec2D<T> &b) {
-  return std::sqrt(static_cast<double>(distance2(a, b)));
+  return detail::sqrt(static_cast<double>(distance2(a, b)));
 }
+
+using Position = Vec2D<WorldCoordinateType>;
+using BitmapSize = Vec2D<BitmapSizeType>;
+
 }// namespace e00

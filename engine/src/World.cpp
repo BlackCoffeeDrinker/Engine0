@@ -1,9 +1,9 @@
 #include "PrivateInclude.hpp"
 
 namespace e00 {
-World::World(std::string name, ResourcePtrT<e00::Map> &&map)
+World::World(std::string name)
     : _name(std::move(name)),
-      _map(std::move(map)) {
+      _map(nullptr) {
 }
 
 World::~World() = default;
@@ -11,54 +11,63 @@ World::~World() = default;
 World::NodeID World::Insert(Actor *actor, const Vec2D<WorldCoordinateType> &position) {
   // Is this actor in this world ?
   if (Size() < position) {
-    return -1;
+    return InvalidNodeID;
   }
 
-  // Find first free element
-  // TODO: replace this with a "NEXT FREE" type of system
-  for (auto e = 0; e < _elements.size(); e++) {
-    auto element = _elements.at(e);
-
+  // Find first `null` actor
+  for (auto i = 0u; i < _elements.size(); i++) {
+    auto &element = _elements.at(i);
     if (element.actor == nullptr) {
       element.actor = actor;
       element.position = position;
-      return e;
+
+      return i;
     }
   }
 
-  _elements.push_back({actor, position});
-  return _elements.size() - 1;
+  return InvalidNodeID;
 }
 
 void World::Update(NodeID element, const Vec2D<WorldCoordinateType> &position) {
-  if (element < _elements.size()) {
-    _elements.at(element).position = position;
+  if (_elements.size() > element) {
+    if (Size() < position) {
+      return;
+    }
+
+    auto &value = _elements.at(element);
+    value.position = position;
+    // Call updated position on actor ?
   }
 }
 
 void World::Remove(NodeID element) {
   if (element < _elements.size()) {
-    _elements.at(element).actor = nullptr;
-    _elements.at(element).position = {};
+    auto &value = _elements.at(element);
+    value.actor = nullptr;
+    value.position = {};
   }
 }
 
-void World::ProcessAction(const ActionInstance &action) {
+bool World::ProcessAction(const ActionInstance &action) {
 }
 
-auto World::NumActors() const {
-  return std::count_if(std::begin(_elements), std::end(_elements), [](const auto &element) {
+size_t World::NumActors() const {
+  return std::ranges::count_if(_elements, [](const auto &element) {
     return element.actor != nullptr;
   });
 }
 
-std::vector<World::NodeID> &World::Query(const RectT<e00::WorldCoordinateType> &bounds, std::vector<World::NodeID> &output) const {
+void World::PaintTile(const Position &tilePosition, Painter &painter, const Vec2D<BitmapSizeType> &origin) const {
+  return _map->PaintTile(tilePosition, painter, origin);
+}
 
+std::vector<World::NodeID> &World::Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const {
   // TODO This is horrible; make some kind of BSP
   for (NodeID i = 0; i < _elements.size(); i++) {
-    const auto &element = _elements.at(i);
-    if (bounds.Contains(element.position))
+    const auto &[actor, position] = _elements.at(i);
+    if (actor != nullptr && bounds.Contains(position)) {
       output.push_back(i);
+    }
   }
 
   return output;

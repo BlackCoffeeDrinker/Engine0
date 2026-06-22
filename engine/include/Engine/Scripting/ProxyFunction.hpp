@@ -3,7 +3,6 @@
 #include <vector>
 #include <limits>
 
-#include "TypeInfo.hpp"
 #include "BoxedValue.hpp"
 #include "FunctionParams.hpp"
 

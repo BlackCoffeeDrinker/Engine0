@@ -44,5 +44,10 @@ Assuming you've done the above two steps, you can start CLion, and open the proj
 
 Select menu option **Build   ➜ Build Project**.
 
+# How things are done in DOS land
+Keyboard: IRQ1-driven with full extended scancode (0xE0 prefix) support.
+Mouse: INT 33h mouse driver with relative motion via mickeys.
+Joystick: gameport joystick via BIOS INT 15h (axes) and direct port 0x201 reads (buttons) with software calibration.
+
 ## Making your own game
 > TODO

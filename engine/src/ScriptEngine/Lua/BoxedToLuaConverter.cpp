@@ -1,7 +1,7 @@
+#include <Engine.hpp>
+
 #include "BoxedToLuaConverter.hpp"
 #include "UserDataHolder.hpp"
-
-#include <Engine/Scripting/BoxedCast.hpp>
 
 #include <string_view>
 

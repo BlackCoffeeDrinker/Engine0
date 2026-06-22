@@ -1,10 +1,12 @@
+#include <Engine.hpp>
+
 #include "LuaToBoxedConverter.hpp"
 #include "RefFunction.hpp"
 #include "UserDataHolder.hpp"
 
-#include <Engine/Scripting/BoxedCast.hpp>
 
 using namespace e00::scripting;
+using namespace e00;
 
 namespace {
 BoxedValue IntegerToX(BoxedValue &&original, const TypeInfo &target) {
@@ -72,16 +74,25 @@ BoxedValue lua_to_boxed_value(lua_State *L, int n, const TypeInfo &info) {
     return guessed;
   }
 
+  constexpr auto luaIntegerType = user_type<lua_Integer>();
+  constexpr auto luaNumberType = user_type<lua_Number>();
+  constexpr auto luaStringType = user_type<std::string>();
+  constexpr auto luaBoolType = user_type<bool>();
+  
   // We need to do some conversion
-  if (guessed.get_type_info() == user_type<lua_Integer>()) {
+  if (guessed.get_type_info() == luaIntegerType) {
     return IntegerToX(std::move(guessed), info);
-  } else if (guessed.get_type_info() == user_type<lua_Number>()) {
+  }
+  if (guessed.get_type_info() == luaNumberType) {
     return FloatingToX(std::move(guessed), info);
-  } else if (guessed.get_type_info() == user_type<std::string>()) {
+  }
+  if (guessed.get_type_info() == luaStringType) {
     return StringToX(std::move(guessed), info);
-  } else if (guessed.get_type_info() == user_type<bool>()) {
+  }
+  if (guessed.get_type_info() == luaBoolType) {
     return BoolToX(std::move(guessed), info);
-  } else if (guessed.get_type_info() == user_type<std::nullptr_t>()) {
+  }
+  if (guessed.get_type_info() == user_type<std::nullptr_t>()) {
     return NullToX(std::move(guessed), info);
   }
 
@@ -122,7 +133,7 @@ BoxedValue lua_to_boxed_value_guess(lua_State *L, int n) {
 
     case LUA_TFUNCTION:
       // build a proxy function
-      return BoxedValue((ProxyFunction *)new lua::RefFunction(L, luaL_ref(L, LUA_REGISTRYINDEX)));
+      return BoxedValue(static_cast<ProxyFunction *>(new lua::RefFunction(L, luaL_ref(L, LUA_REGISTRYINDEX))));
 
     case LUA_TUSERDATA:
       {

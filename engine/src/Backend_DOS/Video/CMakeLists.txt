@@ -1,0 +1,9 @@
+target_sources(Engine00
+        PRIVATE
+        Ega.hpp
+        PlanarPainter.hpp
+        PlanarPainter.cpp
+        PlanarSurfaceHw.hpp
+        PlanarSurfaceHw.cpp
+        VGA_12h.hpp
+)

@@ -1,3 +1,5 @@
+#include <Engine.hpp>
+
 #include "UserDataHolder.hpp"
 #include "LuaScriptEngine.hpp"
 #include "LuaToNativeTrampoline.hpp"

@@ -10,13 +10,16 @@ include(cmake/PreventInSourceBuilds.cmake)
 #######################################################################################################################
 ## Global Project targeting
 #######################################################################################################################
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# Enable position-independent code globally. This is needed because
-# some library targets are OBJECT libraries.
-set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
+if (DJGPP)
+    set(CMAKE_CXX_EXTENSIONS ON)
+else ()
+    set(CMAKE_CXX_EXTENSIONS OFF)
+    set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+endif ()
 
 #######################################################################################################################
 ## CMake Module configuration
@@ -28,6 +31,8 @@ include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
 include(ExternalProject)
 include(FetchContent)
+include(CheckTypeSize)
+include(CheckSymbolExists)
 
 include(cmake/SystemLink.cmake)
 include(cmake/LibFuzzer.cmake)
@@ -46,6 +51,9 @@ set(GIT_SHA "Unknown" CACHE STRING "SHA this build was generated from")
 string(SUBSTRING "${GIT_SHA}" 0 8 GIT_SHORT_SHA)
 
 target_compile_features(e0_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
+add_compile_options(
+        "$<$<AND:$<CONFIG:Release>,$<COMPILE_LANG_AND_ID:CXX,ARMClang,AppleClang,Clang,GNU>>:-O3>"
+)
 
 add_library(e0::e0_options ALIAS e0_options)
 add_library(e0::e0_warnings ALIAS e0_warnings)

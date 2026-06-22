@@ -9,10 +9,10 @@ namespace e00::scripting::detail {
 
 template<typename T>
 constexpr T *throw_if_null(T *t) {
-  //  if (t) {
-  return t;
-  //  }
-  //  throw std::runtime_error("Attempted to dereference null BoxedValue");
+  if (t) {
+    return t;
+  }
+  throw std::runtime_error("Attempted to dereference null BoxedValue");
 }
 
 template<typename T>
@@ -37,18 +37,16 @@ template<typename T>
 static const T *verify_type(const BoxedValue &ob, const TypeInfo &ti, const T *ptr) {
   if (ob.get_type_info().bare_equal_type_info(ti)) {
     return throw_if_null(ptr);
-  } else {
-    throw std::bad_cast();
   }
+  throw std::bad_cast();
 }
 
 template<typename T>
 static T *verify_type(const BoxedValue &ob, const TypeInfo &ti, T *ptr) {
   if (!ob.is_const() && ob.get_type_info().bare_equal_type_info(ti)) {
     return throw_if_null(ptr);
-  } else {
-    throw std::bad_cast();
   }
+  throw std::bad_cast();
 }
 
 /// Generic Cast_Helper_Inner, for casting to any contained_type

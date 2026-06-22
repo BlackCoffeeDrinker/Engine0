@@ -1,30 +1,31 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdio>
 #include <limits>
-#include <type_traits>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include <magic_enum.hpp>
 
 namespace e00::fmt_lite {
 const char digit_pairs[201] = {
-  "00010203040506070809"
-  "10111213141516171819"
-  "20212223242526272829"
-  "30313233343536373839"
-  "40414243444546474849"
-  "50515253545556575859"
-  "60616263646566676869"
-  "70717273747576777879"
-  "80818283848586878889"
-  "90919293949596979899"
-};
+    "00010203040506070809"
+    "10111213141516171819"
+    "20212223242526272829"
+    "30313233343536373839"
+    "40414243444546474849"
+    "50515253545556575859"
+    "60616263646566676869"
+    "70717273747576777879"
+    "80818283848586878889"
+    "90919293949596979899"};
 
 
 template<typename T>
 constexpr unsigned int num_digits(T number) {
+  if (number == 0) return 1;
   unsigned int digits = 0;
   if (number < 0)
     digits = 1;
@@ -83,27 +84,39 @@ constexpr unsigned int num_digits(char x) {
 }
 
 template<typename T>
-struct formatter { formatter() = delete; };
+struct formatter {
+  formatter() = delete;
+};
 
 template<typename T>
 struct integer_formatter {
   template<typename Context>
   void parse(Context &ctx, T value) {
-    char buffer[num_digits(std::numeric_limits<T>::max())];
+    if (value == 0) {
+      *ctx._out++ = '0';
+      return;
+    }
 
     if (value < 0) {
       *ctx._out++ = '-';
+      if (value == std::numeric_limits<T>::min()) {
+        // Special case for MIN to avoid overflow when negating
+        parse(ctx, static_cast<T>(-(value / 10)));
+        *ctx._out++ = static_cast<char>('0' + (-(value % 10)));
+        return;
+      }
       parse(ctx, static_cast<T>(-value));
       return;
     }
 
+    char buffer[num_digits(std::numeric_limits<T>::max())];
     const auto size = num_digits(value);
     char *c = buffer + size - 1;
 
     while (value >= 100) {
       auto pos = value % 100;
       value /= 100;
-      *(short *)(c - 1) = *(short *)(digit_pairs + 2 * pos);
+      *(short *) (c - 1) = *(short *) (digit_pairs + 2 * pos);
       c -= 2;
     }
 
@@ -117,24 +130,38 @@ struct integer_formatter {
 };
 
 template<>
-struct formatter<int> : integer_formatter<int> { formatter() = default; };
+struct formatter<int> : integer_formatter<int> {
+  formatter() = default;
+};
 template<>
 struct formatter<char> : integer_formatter<char> {
   formatter() = default;
   template<typename Context>
-  void parse(Context& ctx, const char& v) {
+  void parse(Context &ctx, const char &v) {
     *ctx._out = v;
     ctx._out++;
   }
 };
 template<>
-struct formatter<unsigned int> : integer_formatter<unsigned int> { formatter() = default; };
+struct formatter<unsigned int> : integer_formatter<unsigned int> {
+  formatter() = default;
+};
 template<>
-struct formatter<unsigned long> : integer_formatter<unsigned long> { formatter() = default; };
+struct formatter<unsigned long> : integer_formatter<unsigned long> {
+  formatter() = default;
+};
 template<>
-struct formatter<long long> : integer_formatter<long long> { formatter() = default; };
+struct formatter<long long> : integer_formatter<long long> {
+  formatter() = default;
+};
 template<>
-struct formatter<long int> : integer_formatter<long int> { formatter() = default; };
+struct formatter<long int> : integer_formatter<long int> {
+  formatter() = default;
+};
+template<>
+struct formatter<unsigned long long> : integer_formatter<unsigned long long> {
+  formatter() = default;
+};
 template<>
 struct formatter<bool> {
   formatter() = default;
@@ -171,167 +198,231 @@ struct formatter<const void *> {
   }
 };
 
+template<>
+struct formatter<double> {
+  formatter() = default;
+  template<typename Context>
+  void parse(Context &ctx, const double &v) {
+    char buffer[64];
+    int n = std::snprintf(buffer, sizeof(buffer), "%g", v);
+    if (n > 0) {
+      std::copy(buffer, buffer + n, ctx._out);
+    }
+  }
+};
+template<>
+struct formatter<float> {
+  formatter() = default;
+  template<typename Context>
+  void parse(Context &ctx, const float &v) {
+    formatter<double>().parse(ctx, static_cast<double>(v));
+  }
+};
+template<>
+struct formatter<long double> {
+  formatter() = default;
+  template<typename Context>
+  void parse(Context &ctx, const long double &v) {
+    char buffer[128];
+    int n = std::snprintf(buffer, sizeof(buffer), "%Lg", v);
+    if (n > 0) {
+      std::copy(buffer, buffer + n, ctx._out);
+    }
+  }
+};
+
 namespace internal {
-  template<typename OutputIt>
-  struct ArgFormatter {
-    OutputIt _out;
-    constexpr ArgFormatter(OutputIt it) : _out(it) {}
-
-    template<typename T>
-    constexpr typename std::enable_if<std::is_constructible<formatter<T>>::value, void>::type operator()(const T &i) {
-      formatter<T>().parse(*this, i);
-    }
-
-    constexpr void operator()(long double) {}
-  };
-
-  enum class arg_type {
-    none_type,
-    int_type,
-    uint_type,
-    ulong_type,
-    long_long_type,
-    ulong_long_type,
-    bool_type,
-    char_type,
-    float_type,
-    double_type,
-    long_double_type,
-    cstring_type,
-    string_view_type,
-    pointer_type,
-  };
-
-  // Holds all types of possible arguments
-  class format_arg {
-    union {
-      const int int_value;
-      const unsigned uint_value;
-      const long long long_long_value;
-      const unsigned long ulong;
-      const unsigned long long ulong_long_value;
-      const bool bool_value;
-      const char char_value;
-      const float float_value;
-      const double double_value;
-      const long double long_double_value;
-      const void *pointer;
-      const std::string_view str_view;
-    };
-
-    const arg_type type;
-
-  public:
-    format_arg() : type(arg_type::none_type) {}
-    explicit format_arg(std::string_view string_view) : str_view(string_view), type(arg_type::string_view_type) {}
-    explicit format_arg(const std::string& str) : str_view(str), type(arg_type::string_view_type) {}
-    explicit format_arg(const char *string_value) : str_view(std::string_view(string_value)), type(arg_type::cstring_type) {}
-    explicit format_arg(const void *ptr) : pointer(ptr), type(arg_type::pointer_type) {}
-    explicit format_arg(long double ldv) : long_double_value(ldv), type(arg_type::long_double_type) {}
-    explicit format_arg(double dv) : double_value(dv), type(arg_type::double_type) {}
-    explicit format_arg(float fv) : float_value(fv), type(arg_type::float_type) {}
-    explicit format_arg(char cv) : char_value(cv), type(arg_type::char_type) {}
-    explicit format_arg(bool bv) : bool_value(bv), type(arg_type::bool_type) {}
-    explicit format_arg(unsigned long long ullv) : ulong_long_value(ullv), type(arg_type::ulong_long_type) {}
-    explicit format_arg(long long llv) : long_long_value(llv), type(arg_type::long_long_type) {}
-    explicit format_arg(unsigned uiv) : uint_value(uiv), type(arg_type::uint_type) {}
-    explicit format_arg(int iv) : int_value(iv), type(arg_type::int_type) {}
-    explicit format_arg(unsigned long ul) : ulong(ul), type(arg_type::ulong_type) {}
-
-    // Visits an arg by contained_type
-    template<typename Visitor>
-    constexpr void visit_arg(Visitor &&vis) const {
-      switch (type) {
-        case arg_type::none_type: break;
-        case arg_type::string_view_type: vis(str_view); break;
-        case arg_type::ulong_type: vis(ulong); break;
-        case arg_type::cstring_type: vis(str_view); break;
-        case arg_type::pointer_type: vis(pointer); break;
-        case arg_type::long_double_type: vis(long_double_value); break;
-        case arg_type::double_type: vis(double_value); break;
-        case arg_type::float_type: vis(float_value); break;
-        case arg_type::char_type: vis(char_value); break;
-        case arg_type::bool_type: vis(bool_value); break;
-        case arg_type::ulong_long_type: vis(ulong_long_value); break;
-        case arg_type::long_long_type: vis(long_long_value); break;
-        case arg_type::uint_type: vis(uint_value); break;
-        case arg_type::int_type: vis(int_value); break;
-      }
-    }
-  };
+template<typename OutputIt>
+struct ArgFormatter {
+  OutputIt _out;
+  constexpr ArgFormatter(OutputIt it) : _out(it) {}
 
   template<typename T>
-  typename std::enable_if<!std::is_enum<T>::value, format_arg>::type make_arg(const T &arg) {
-    return format_arg(arg);
+  constexpr typename std::enable_if<std::is_constructible<formatter<T>>::value, void>::type operator()(const T &i) {
+    formatter<T>().parse(*this, i);
   }
+};
 
-  template<typename T>
-  typename std::enable_if<std::is_enum<T>::value, format_arg>::type make_arg(const T &arg) {
-    return format_arg(magic_enum::enum_name<T>(arg));
-  }
+enum class arg_type {
+  none_type,
+  int_type,
+  uint_type,
+  ulong_type,
+  long_type,
+  long_long_type,
+  ulong_long_type,
+  bool_type,
+  char_type,
+  float_type,
+  double_type,
+  long_double_type,
+  cstring_type,
+  string_view_type,
+  pointer_type,
+};
 
-  // constexpr find
-  template<typename T, typename Ptr = const T *>
-  constexpr bool find(Ptr first, Ptr last, T value, Ptr &out) {
-    for (out = first; out != last; ++out) {
-      if (*out == value) {
-        return true;
-      }
-    }
-    return false;
-  }
+// Holds all types of possible arguments
+class format_arg {
+  union {
+    const int int_value;
+    const unsigned uint_value;
+    const long long_value;
+    const long long long_long_value;
+    const unsigned long ulong;
+    const unsigned long long ulong_long_value;
+    const bool bool_value;
+    const char char_value;
+    const float float_value;
+    const double double_value;
+    const long double long_double_value;
+    const void *pointer;
+    const std::string_view str_view;
+  };
 
-  template<typename OutputIt, size_t N>
-  void HandleFormattingArguments(
-    std::string_view fmt_options,
-    size_t& next_unnumbered_args,
-    OutputIt out,
-    std::array<internal::format_arg, N>& fmt_args) {
+  const arg_type type;
 
-    // Todo: split this into 2 methods ?
+public:
+  format_arg() : type(arg_type::none_type) {}
+  explicit format_arg(std::string_view string_view) : str_view(string_view), type(arg_type::string_view_type) {}
+  explicit format_arg(const std::string &str) : str_view(str), type(arg_type::string_view_type) {}
+  explicit format_arg(const char *string_value) : str_view(std::string_view(string_value)), type(arg_type::cstring_type) {}
+  explicit format_arg(const void *ptr) : pointer(ptr), type(arg_type::pointer_type) {}
+  explicit format_arg(long double ldv) : long_double_value(ldv), type(arg_type::long_double_type) {}
+  explicit format_arg(double dv) : double_value(dv), type(arg_type::double_type) {}
+  explicit format_arg(float fv) : float_value(fv), type(arg_type::float_type) {}
+  explicit format_arg(char cv) : char_value(cv), type(arg_type::char_type) {}
+  explicit format_arg(bool bv) : bool_value(bv), type(arg_type::bool_type) {}
+  explicit format_arg(unsigned long long ullv) : ulong_long_value(ullv), type(arg_type::ulong_long_type) {}
+  explicit format_arg(long long llv) : long_long_value(llv), type(arg_type::long_long_type) {}
+  explicit format_arg(unsigned uiv) : uint_value(uiv), type(arg_type::uint_type) {}
+  explicit format_arg(int iv) : int_value(iv), type(arg_type::int_type) {}
+  explicit format_arg(unsigned long ul) : ulong(ul), type(arg_type::ulong_type) {}
+  explicit format_arg(long l) : long_value(l), type(arg_type::long_type) {}
 
-    auto arg_fmt = internal::ArgFormatter(out);
-    bool has_found_index = false;
-    size_t index = 0;
-
-    auto current_p = fmt_options.begin();
-    const auto end_p = fmt_options.end();
-
-    // Parse the index
-    while (current_p != end_p) {
-      // did we find the "options" marker ?
-      if (*current_p == ':') {
-        // if so, increment and get out of here
-        current_p++;
+  // Visits an arg by contained_type
+  template<typename Visitor>
+  constexpr void visit_arg(Visitor &&vis) const {
+    switch (type) {
+      case arg_type::none_type:
         break;
-      }
-
-      // parse the index
-      has_found_index = true;
-      index = index * 10 + unsigned(*current_p - '0');
-      current_p++;
-    }
-
-    // Parse the options
-    while (current_p != end_p) {
-      // TODO: Parse options
-      current_p++;
-    }
-
-    // Ask the formatter, configured with options, to format this argument
-    if (has_found_index) {
-      if (index < N) {
-        fmt_args.at(index).visit_arg(arg_fmt);
-      }
-    } else {
-      fmt_args.at(next_unnumbered_args++).visit_arg(arg_fmt);
+      case arg_type::string_view_type:
+        vis(str_view);
+        break;
+      case arg_type::ulong_type:
+        vis(ulong);
+        break;
+      case arg_type::cstring_type:
+        vis(str_view);
+        break;
+      case arg_type::pointer_type:
+        vis(pointer);
+        break;
+      case arg_type::long_double_type:
+        vis(long_double_value);
+        break;
+      case arg_type::double_type:
+        vis(double_value);
+        break;
+      case arg_type::float_type:
+        vis(float_value);
+        break;
+      case arg_type::char_type:
+        vis(char_value);
+        break;
+      case arg_type::bool_type:
+        vis(bool_value);
+        break;
+      case arg_type::ulong_long_type:
+        vis(ulong_long_value);
+        break;
+      case arg_type::long_long_type:
+        vis(long_long_value);
+        break;
+      case arg_type::uint_type:
+        vis(uint_value);
+        break;
+      case arg_type::int_type:
+        vis(int_value);
+        break;
+      case arg_type::long_type:
+        vis(long_value);
+        break;
     }
   }
+};
+
+template<typename T>
+std::enable_if<!std::is_enum_v<T>, format_arg>::type make_arg(const T &arg) {
+  return format_arg(arg);
+}
+
+template<typename T>
+std::enable_if<std::is_enum_v<T>, format_arg>::type make_arg(const T &arg) {
+  return format_arg(magic_enum::enum_name<T>(arg));
+}
+
+// constexpr find
+template<typename T, typename Ptr = const T *>
+constexpr bool find(Ptr first, Ptr last, T value, Ptr &out) {
+  for (out = first; out != last; ++out) {
+    if (*out == value) {
+      return true;
+    }
+  }
+  return false;
+}
+
+template<typename OutputIt, size_t N>
+void HandleFormattingArguments(
+    std::string_view fmt_options,
+    size_t &next_unnumbered_args,
+    OutputIt out,
+    std::array<internal::format_arg, N> &fmt_args) {
+
+  // Todo: split this into 2 methods ?
+
+  auto arg_fmt = internal::ArgFormatter(out);
+  bool has_found_index = false;
+  size_t index = 0;
+
+  auto current_p = fmt_options.begin();
+  const auto end_p = fmt_options.end();
+
+  // Parse the index
+  while (current_p != end_p) {
+    // did we find the "options" marker ?
+    if (*current_p == ':') {
+      // if so, increment and get out of here
+      current_p++;
+      break;
+    }
+
+    // parse the index
+    has_found_index = true;
+    index = index * 10 + unsigned(*current_p - '0');
+    current_p++;
+  }
+
+  // Parse the options
+  while (current_p != end_p) {
+    // TODO: Parse options
+    current_p++;
+  }
+
+  // Ask the formatter, configured with options, to format this argument
+  if (has_found_index) {
+    if (index < N) {
+      fmt_args.at(index).visit_arg(arg_fmt);
+    }
+  } else if (next_unnumbered_args < N) {
+    fmt_args.at(next_unnumbered_args++).visit_arg(arg_fmt);
+  }
+}
 
 }// namespace internal
 
 template<typename... Args>
-std::string format(std::string_view fmt, const Args& ...args) {
+std::string format(std::string_view fmt, const Args &...args) {
   if constexpr (sizeof...(Args) == 0) {
     return std::string(fmt);
   }
@@ -342,7 +433,7 @@ std::string format(std::string_view fmt, const Args& ...args) {
   output.reserve(fmt.size());
 
   // Make the format_args
-  std::array<internal::format_arg, sizeof...(Args)> fmt_args = { internal::make_arg(args)... };
+  std::array<internal::format_arg, sizeof...(Args)> fmt_args = {internal::make_arg(args)...};
 
   auto out = std::back_inserter(output);
 

@@ -5,7 +5,7 @@
 #include <string_view>
 #include <functional>
 
-#include <Engine/Stream.hpp>
+#include <../include/Engine/Platform/Stream.hpp>
 
 namespace e00::impl {
 struct IniParser {

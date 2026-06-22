@@ -4,7 +4,7 @@
 #include <Engine.hpp>
 
 class ExampleGame : public e00::Engine {
-  e00::Logger _game_logger;
+  e00::WorldWidget *_world_widget = nullptr;
 
 protected:
   void ExecuteAction(const e00::Action &action) override;
@@ -13,6 +13,8 @@ protected:
   void OnFirstTick() override;
   void OnPause() override;
   void OnResume() override;
+  void OnWorldUnload(const std::unique_ptr<e00::World> &old_world) override;
+  void OnWorldLoaded(const std::unique_ptr<e00::World> &new_world) override;
 
 public:
   ExampleGame();

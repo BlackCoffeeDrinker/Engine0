@@ -11,8 +11,6 @@ class WorldWidget : public Widget {
 protected:
   void ResizeEvent() override;
 
-  void ComputeSize() override;
-  
 public:
   explicit WorldWidget(const std::unique_ptr<World> &worldToDraw);
   ~WorldWidget() override = default;

@@ -1,3 +1,4 @@
+#include <Engine.hpp>
 #include "RefFunction.hpp"
 
 namespace e00::scripting::lua {

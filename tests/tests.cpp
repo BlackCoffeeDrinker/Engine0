@@ -1,20 +1,55 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
+#include <catch2/reporters/catch_reporter_event_listener.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
 
-#include <Engine.hpp>
+#include "tests.hpp"
+
+#include "Loaders/BitmapLoader.hpp"
+#include "Loaders/WorldLoader.hpp"
+#include "Loaders/PngLoader.hpp"
+
+class SetupResourceManager : public Catch::EventListenerBase {
+public:
+  using Catch::EventListenerBase::EventListenerBase;
+
+  void testRunStarting(Catch::TestRunInfo const &) override {
+    e00::StreamFactory::GlobalStreamFactory().SetResourceDirectory("");
+    (void) e00::ResourceManager::GlobalResourceManager().AddLoader<e00::impl::BitmapLoader>();
+    (void) e00::ResourceManager::GlobalResourceManager().AddLoader<e00::impl::PNGLoader>();
+    (void) e00::ResourceManager::GlobalResourceManager().AddLoader<e00::impl::WorldLoader>();
+  }
+};
+
+CATCH_REGISTER_LISTENER(SetupResourceManager)
 
 namespace platform {
-std::unique_ptr<e00::LoggerSink> CreateSink(const std::string &) {
-  return nullptr;
-}
-}// namespace platform
+std::unique_ptr<e00::LoggerSink> CreateSink(const std::string &name) {
+  class Sink : public e00::LoggerSink {
+    std::string _name;
 
-namespace {
-double ColorCompare_REF(int r1, int g1, int b1, int r2, int g2, int b2) {
-  double luma1 = (r1 * 299 + g1 * 587 + b1 * 114) / (255.0 * 1000);
-  double luma2 = (r2 * 299 + g2 * 587 + b2 * 114) / (255.0 * 1000);
-  double lumadiff = luma1 - luma2;
-  double diffR = (r1 - r2) / 255.0, diffG = (g1 - g2) / 255.0, diffB = (b1 - b2) / 255.0;
-  return (diffR * diffR * 0.299 + diffG * diffG * 0.587 + diffB * diffB * 0.114) * 0.75
-         + lumadiff * lumadiff;
+  public:
+    explicit Sink(std::string name) : _name(std::move(name)) {
+    }
+
+    void log(const e00::detail::LogMessage &msg) override {
+      fprintf(stderr, "[%s] %s\n", _name.c_str(), msg.payload.data());
+      fflush(stderr);
+    }
+
+    void flush() override {
+      fflush(stderr);
+    }
+  };
+  return std::make_unique<Sink>(name);
 }
-}// namespace
+
+std::unique_ptr<e00::Stream> OpenStream(const std::string_view &name) {
+  return TestFileStream::CreateFromFilename(name, false);
+}
+
+std::unique_ptr<e00::WritableStream> OpenStreamForWrite(const std::string_view &name) {
+  return TestFileStream::CreateFromFilename(name, true);
+}
+
+
+}// namespace platform

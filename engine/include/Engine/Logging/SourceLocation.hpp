@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace experimental {
 /**
  * Represent a source location, useful for logging

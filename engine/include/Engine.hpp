@@ -1,80 +1,90 @@
 #pragma once
 
-#include <array>
 #include <algorithm>
-#include <cstdint>
+#include <array>
 #include <chrono>
-#include <limits>
-#include <memory>
-#include <map>
-#include <system_error>
-#include <vector>
+#include <cstdint>
 #include <iterator>
-#include <type_traits>
-#include <string_view>
-#include <string>
-#include <set>
-#include <utility>
+#include <limits>
 #include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <span>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
-#define NOT_COPYABLE(CLASS_NAME) \
-CLASS_NAME (const CLASS_NAME &) = delete; \
-CLASS_NAME ( CLASS_NAME && ) = delete;    \
-CLASS_NAME & operator=( const CLASS_NAME & ) = delete; \
-CLASS_NAME & operator=( CLASS_NAME && ) = delete
+#define NOT_COPYABLE(CLASS_NAME)                      \
+  CLASS_NAME(const CLASS_NAME &) = delete;            \
+  CLASS_NAME(CLASS_NAME &&) = delete;                 \
+  CLASS_NAME &operator=(const CLASS_NAME &) = delete; \
+  CLASS_NAME &operator=(CLASS_NAME &&) = delete
 
 #include <Engine/Config.hpp>
 
+#include <Engine/Detail/Property.hpp>
+#include <Engine/Detail/PropertySet.hpp>
 #include <Engine/Detail/StringFormat.hpp>
 #include <Engine/Detail/TypeId.hpp>
 
-#include <Engine/Logging/SourceLocation.hpp>
 #include <Engine/Logging/Logger.hpp>
+#include <Engine/Logging/SourceLocation.hpp>
 
-#include <Engine/Math/Vec2D.hpp>
-#include <Engine/Math/Rect.hpp>
-#include <Engine/Math/Color.hpp>
 #include <Engine/Math/AABB.hpp>
+#include <Engine/Math/Color.hpp>
+#include <Engine/Math/Math.hpp>
+#include <Engine/Math/Rect.hpp>
 #include <Engine/Math/SpacePartition.hpp>
+#include <Engine/Math/Vec2D.hpp>
 
-#include <Engine/GameClock.hpp>
-#include <Engine/ActionCategory.hpp>
 #include <Engine/Action.hpp>
+#include <Engine/ActionCategory.hpp>
 #include <Engine/ActionInstance.hpp>
-#include <Engine/InputSystem.hpp>
-#include <Engine/InputEvent.hpp>
-#include <Engine/Stream.hpp>
-#include <Engine/StreamFactory.hpp>
-
+#include <Engine/Actor.hpp>
+#include <Engine/DefaultBitmapHelpers.hpp>
+#include <Engine/GameClock.hpp>
 #include <Engine/Resource.hpp>
 #include <Engine/ResourcePtr.hpp>
+#include <Engine/World.hpp>
+
+
 #include <Engine/Resource/Bitmap.hpp>
 #include <Engine/Resource/Font.hpp>
-#include <Engine/Resource/Sprite.hpp>
-#include <Engine/Resource/Tileset.hpp>
 #include <Engine/Resource/Map.hpp>
+#include <Engine/Resource/Palette.hpp>
+#include <Engine/Resource/Sprite.hpp>
 
-#include <Engine/ResourceLoader.hpp>
-#include <Engine/ResourceManager.hpp>
+#include <Engine/Platform/DrawableSurface.hpp>
+#include <Engine/Platform/InputEvent.hpp>
+#include <Engine/Platform/InputSystem.hpp>
+#include <Engine/Platform/Painter.hpp>
+#include <Engine/Platform/Stream.hpp>
+#include <Engine/Platform/ResourceLoader.hpp>
+#include <Engine/Platform/ResourceLoaderOptions.hpp>
+#include <Engine/Platform/ResourceManager.hpp>
+#include <Engine/Platform/StreamFactory.hpp>
 
+#include <Engine/GUI/FontGlyph.hpp>
+#include <Engine/GUI/LabelWidget.hpp>
+#include <Engine/GUI/Menu.hpp>
 #include <Engine/GUI/Widget.hpp>
 #include <Engine/GUI/WorldWidget.hpp>
-#include <Engine/GUI/Menu.hpp>
-#include <Engine/GUI/FontGlyph.hpp>
 
-#include <Engine/Painter.hpp>
-
-#include <Engine/Actor.hpp>
-#include <Engine/World.hpp>
 
 #include <Engine/Scripting/ScriptEngine.hpp>
 
 #include <Engine/Engine.hpp>
 
+#undef NOT_COPYABLE
+
 namespace e00 {
 /**
  * Must be called first, initializes the global variables and starts platform code
- * @return error starting platform
+ * @return Any errors starting the platform
  */
 std::error_code Init();
 
@@ -87,6 +97,5 @@ void Exit();
  * Run engine
  * @param engine the engine to execute
  */
-void Run(e00::Engine& engine);
-}
-
+void Run(e00::Engine &engine);
+}// namespace e00

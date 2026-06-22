@@ -2,7 +2,7 @@
 
 namespace e00 {
 /**
- * \brief Abstract class for all objects placed on a map.
+ * \brief Abstract class for all objects placed in a world
  *
  * Example of entities includes enemies, the hero,
  * non-playing characters, doors, chests, etc.
@@ -10,36 +10,22 @@ namespace e00 {
 class Actor {
 public:
   enum class BodyType {
-    Static,// Unmovable actor
+    Static, // Unmovable actor
     Dynamic,// Actor can move
+    None,   // Invisible actor, used for tiggers
   };
 
 private:
   Vec2D<WorldCoordinateType> _size;// << Size of this actor
-  BodyType _type;
-
+  BodyType _type{BodyType::Static};// << Physics type
+  
 public:
-  bool IsHero() const;
+  virtual ~Actor() = default;
 
   void Size(const Vec2D<WorldCoordinateType> &newSize) { _size = newSize; }
 
-  /**
-   * Size of this actor
-   * @return
-   */
   [[nodiscard]] auto Size() const { return _size; }
 
-  /**
-   *
-   * @return
-   */
   [[nodiscard]] auto Type() const noexcept { return _type; }
-
-  bool HasSprites() const;
-
-  ResourcePtrT<Sprite> GetSprite(const std::string_view& name) const;
-
-  void ClearSprites();
-
 };
 }// namespace e00

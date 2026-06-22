@@ -1,6 +1,8 @@
+#include <Engine.hpp>
+
 #include "LuaToNativeTrampoline.hpp"
-#include "LuaToBoxedConverter.hpp"
 #include "BoxedToLuaConverter.hpp"
+#include "LuaToBoxedConverter.hpp"
 #include "TrampolineData.hpp"
 
 using namespace e00::scripting;

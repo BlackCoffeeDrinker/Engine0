@@ -37,11 +37,11 @@ int lua_log(lua_State *L) {
   for (int i = 0; i < args_count; i++) {
     auto boxed_value = lua_to_boxed_value_guess(L, i + 1);
 
-    if (boxed_value.get_type_info().bare_equal_type_info(user_type<std::string>())) {
+    if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<std::string>())) {
       ss << cast<std::string>(boxed_value);
-    } else if (boxed_value.get_type_info().bare_equal_type_info(user_type<int>())) {
+    } else if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<int>())) {
       ss << cast<int>(boxed_value);
-    } else if (boxed_value.get_type_info().bare_equal_type_info(user_type<float>())) {
+    } else if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<float>())) {
       ss << cast<float>(boxed_value);
     }
 
@@ -160,13 +160,13 @@ std::error_code LuaScriptEngine::parse(const std::unique_ptr<e00::Stream> &strea
     auto *state = static_cast<ReaderState *>(ud);
     *sz = 0;
 
-    if (const auto max_read = state->stream->max_read(); max_read > 0) {
+    if (const auto max_read = state->stream->AvailableToRead(); max_read > 0) {
       *sz = 255;
       if (*sz > max_read) {
         *sz = max_read;
       }
 
-      state->stream->read(*sz, state->buffer);
+      state->stream->Read(*sz, state->buffer);
       return state->buffer;
     }
 
@@ -182,7 +182,7 @@ std::error_code LuaScriptEngine::parse(const std::unique_ptr<e00::Stream> &strea
   return lua_ret_to_error_code(lua_pcall(_state, 0, 0, 0));
 }
 
-std::unique_ptr<scripting::ProxyFunction> LuaScriptEngine::get_function(const std::string &fn_name, scripting::TypeInfo preferred_return_type) {
+std::unique_ptr<scripting::ProxyFunction> LuaScriptEngine::get_function(const std::string &fn_name, TypeInfo preferred_return_type) {
   // Get a global of the function name
   lua_getglobal(_state, fn_name.c_str());
 

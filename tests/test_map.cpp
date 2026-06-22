@@ -1,5 +1,4 @@
-#include <catch2/catch.hpp>
-#include <Engine.hpp>
+#include "tests.hpp"
 
 extern unsigned char testMap_160_by_50[];
 /*

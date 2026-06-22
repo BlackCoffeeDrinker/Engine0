@@ -1,17 +1,15 @@
 #include "PrivateInclude.hpp"
 
 namespace {
-
 class DefaultInputSystem : public e00::InputSystem {
 public:
   [[nodiscard]] std::string name() const override {
     return "Unknown";
   }
-  [[nodiscard]] std::string name(uint16_t value) const override {
+  [[nodiscard]] std::string name(e00::input_value_t value) const override {
     return "Unknown";
   }
 };
-
 const DefaultInputSystem defaultInputSystem{};
 }// namespace
 

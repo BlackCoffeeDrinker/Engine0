@@ -10,7 +10,7 @@ std::error_code IniParser::Parse(Stream &stream, const std::function<std::error_
   // Configure the reader
   const ini_reader reader = [](char *str, int num, void *streamuser) {
     auto *s = static_cast<Stream *>(streamuser);
-    return s->read_line_into(str, num);
+    return s->ReadLineInto( str, num);
   };
 
   // User data structure to pass to the handler

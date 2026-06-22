@@ -1,27 +1,24 @@
 #pragma once
 
-#include "../../include/Engine/ResourceLoader.hpp"
 #include <Engine.hpp>
 
 namespace e00::impl {
-class WorldLoader : public ResourceLoader {
-  mutable Logger _logger;
 
-  // Hide the actual implementation, because it adds too much compilation time otherwise
-  class Impl;
-  std::unique_ptr<Impl> _impl;
+/**
+ * This is a *Map* loader, not a world loader
+ * 
+ */
+class WorldLoader : public ResourceLoader {
+  std::error_code ParseTileset(Stream &stream, const std::unique_ptr<Map> &map);
+  std::error_code ParseSet(Stream &stream, const std::unique_ptr<Map> &map);
 
 public:
   WorldLoader();
-
   ~WorldLoader() override;
 
-  bool SupportsType(type_t type) const override {
-    return type == type_id<World>();
-  }
-
-  bool CanLoad(Stream &stream) override;
-
-  ResourceLoader::Result ReadLoad(Stream &stream) override;
+  [[nodiscard]] bool SupportsOption(type_t optionTypeid) const override;
+  bool SupportsType(type_t type) const override { return type == type_id<Map>(); }
+  bool CanLoad(const LoadContext& context) override;
+  Result ReadLoad(const LoadContext& context) override;
 };
 }// namespace e00::impl

@@ -1,8 +1,13 @@
 
 #pragma once
 
-namespace e00 {
 
+#include <cstdint>
+
+namespace e00 {
+/**
+ * RGB color holder
+ */
 struct Color final {
   enum {
     RED_MASK = 0x00FF0000u,
@@ -36,9 +41,9 @@ struct Color final {
    */
   static constexpr Color fromRGB(uint32_t rgb) {
     return {
-      ExtractColor<3>(rgb),
-      ExtractColor<2>(rgb),
-      ExtractColor<1>(rgb),
+        ExtractColor<3>(rgb),
+        ExtractColor<2>(rgb),
+        ExtractColor<1>(rgb),
     };
   }
 
@@ -53,9 +58,9 @@ struct Color final {
    */
   static constexpr Color fromBGR(uint32_t bgr) {
     return {
-      ExtractColor<1>(bgr),
-      ExtractColor<2>(bgr),
-      ExtractColor<3>(bgr),
+        ExtractColor<1>(bgr),
+        ExtractColor<2>(bgr),
+        ExtractColor<3>(bgr),
     };
   }
 
@@ -111,10 +116,12 @@ struct Color final {
    * @param other The color to which the distance is computed.
    * @return The squared Euclidean distance as a double.
    */
-  [[nodiscard]] double distanceTo(const Color &other) const {
-    return std::pow(red - other.red, 2)
-           + std::pow(green - other.green, 2)
-           + std::pow(blue - other.blue, 2);
+  [[nodiscard]] uint32_t distanceTo(const Color &other) const noexcept {
+    const auto dr = static_cast<int32_t>(red) - static_cast<int32_t>(other.red);
+    const auto dg = static_cast<int32_t>(green) - static_cast<int32_t>(other.green);
+    const auto db = static_cast<int32_t>(blue) - static_cast<int32_t>(other.blue);
+
+    return static_cast<uint32_t>((dr * dr) + (dg * dg) + (db * db));
   }
 
   explicit operator uint32_t() const noexcept {
@@ -132,9 +139,7 @@ struct Color final {
    * @return True if the colors are equal in all channels, false otherwise.
    */
   bool operator==(const Color &rhs) const noexcept {
-    return (red == rhs.red)
-           && (green == rhs.green)
-           && (blue == rhs.blue);
+    return (red == rhs.red) && (green == rhs.green) && (blue == rhs.blue);
   }
 
   /**
@@ -152,136 +157,37 @@ struct Color final {
   }
 };
 
-/**
- * Class representing a palette with a fixed numbers of colors.
- *
- */
-struct FixedPalette final {
-  std::array<Color, 256> colors;
-  uint8_t numberOfColors;
+class ColorOrIndex final {
+  bool colorSet = false;
+  Color color = {};
+  bool indexSet = false;
+  uint8_t index = 0;
 
-  constexpr FixedPalette() : numberOfColors(0) {}
+public:
+  ColorOrIndex() = default;
+  ColorOrIndex(const Color &color) : colorSet(true), color(color) {}
+  ColorOrIndex(uint8_t index) : indexSet(true), index(index) {}
+  ColorOrIndex(const Color &color, uint8_t index) : colorSet(true), color(color), indexSet(true), index(index) {}
 
-  constexpr explicit FixedPalette(const size_t numberOfColors) : numberOfColors(numberOfColors) {
-    if (numberOfColors > colors.size()) {
-      abort();
-    }
+  [[nodiscard]] bool isColor() const { return colorSet; }
+  [[nodiscard]] const Color &getColor() const { return color; }
+  [[nodiscard]] bool isIndex() const { return indexSet; }
+  [[nodiscard]] uint8_t getIndex() const { return index; }
+
+  void setColor(const Color &color) {
+    colorSet = true;
+    this->color = color;
+  }
+  void setIndex(uint8_t index) {
+    indexSet = true;
+    this->index = index;
   }
 
-  ~FixedPalette() = default;
-
-  constexpr Color operator[](const size_t index) const noexcept {
-    if (index >= numberOfColors) {
-      abort();
-      return {};
-    }
-    return colors.at(index);
+  void clearColor() {
+    colorSet = false;
   }
-
-  Color &operator[](const size_t index) noexcept {
-    if (index >= numberOfColors) {
-      abort();
-      return colors.at(0);
-    }
-    return colors.at(index);
-  }
-
-  /**
-   * Compares two FixedPalette objects to determine if they contain the same set of colors.
-   *
-   * This function checks if the two palettes have the same number of colors and whether
-   * the colors at each respective index are identical. The comparison stops as soon as a
-   * mismatch is found.
-   *
-   * @param rhs The FixedPalette object to compare against.
-   * @return True if both palettes have the same number of colors and identical colors at
-   *         each corresponding position; false otherwise.
-   */
-  [[nodiscard]] bool isSamePalette(const FixedPalette &rhs) const noexcept {
-    const bool sameSize = numberOfColors == rhs.numberOfColors;
-    return sameSize
-           && std::equal(
-             colors.begin(), colors.begin() + numberOfColors, rhs.colors.begin());
-  }
-
-  /**
-   * Identifies the index of the closest matching color in a fixed palette.
-   *
-   * This function iterates over the available colors in the palette to find
-   * the color that is either an exact match to the input color or has the smallest
-   * squared Euclidean distance to it. If an exact match is found, its index is
-   * immediately returned. Otherwise, the index of the color with the smallest
-   * distance is returned.
-   *
-   * @param x The reference color to find the closest match for.
-   * @return The index of the closest matching color (exact or minimum distance).
-   */
-  [[nodiscard]] uint8_t findClosestColorIndex(const Color &x) const {
-    uint8_t closestIndex = 0;
-    double minDistance = std::numeric_limits<double>::max();
-
-    for (uint8_t i = 0; i < numberOfColors; ++i) {
-      const auto &value = colors.at(i);
-
-      // Do we have an exact match?
-      if (value == x) {
-        return i;
-      }
-
-      // Compute distance and check if it's lower then the one we have
-      if (const auto distance = value.distanceTo(x); distance < minDistance) {
-        minDistance = distance;
-        closestIndex = i;
-      }
-    }
-
-    return closestIndex;
-  }
-
-  [[nodiscard]] auto size() const noexcept {
-    return numberOfColors;
-  }
-  
-  [[nodiscard]] auto begin() const noexcept {
-    return colors.begin();
-  }
-  
-  [[nodiscard]] auto end() const noexcept {
-    return colors.begin() + numberOfColors;
-  }
-  /**
-   * Changes the number of colors in this palette
-   *
-   * @param num_colors_in_palette The new number of colors in this palette
-   */
-  void resize(const int num_colors_in_palette) {
-    if (num_colors_in_palette > colors.size()) {
-      abort();
-    }
-    numberOfColors = num_colors_in_palette;
-  }
-
-  /**
-   * Indicates whether the FixedPalette contains any colors.
-   *
-   * @return True if the palette contains one or more colors; false otherwise.
-   */
-  explicit operator bool() const noexcept {
-    return numberOfColors > 0;
-  }
-
-  bool operator==(const FixedPalette &rhs) const noexcept {
-    return isSamePalette(rhs);
-  }
-
-  bool operator!=(const FixedPalette &rhs) const noexcept {
-    return !(*this == rhs);
-  }
-
-  FixedPalette &operator=(const FixedPalette &rhs) {
-    numberOfColors = rhs.numberOfColors;
-    std::copy(rhs.colors.begin(), rhs.colors.end(), colors.begin());
-    return *this;
+  void clearIndex() {
+    indexSet = false;
   }
 };
 

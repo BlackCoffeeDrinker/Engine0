@@ -1,7 +1,6 @@
-#include <catch2/catch.hpp>
+#include "tests.hpp"
 
 #include <iostream>
-#include <Engine.hpp>
 
 namespace {
 bool returns_true() {
@@ -13,39 +12,39 @@ bool accepts_an_int(int i) {
 }
 }// namespace
 
-TEST_CASE("Type Info identifies pointers") {
+TEST_CASE("Type Info identifies pointers", "[scripting]") {
   int a = 0;
   int *p = &a;
 
-  auto info = e00::scripting::user_type(p);
+  auto info = e00::user_type(p);
   REQUIRE(info.is_pointer());
 }
 
-TEST_CASE("Script System initializes") {
+TEST_CASE("Script System initializes", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   REQUIRE(script);
 }
 
-TEST_CASE("Can log from script") {
+TEST_CASE("Can log from script", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   script->parse("\nprint(\"Hello World\")\n");
 }
 
-TEST_CASE("Can call free functions") {
+TEST_CASE("Can call free functions", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
 
   script->register_function("returns_true", &returns_true);
   script->parse("\nreturns_true()\n");
 }
 
-TEST_CASE("Passing an int to a function") {
+TEST_CASE("Passing an int to a function", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
 
   script->register_function("accepts_an_int", &accepts_an_int);
   script->parse("\naccepts_an_int(3)\n");
 }
 
-TEST_CASE("Calling an int lamda") {
+TEST_CASE("Calling an int lamda", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   script->register_function("l", [](int a) {
     return a == 4;
@@ -53,7 +52,7 @@ TEST_CASE("Calling an int lamda") {
   script->parse("\nl(4)\n");
 }
 
-TEST_CASE("Calling a const string lamda") {
+TEST_CASE("Calling a const string lamda", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   script->register_function("l", [](const std::string &a) {
     return a.size();
@@ -61,7 +60,7 @@ TEST_CASE("Calling a const string lamda") {
   script->parse("\nl(\"A string\")\n");
 }
 
-TEST_CASE("Gets native return value correctly") {
+TEST_CASE("Gets native return value correctly", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   script->register_function("a", []() { return 3; });
   script->register_function("b", [](int a) {
@@ -71,7 +70,7 @@ TEST_CASE("Gets native return value correctly") {
   script->parse("\nb(a())\n");
 }
 
-TEST_CASE("Multiple types of native methods can be called") {
+TEST_CASE("Multiple types of native methods can be called", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   int a = 0;
   bool is_failed = false;
@@ -83,7 +82,7 @@ TEST_CASE("Multiple types of native methods can be called") {
   REQUIRE_FALSE(is_failed);
 }
 
-TEST_CASE("Native calls a method in script and gets it's return value") {
+TEST_CASE("Native calls a method in script and gets it's return value", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
   script->parse("\nfunction test ()\n return \"Hello, World\"\nend\n");
 
@@ -91,7 +90,7 @@ TEST_CASE("Native calls a method in script and gets it's return value") {
   REQUIRE(hello_world == "Hello, World");
 }
 
-TEST_CASE("Register a variable") {
+TEST_CASE("Register a variable", "[scripting]") {
   int a = 5;
   int got_a = 0;
 
@@ -104,7 +103,7 @@ TEST_CASE("Register a variable") {
   REQUIRE(got_a == a);
 }
 
-TEST_CASE("Pass a script function back to native and call it") {
+TEST_CASE("Pass a script function back to native and call it", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
 
   e00::scripting::BoxedValue val;
@@ -117,7 +116,7 @@ TEST_CASE("Pass a script function back to native and call it") {
   REQUIRE(val.is_arithmetic());
   if (val.is_arithmetic()) {
     int result = 0;
-    e00::scripting::try_cast<int>(val, [&result](int a) {
+    e00::scripting::try_cast<long long>(val, [&result](long long a) {
       result = a;
     });
 
@@ -125,7 +124,7 @@ TEST_CASE("Pass a script function back to native and call it") {
   }
 }
 
-TEST_CASE("Native can return structs") {
+TEST_CASE("Native can return structs", "[scripting]") {
   auto script = e00::ScriptEngine::Create();
 
   struct Item {
@@ -148,7 +147,7 @@ TEST_CASE("Native can return structs") {
   REQUIRE(is_ok);
 }
 
-TEST_CASE("Can call object methods") {
+TEST_CASE("Can call object methods", "[scripting]") {
   class Simple {
   public:
     bool called = false;

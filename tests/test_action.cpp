@@ -1,5 +1,4 @@
-#include <catch2/catch.hpp>
-#include <Engine.hpp>
+#include "tests.hpp"
 #include "magic_enum.hpp"
 
 enum class TestActions : int {

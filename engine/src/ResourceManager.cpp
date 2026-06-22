@@ -1,104 +1,9 @@
-#include "PrivateInclude.hpp"
+#include <utility>
 
-#include "Loaders/BitmapLoader.hpp"
-#include "Loaders/WorldLoader.hpp"
+#include "PrivateInclude.hpp"
 
 namespace {
 std::unique_ptr<e00::ResourceManager> _globalResourceManager;
-
-std::unique_ptr<e00::ResourceLoader> CreateLoaderForType(const e00::type_t resourceType) {
-  if (resourceType == e00::type_id<e00::Map>()) {
-    return std::make_unique<e00::impl::WorldLoader>();
-  } else if (resourceType == e00::type_id<e00::Bitmap>()) {
-    return std::make_unique<e00::impl::BitmapLoader>();
-  }
-
-  return nullptr;
-}
-
-class ControlBlockDetails : public e00::detail::ControlBlock {
-  static e00::Logger _logger;
-
-  e00::ResourceManager *_owner;
-  e00::type_t _type;
-  std::string _name;
-  uint32_t _refs{0};
-  std::unique_ptr<e00::Resource> _resource;
-
-protected:
-  [[nodiscard]] auto Owner() const noexcept { return _owner; }
-
-  virtual void ZeroRefs() noexcept = 0;
-
-  virtual void LoadResource() {
-    if (const auto loader = CreateLoaderForType(_type)) {
-      // Set up the loader
-      loader->SetResourceLoader(_owner);
-
-      // Load it (well, try)
-      if (const auto stream = e00::StreamFactory::GlobalStreamFactory().OpenStream(_name)) {
-        auto result = loader->ReadLoad(*stream);
-        if (result.error) {
-          _logger.Error(e00::source_location::current(),
-                        "Resource loader failed to load resource: {}",
-                        result.error.message());
-          return;
-        }
-
-        _resource = std::move(result.resource);
-        _logger.Info(e00::source_location::current(), "Resource {} loaded", _name);
-      } else {
-        // Something went wrong :(
-        _logger.Error(e00::source_location::current(), "Unable to load resource {}: data was not found", _name);
-      }
-
-      return;
-    }
-
-    _logger.Error(e00::source_location::current(), "Unable to find resource loader");
-  }
-
-public:
-  ControlBlockDetails(e00::ResourceManager *e, e00::type_t t, std::string n, e00::source_location /*s*/)
-      : _owner(e),
-        _type(t),
-        _name(std::move(n)),
-        _resource(nullptr) /*, _init(s) */ {
-  }
-
-  ControlBlockDetails(e00::ResourceManager *e, e00::type_t t, std::string n, std::unique_ptr<e00::Resource> &&r)
-      : _owner(e),
-        _type(t),
-        _name(std::move(n)),
-        _resource(std::move(r)) {}
-
-  ~ControlBlockDetails() override = default;
-
-  [[nodiscard]] std::string_view name() const override { return _name; }
-  [[nodiscard]] e00::type_t type() const override { return _type; }
-  void add_ref() noexcept override { _refs++; }
-  void remove_ref() noexcept override {
-    if (_refs > 0) {
-      _refs--;
-    }
-
-    if (_refs == 0) {
-      _logger.Info(e00::source_location::current(), "Unloading {}", name());
-      ZeroRefs();
-    }
-  }
-
-  e00::Resource *resource() override {
-    if (!_resource) {
-      LoadResource();
-    }
-
-    return _resource.get();
-  }
-};
-
-e00::Logger ControlBlockDetails::_logger = e00::Logger();
-
 }// namespace
 
 namespace e00 {
@@ -110,88 +15,149 @@ ResourceManager &ResourceManager::GlobalResourceManager() {
   return *_globalResourceManager;
 }
 
+ResourceLoader &ResourceManager::InvalidLoader() {
+  class InvalidLoader : public ResourceLoader {
+  public:
+    [[nodiscard]] bool SupportsType(type_t type) const override { return false; }
+    bool CanLoad(const LoadContext &context) override { return false; }
+    Result ReadLoad(const LoadContext &context) override { return {std::make_error_code(std::errc::invalid_argument)}; }
+    explicit operator bool() const override { return false; }
+  };
+  static InvalidLoader invalidLoader;
+  return invalidLoader;
+}
+
 std::error_code ResourceManager::AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd) {
   loaderToAdd->SetResourceLoader(this);
   _loaders.push_back(std::move(loaderToAdd));
   return {};
 }
 
-ResourceManager::ResourceManager() = default;
+void ResourceManager::SetAlias(ResourceId id, std::string_view real_name) {
+  _aliases.emplace_back(id, std::string(real_name));
+}
 
-detail::ControlBlock *ResourceManager::MakeMemoryContainer(const std::string &name, type_t type, std::unique_ptr<Resource> &&theResource) {
+ResourceManager::ResourceManager()
+    : _stream_factory(StreamFactory::GlobalStreamFactory()) {
+}
+
+std::unique_ptr<Stream> ResourceManager::FindStreamForResource(ResourceId id, type_t type) {
+  const auto aliasIt = std::ranges::find_if(_aliases, [&](const auto &alias) {
+    return alias.id == id;
+  });
+
+  if (aliasIt != _aliases.end()) {
+    GetDefaultLogger().Info(source_location::current(), "Alias found for {} -> {}", id, aliasIt->filename);
+    return _stream_factory.OpenStream(aliasIt->filename);
+  }
+
+  GetDefaultLogger().Error(source_location::current(), "No alias found for {}", id);
+  return nullptr;
+}
+
+detail::ControlBlock *ResourceManager::FindKnownControlBlockFor(ResourceId id, type_t type) const {
+  // Do we know about this resource already?
   for (const auto &a: _loaded_resources_cb) {
-    if (a->type() == type && a->name() == name) {
-      _logger.Info(source_location::current(), "Resource {} of type {} already known", name, type);
+    if (a->type() == type && a->id() == id) {
+      GetDefaultLogger().Info(source_location::current(), "Resource {} of type {} already known", id, type);
       return a.get();
     }
   }
 
-  class R : public ControlBlockDetails {
-  public:
-    R(ResourceManager *e, type_t t, std::string n, std::unique_ptr<Resource> &&r)
-        : ControlBlockDetails(e, t, std::move(n), std::move(r)) {}
+  return nullptr;
+}
 
-    ~R() override = default;
+detail::ControlBlock *ResourceManager::MakeMemoryContainer(ResourceId id, type_t type, std::unique_ptr<Resource> &&theResource, const source_location &from) {
+  class R : public detail::ControlBlock {
+    ResourceManager *const _owner;
+
+  public:
+    R(ResourceManager *e, type_t t, ResourceId n, std::unique_ptr<Resource> &&r)
+        : ControlBlock(n, t),
+          _owner(e) {
+      _resource = r.release();
+    }
+
+    ~R() override { _owner->EraseControlBlock(this); }
+
+    std::error_code OnLoadLazyResource() override { return std::make_error_code(std::errc::not_supported); }
 
   protected:
-    void ZeroRefs() noexcept override {
-      if (!Owner()->EraseControlBlock(this)) {
-        Owner()->_logger.Error(source_location::current(), "Failed to find cache for resource {}", name());
-      }
+    void OnZeroShared() noexcept override {
+      delete _resource;
+      _resource = nullptr;
     }
   };
 
-  auto const &ret = _loaded_resources_cb.emplace_back(std::make_unique<R>(this, type, name, std::move(theResource)));
+  auto const &ret = _loaded_resources_cb.emplace_back(
+      std::make_unique<R>(
+          this,
+          type,
+          id,
+          std::move(theResource)));
 
-  _logger.Info(source_location::current(), "Memory create resource {} of type {}", name, type);
+  GetDefaultLogger().Info(source_location::current(), "Memory create resource {} of type {}", id, type);
   return ret.get();
 }
 
-detail::ControlBlock *ResourceManager::MakeResourceContainer(const std::string &name, type_t type, const source_location &from) {
-  for (const auto &a: _loaded_resources_cb) {
-    if (a->type() == type && a->name() == name) {
-      _logger.Info(source_location::current(), "Resource {} of type {} already known", name, type);
-      return a.get();
-    }
+bool ResourceManager::CanLoad(ResourceId id, type_t type) {
+  // Make sure at least one loader can load this type, don't actually do a CanLoad on it as it may be expensive
+  if (!std::ranges::any_of(_loaders, [&](const std::unique_ptr<ResourceLoader> &loader) {
+        return loader->SupportsType(type);
+      })) {
+    // No loader found for this type
+    GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}: no loader found", id);
+    return false;
   }
 
-  class R : public ControlBlockDetails {
-  public:
-    R(ResourceManager *e, type_t t, std::string n, source_location s)
-        : ControlBlockDetails(e, t, std::move(n), s) {
-    }
+  // Check if a stream exists for this resource
+  if (const auto stream = FindStreamForResource(id, type)) {
+    return true;
+  }
 
-    ~R() override = default;
+  GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}: data was not found", id);
+  return false;
+}
 
-  protected:
-    void ZeroRefs() noexcept override {
-      if (!Owner()->EraseControlBlock(this)) {
-        Owner()->_logger.Error(source_location::current(), "Failed to find cache for resource {}", name());
+std::expected<std::unique_ptr<Resource>, std::error_code> ResourceManager::LoadResource(ResourceId resource_id, type_t resource_type, std::span<LoadOption *const> options) {
+  // Find the stream
+  if (const auto stream = FindStreamForResource(resource_id, resource_type)) {
+    GetDefaultLogger().Info(source_location::current(), "Loading resource {} of type {}", resource_id, resource_type);
+
+    const ResourceLoader::LoadContext ctx{
+        .stream = *stream,
+        .targetTypeId = resource_type,
+        .options = options};
+
+    // Find a loader
+    for (const auto &loader: _loaders) {
+      if (!loader->SupportsType(resource_type) || !loader->CanLoad(ctx)) {
+        continue;
+      }
+
+      if (auto attemptedLoad = loader->ReadLoad(ctx);
+          attemptedLoad.resource != nullptr) {
+        return std::move(attemptedLoad.resource);
       }
     }
-  };
 
-  // Did not find the resource; so make a new container
-  auto const &ret = _loaded_resources_cb.emplace_back(std::make_unique<R>(this, type, name, from));
+    // No loader was able to load this resource
+    GetDefaultLogger().Error(source_location::current(), "No loader was able to load resource {}", resource_id);
+    return std::unexpected(std::make_error_code(std::errc::not_supported));
+  }
 
-  _logger.Info(source_location::current(),
-               "New resource {} of type {} asked at {}:{}",
-               name,
-               type,
-               from.file_name(),
-               from.line());
-
-  return ret.get();
+  GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}", resource_id);
+  return std::unexpected(std::make_error_code(std::errc::no_such_file_or_directory));
 }
 
 bool ResourceManager::EraseControlBlock(detail::ControlBlock *cb) {
+  GetDefaultLogger().Info(source_location::current(), "Erasing control block {}", cb->id());
+
   // Find the control block
-  const auto i = std::find_if(
-      _loaded_resources_cb.begin(),
-      _loaded_resources_cb.end(),
-      [&cb](const auto &uptr) {
-        return uptr.get() == cb;
-      });
+  const auto i = std::ranges::find_if(_loaded_resources_cb,
+                                      [&cb](const auto &uptr) {
+                                        return uptr.get() == cb;
+                                      });
 
   if (i != _loaded_resources_cb.end()) {
     _loaded_resources_cb.erase(i);
@@ -199,6 +165,11 @@ bool ResourceManager::EraseControlBlock(detail::ControlBlock *cb) {
   }
 
   return false;
+}
+
+void ResourceManager::Tick(const std::chrono::milliseconds delta) {
+  // Go through all the resources that need ticks
+  std::ignore = delta;
 }
 
 

@@ -1,3 +1,5 @@
+#include <Engine.hpp>
+
 #include "LuaProxyFunction.hpp"
 
 #include <iostream>

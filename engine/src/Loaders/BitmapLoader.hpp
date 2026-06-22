@@ -4,8 +4,6 @@
 
 namespace e00::impl {
 class BitmapLoader : public ResourceLoader {
-  mutable Logger _logger;
-
 public:
   BitmapLoader();
 
@@ -13,8 +11,8 @@ public:
 
   bool SupportsType(type_t type) const override { return type == type_id<Bitmap>(); }
 
-  bool CanLoad(Stream &stream) override;
+  bool CanLoad(const LoadContext& context) override;
 
-  Result ReadLoad(Stream &stream) override;
+  Result ReadLoad(const LoadContext& context) override;
 };
 }// namespace e00::impl
