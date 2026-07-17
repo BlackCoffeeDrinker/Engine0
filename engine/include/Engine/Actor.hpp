@@ -1,6 +1,7 @@
 #pragma once
 
 namespace e00 {
+
 /**
  * \brief Abstract class for all objects placed in a world
  *
@@ -18,9 +19,22 @@ public:
 private:
   Vec2D<WorldCoordinateType> _size;// << Size of this actor
   BodyType _type{BodyType::Static};// << Physics type
-  
+  ResourcePtrT<Sprite> _sprite;
+
 public:
   virtual ~Actor() = default;
+
+  void Tick(std::chrono::milliseconds delta) {
+    if (_sprite) {
+      _sprite->SetCurrentTime(_sprite->CurrentTime() + delta);
+    }
+  }
+
+  void Draw(Painter &painter, const Vec2D<BitmapSizeType> &position) {
+    if (_sprite) {
+      painter.DrawSurface(*_sprite, {{0, 0}, _sprite->Size()}, position);
+    }
+  }
 
   void Size(const Vec2D<WorldCoordinateType> &newSize) { _size = newSize; }
 

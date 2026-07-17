@@ -40,6 +40,8 @@ Engine::Engine()
   _script_engine->register_function("GetText", [this](int textCode) -> std::string {
     return _strings->GetText(textCode);
   });
+  
+  std::launder
 }
 
 Engine::~Engine() = default;
@@ -115,7 +117,7 @@ void Engine::Tick(const std::chrono::milliseconds &delta) noexcept {
       _current_game_time += delta;
 
       if (_current_world) {
-        //
+        _current_world->Tick(delta);
       }
 
       ExecuteActionsAtTime(Now());

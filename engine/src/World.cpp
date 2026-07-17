@@ -48,6 +48,14 @@ void World::Remove(NodeID element) {
   }
 }
 
+void World::Tick(std::chrono::milliseconds delta) {
+  for (auto &element : _elements) {
+    if (element.actor != nullptr) {
+      element.actor->Tick(delta);
+    }
+  }
+}
+
 bool World::ProcessAction(const ActionInstance &action) {
 }
 

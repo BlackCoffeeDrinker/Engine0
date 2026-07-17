@@ -277,5 +277,11 @@ public:
   }
 
   void Tick(std::chrono::milliseconds delta);
+
+  void SetResourceLimit(size_t limit) { _resource_limit = limit; }
+  [[nodiscard]] size_t ResourceLimit() const { return _resource_limit; }
+
+private:
+  size_t _resource_limit = 100;// Default limit of loaded resources
 };
 }// namespace e00

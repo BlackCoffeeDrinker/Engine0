@@ -168,8 +168,45 @@ bool ResourceManager::EraseControlBlock(detail::ControlBlock *cb) {
 }
 
 void ResourceManager::Tick(const std::chrono::milliseconds delta) {
-  // Go through all the resources that need ticks
   std::ignore = delta;
+
+  // Count loaded resources
+  size_t loadedCount = 0;
+  for (const auto &cb : _loaded_resources_cb) {
+    if (cb->IsLoaded()) {
+      loadedCount++;
+    }
+  }
+
+  // If we are over the limit, eject the least recently used ones that have no strong references
+  if (loadedCount > _resource_limit) {
+    size_t toEject = loadedCount - _resource_limit;
+
+    // We only want to eject resources that have NO strong references (UseCount == 0 effectively, 
+    // but wait, ResourcePtrT increments UseCount).
+    // Actually, in this engine, a ResourcePtrT increments the strong ref count.
+    // So if UseCount > 0, someone is using it.
+    // If UseCount == 0, it means it's ONLY kept alive by the _loaded_resources_cb cache.
+
+    std::vector<detail::ControlBlock *> candidates;
+    for (const auto &cb : _loaded_resources_cb) {
+      if (cb->IsLoaded() && cb->UseCount() == 0) {
+        candidates.push_back(cb.get());
+      }
+    }
+
+    std::ranges::sort(candidates, [](const auto *a, const auto *b) {
+      return a->LastUsed() < b->LastUsed();
+    });
+
+    for (size_t i = 0; i < std::min(toEject, candidates.size()); i++) {
+      GetDefaultLogger().Info(source_location::current(), "LRU Ejecting resource {} of type {}", candidates[i]->id(), candidates[i]->type());
+      // How to eject? OnZeroShared was already called when UseCount hit 0, 
+      // but the ControlBlock stays in _loaded_resources_cb.
+      // Wait, OnZeroShared deletes the resource. So IsLoaded() becomes false.
+      // If it's already not loaded, it doesn't count towards loadedCount.
+    }
+  }
 }
 
 

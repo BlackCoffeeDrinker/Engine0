@@ -5,6 +5,7 @@
 
 class ExampleGame : public e00::Engine {
   e00::WorldWidget *_world_widget = nullptr;
+  e00::LabelWidget *_label_widget = nullptr;
 
 protected:
   void ExecuteAction(const e00::Action &action) override;

@@ -87,6 +87,8 @@ public:
    */
   void Remove(NodeID element);
 
+  void Tick(std::chrono::milliseconds delta);
+
   bool ProcessAction(const ActionInstance &action);
 };
 }// namespace e00

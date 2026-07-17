@@ -645,6 +645,12 @@ ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext& context) {
       DrawableSurface::BitDepth::DEPTH_8,
       gif_context.globalPalette);
 
+  for (const auto &option : context.options) {
+    if (option->optionTypeid == type_id<DiscardPalette>()) {
+      finalSprite->DiscardPalette();
+    }
+  }
+
   /* Read data */
   while (true) {
     uint8_t block_type = 0;

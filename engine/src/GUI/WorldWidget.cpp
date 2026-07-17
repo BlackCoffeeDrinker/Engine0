@@ -42,6 +42,16 @@ void WorldWidget::DrawWorld(Painter &painter, const World &world) {
       world.PaintTile(start + tilePos, painter, drawPosition);
     }
   }
+
+  // Draw actors
+  const RectT<WorldCoordinateType> viewport(start, adjSize);
+  for (const auto &element : world.Actors()) {
+    if (element.actor != nullptr && viewport.Contains(element.position)) {
+      const auto relativePosition = element.position - start;
+      const auto drawPosition = AbsolutePosition() + relativePosition * tile_size;
+      element.actor->Draw(painter, drawPosition);
+    }
+  }
 }
 
 void WorldWidget::ResizeEvent() {

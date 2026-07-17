@@ -13,8 +13,8 @@
 namespace e00 {
 namespace detail {
 class ControlBlock {
-  const ResourceId _id;
-  const type_t _type;
+  ResourceId _id;
+  type_t _type;
   atomic_long _strong_ref_count;
 
 protected:
@@ -147,7 +147,9 @@ struct ResourcePtrT {
   [[nodiscard]] explicit operator bool() const { return cb != detail::InvalidControlBlock::InvalidBlock(); }
 
   [[nodiscard]] ResourceId Id() const { return cb->id(); }
-  [[nodiscard]] pointer get() const { return static_cast<T *>(cb->resource()); }
+  [[nodiscard]] pointer get() const {
+    return static_cast<T *>(cb->resource());
+  }
   [[nodiscard]] const_reference operator*() const { return *get(); }
   [[nodiscard]] reference operator*() { return *get(); }
   [[nodiscard]] pointer operator->() const { return get(); }

@@ -42,6 +42,10 @@ void ExampleGame::OnWorldLoaded(const std::unique_ptr<e00::World> &new_world) {
 
   _world_widget = RootWidget()->AddChild<e00::WorldWidget>(new_world);
   _world_widget->SetFixedSize({640, 480 - 80});
+
+  _label_widget = RootWidget()->AddChild<e00::LabelWidget>();
+  _label_widget->SetText("Hello World");
+  _label_widget->SetPosition({10, 480 - 40});
 }
 
 void ExampleGame::ExecuteAction(const e00::Action &action) {

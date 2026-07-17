@@ -41,6 +41,18 @@
 #include <Engine/Math/SpacePartition.hpp>
 #include <Engine/Math/Vec2D.hpp>
 
+#include <Engine/Platform/DrawableSurface.hpp>
+#include <Engine/Platform/InputEvent.hpp>
+#include <Engine/Platform/InputSystem.hpp>
+#include <Engine/Platform/Painter.hpp>
+#include <Engine/Platform/Stream.hpp>
+
+#include <Engine/Resource/Bitmap.hpp>
+#include <Engine/Resource/Font.hpp>
+#include <Engine/Resource/Map.hpp>
+#include <Engine/Resource/Palette.hpp>
+#include <Engine/Resource/Sprite.hpp>
+
 #include <Engine/Action.hpp>
 #include <Engine/ActionCategory.hpp>
 #include <Engine/ActionInstance.hpp>
@@ -51,18 +63,6 @@
 #include <Engine/ResourcePtr.hpp>
 #include <Engine/World.hpp>
 
-
-#include <Engine/Resource/Bitmap.hpp>
-#include <Engine/Resource/Font.hpp>
-#include <Engine/Resource/Map.hpp>
-#include <Engine/Resource/Palette.hpp>
-#include <Engine/Resource/Sprite.hpp>
-
-#include <Engine/Platform/DrawableSurface.hpp>
-#include <Engine/Platform/InputEvent.hpp>
-#include <Engine/Platform/InputSystem.hpp>
-#include <Engine/Platform/Painter.hpp>
-#include <Engine/Platform/Stream.hpp>
 #include <Engine/Platform/ResourceLoader.hpp>
 #include <Engine/Platform/ResourceLoaderOptions.hpp>
 #include <Engine/Platform/ResourceManager.hpp>
@@ -73,7 +73,6 @@
 #include <Engine/GUI/Menu.hpp>
 #include <Engine/GUI/Widget.hpp>
 #include <Engine/GUI/WorldWidget.hpp>
-
 
 #include <Engine/Scripting/ScriptEngine.hpp>
 
