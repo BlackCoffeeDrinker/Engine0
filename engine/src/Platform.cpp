@@ -16,7 +16,7 @@ std::unique_ptr<e00::DrawableSurface> Optimize(const e00::DrawableSurface &sourc
 
   if (surf) {
     if (const auto painter = surf->BeginDraw()) {
-      painter->DrawSurface(source, {{0, 0}, source.Size()}, {0, 0});
+      painter->BlitSurface(source, {{0, 0}, source.Size()}, {0, 0});
       return surf;
     }
   }

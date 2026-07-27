@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Engine/Resource/DrawableResource.hpp>
+#include <chrono>
 
 namespace e00 {
 /**
@@ -29,6 +30,8 @@ public:
 
   Sprite(const Sprite &other) = delete;
   ~Sprite() override;
+
+  [[nodiscard]] size_t SizeUsage() override;
 
   /**
    * Sets whether the animation loops when its current time exceeds the total duration.

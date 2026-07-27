@@ -50,6 +50,7 @@ public:
 
   [[nodiscard]] bool IsLoaded() const { return _resource != nullptr; }
   virtual std::error_code OnLoadLazyResource() = 0;
+  virtual std::error_code ForceUnload() = 0;
 
   explicit operator bool() const noexcept { return _id != 0 && _type != type_t{}; }
   [[nodiscard]] bool operator==(std::nullptr_t) const { return _id == 0 && _type == type_t{}; }
@@ -66,6 +67,7 @@ protected:
 
 public:
   std::error_code OnLoadLazyResource() override { return std::make_error_code(std::errc::function_not_supported); }
+  std::error_code ForceUnload() override { return std::make_error_code(std::errc::function_not_supported); }
 
   static constexpr InvalidControlBlock *InvalidBlock() {
     static InvalidControlBlock block{};
@@ -155,7 +157,9 @@ struct ResourcePtrT {
   [[nodiscard]] pointer operator->() const { return get(); }
   [[nodiscard]] const_reference Ref() const { return *get(); }
 
+  [[nodiscard]] bool IsLoaded() const { return cb->IsLoaded(); }
   std::error_code EnsureLoad() const { return !cb->IsLoaded() ? cb->OnLoadLazyResource() : std::error_code(); }
+  void ForceUnload() const { cb->ForceUnload(); }
 
 private:
   friend class ResourceManager;

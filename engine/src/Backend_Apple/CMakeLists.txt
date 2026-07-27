@@ -9,6 +9,8 @@ target_sources(Engine00
         main.mm
         Apple_KeyboardSystem.mm
         OpenStream.cpp
+        MetalSurfacePainter.cpp
+        MetalSurfacePainter.hpp
 )
 
 target_link_libraries(Engine00 PUBLIC

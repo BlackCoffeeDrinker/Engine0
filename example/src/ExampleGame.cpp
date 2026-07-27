@@ -13,8 +13,6 @@ std::string_view ExampleGame::Name() const noexcept {
 }
 
 std::error_code ExampleGame::OnInit() {
-
-
   return LoadWorld("helloworld");
 }
 

@@ -26,7 +26,7 @@ struct Element {
  */
 class World {
   std::string _name;
-  ResourcePtrT<e00::Map> _map;
+  ResourcePtrT<Map> _map;
   std::array<Element, detail::MaxActorsInWorld> _elements;
 
 public:
@@ -47,48 +47,19 @@ public:
   [[nodiscard]] auto Width() const { return Size().x; }
   [[nodiscard]] auto Height() const { return Size().y; }
   [[nodiscard]] auto TileSize() const { return _map->TileSize(); }
-
-  [[nodiscard]] const ResourcePtrT<e00::Map> &Map() const { return _map; }
-  [[nodiscard]] size_t NumActors() const;
+  [[nodiscard]] const ResourcePtrT<Map> &Map() const { return _map; }
   [[nodiscard]] const auto &Actors() const { return _elements; }
+  [[nodiscard]] size_t NumActors() const;
 
-  void PaintTile(const Position &tilePosition, Painter &painter, const Vec2D<BitmapSizeType> &origin) const;
+  void PaintMap(const Position &start, const Position &end, Painter &painter, const BitmapSize &painterOrigin) const {
+    _map->PaintMap({start, end}, painter, painterOrigin);
+  }
 
-
-  /**
-   *
-   * @param bounds
-   * @param output
-   * @return `output`
-   */
   std::vector<NodeID> &Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const;
-
-  /**
-   * Inserts actor `actor` at position `position`
-   *
-   * @param actor the Actor to add to this world
-   * @param position the initial position the actor is at
-   * @return
-   */
   NodeID Insert(Actor *actor, const Vec2D<WorldCoordinateType> &position);
-
-  /**
-   * Change the position of element
-   *
-   * @param element
-   * @param position
-   */
   void Update(NodeID element, const Vec2D<WorldCoordinateType> &position);
-
-  /**
-   * Remove element
-   *
-   * @param element
-   */
   void Remove(NodeID element);
-
   void Tick(std::chrono::milliseconds delta);
-
   bool ProcessAction(const ActionInstance &action);
 };
 }// namespace e00

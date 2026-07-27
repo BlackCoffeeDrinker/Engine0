@@ -272,21 +272,21 @@ TEST_CASE("Painter - DrawSurface", "[painter]") {
     auto painter = dst->BeginDraw();
 
     SECTION("Normal DrawSurface") {
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
         auto data = dst->GetLineData(2);
         CHECK(data[2] == 1);
     }
 
     SECTION("Clipping DrawSurface") {
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {8, 8});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {8, 8});
         // Source is 5x5, starting at (8,8) in 10x10.
         // It should draw pixels at (8,8) up to (9,9).
         auto data8 = dst->GetLineData(8);
         CHECK(data8[8] == 1);
         
         // Check out of bounds doesn't crash
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {10, 10});
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {static_cast<BitmapSizeType>(-2), static_cast<BitmapSizeType>(-2)});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {10, 10});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {static_cast<BitmapSizeType>(-2), static_cast<BitmapSizeType>(-2)});
     }
 
     SECTION("Sub-rect DrawSurface") {
@@ -295,7 +295,7 @@ TEST_CASE("Painter - DrawSurface", "[painter]") {
         auto srcData = src2->GetLineData(5);
         srcData[5] = 1; // Point at (5,5)
 
-        painter->DrawSurface(*src2, {{5, 5}, {2, 2}}, {0, 0});
+        painter->BlitSurface(*src2, {{5, 5}, {2, 2}}, {0, 0});
         auto data = dst->GetLineData(0);
         CHECK(data[0] == 1);
     }

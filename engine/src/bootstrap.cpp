@@ -21,9 +21,7 @@ std::error_code Init() {
   GetDefaultLogger().Verbose(source_location::current(), "Loading main INI");
 
   auto &resource_manager = ResourceManager::GlobalResourceManager();
-
-  const auto current_platform = platform::PlatformName();
-  const auto platform_prefix = std::string("platform:") + std::string(current_platform);
+  const auto platform_prefix = std::string("platform:") + std::string(platform::PlatformName());
 
   if (const auto config = StreamFactory::GlobalStreamFactory().OpenStream("game.ini")) {
     const auto iniEc = impl::IniParser::Parse(*config, [&](const impl::IniParser::Item &item) -> std::error_code {
@@ -85,24 +83,27 @@ void Run(Engine &engine) {
     GetDefaultLogger().Error(source_location::current(), "Unable to initialize platform for engine: {}", engine.Name());
     return;
   }
-  
+
   auto last_time = std::chrono::steady_clock::now();
-  
+  size_t i = 0;
+
   while (engine.IsRunning()) {
     const auto now = std::chrono::steady_clock::now();
     const auto delta = now - last_time;
     last_time = now;
+    i++;
 
     if (delta > std::chrono::milliseconds(300)) {
       GetDefaultLogger().Info(source_location::current(), "Delta of {} miliseconds!", std::chrono::duration_cast<std::chrono::milliseconds>(delta).count());
     }
-    
+
     // Process platform events
     platform::ProcessEvents(engine);
 
     // Render
     if (platform::HasFocus(engine)) {
       platform::ProcessDraw(engine);
+
     } else {
       // If we do not have focus, yield
       platform::Yield();

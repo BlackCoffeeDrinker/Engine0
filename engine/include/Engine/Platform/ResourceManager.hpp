@@ -114,7 +114,7 @@ class ResourceManager {
     }
 
     class StaticOptionControlBlock : public detail::ControlBlock {
-      const ResourceManager *const _owner;
+      ResourceManager *const _owner;
       const source_location _from;
       const std::array<LoadOption *, sizeof...(Options)> _opts;
 
@@ -140,6 +140,12 @@ class ResourceManager {
       }
 
     public:
+      std::error_code ForceUnload() override {
+        delete _resource;
+        _resource = nullptr;
+        return {};
+      }
+
       std::error_code OnLoadLazyResource() override {
         if (auto resource = _owner->LoadResource(
                 id(),
@@ -156,7 +162,7 @@ class ResourceManager {
     // We know a loader exists for this type and the stream exists, assume it's fine
     auto const &ret = _loaded_resources_cb.emplace_back(
         std::make_unique<StaticOptionControlBlock>(
-            this, type_id<T>(), id, from,
+            this, id, from,
             std::forward<Options>(options)...));
     return ResourcePtrT<T>(ret.get());
   }
@@ -230,9 +236,8 @@ public:
   }
 
   template<typename T, typename... Options>
+    requires(sizeof...(Options) > 0) && (std::derived_from<std::decay_t<Options>, LoadOption> && ...)
   ResourcePtrT<T> LazyResource(ResourceId id, Options &&...options) {
-    static_assert((std::derived_from<std::decay_t<Options>, LoadOption> && ...),
-                  "All Options must derive from LoadOption");
     return InternalLazyResource<T>(id, source_location::current(), std::forward<Options>(options)...);
   }
 

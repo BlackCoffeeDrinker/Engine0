@@ -17,7 +17,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_32);
         {
             auto painter = dst->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
 
         DrawableSurface::TargetInformation info32;
@@ -52,7 +52,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         
         {
             auto painter = dst->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
 
         auto dstData = dst->GetLineData(0);
@@ -70,7 +70,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         auto dst = Bitmap::Create({16, 1}, DrawableSurface::BitDepth::DEPTH_32);
         {
             auto painter = dst->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {16, 1}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {16, 1}}, {0, 0});
         }
         
         DrawableSurface::TargetInformation info32;
@@ -106,7 +106,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         
         {
             auto painter = dst->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
         
         auto dstData = dst->GetLineData(0);
@@ -120,7 +120,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         
         {
             auto painter = dst3->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
         
         auto dstData3 = dst3->GetLineData(0);
@@ -141,7 +141,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         
         {
             auto painter = dst->BeginDraw();
-            painter->DrawSurface(*src, {{0, 0}, {8, 1}}, {0, 0});
+            painter->BlitSurface(*src, {{0, 0}, {8, 1}}, {0, 0});
         }
         
         auto dstData = dst->GetLineData(0);

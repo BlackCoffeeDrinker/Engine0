@@ -8,7 +8,6 @@
 
 #include <memory>
 
-#include "BitmapData.hpp"
 #include "OSType.hpp"
 #include "Video/Ega.hpp"
 #include "Video/VGA_12h.hpp"

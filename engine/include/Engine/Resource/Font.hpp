@@ -21,6 +21,9 @@ public:
     std::unique_ptr<GlyphCollection> next;
 
     [[nodiscard]] const GlyphCollection *FindInRange(uint16_t ch) const;
+    [[nodiscard]] size_t SizeUsage() const {
+      return sizeof(*this) + glyphs.size() * sizeof(Glyph) + (next ? next->SizeUsage() : 0);
+    }
   };
 
 protected:
@@ -35,6 +38,10 @@ public:
   virtual uint16_t FontHeight() { return _height; }
   virtual uint16_t CharLength(uint16_t ch) const = 0;
   virtual uint16_t TextLength(const std::string_view &text);
+
+  [[nodiscard]] size_t SizeUsage() override {
+    return sizeof(*this) + (_glyphs ? _glyphs->SizeUsage() : 0);
+  }
 
   [[nodiscard]] type_t Type() const noexcept override { return type_id<Font>(); }
 

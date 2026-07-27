@@ -65,12 +65,11 @@ add_library(Engine00 STATIC
 
         src/Painter_PaintDevice.hpp
         src/Painter_PaintDevice.cpp
-        src/BitmapData.cpp
-        src/BitmapData.hpp
         src/Logger.cpp
         src/TranslatableText.cpp
         src/TranslatableText.hpp
         src/Painter_Generic.cpp
+        src/WindowedDrawableResource.cpp
 
 )
 
@@ -247,6 +246,7 @@ target_sources(Engine00Interface INTERFACE
         include/Engine/Resource/DrawableResource.hpp
         include/Engine/Resource/Bitmap.hpp
         include/Engine/Resource/Sprite.hpp
+        include/Engine/Resource/WindowedDrawableResource.hpp
 
         include/Engine/GUI/FontGlyph.hpp
         include/Engine/GUI/Menu.hpp

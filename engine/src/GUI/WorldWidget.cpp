@@ -34,18 +34,11 @@ void WorldWidget::DrawWorld(Painter &painter, const World &world) {
       computeStartForCenter(_cameraCenter.x, adjSize.x, world.Width()),
       computeStartForCenter(_cameraCenter.y, adjSize.y, world.Height())};
 
-  for (WorldCoordinateType y = 0; y < adjSize.y; y++) {
-    for (WorldCoordinateType x = 0; x < adjSize.x; x++) {
-      const Vec2D tilePos = {x, y};
-      const auto drawPosition = AbsolutePosition() + tilePos * tile_size;
-
-      world.PaintTile(start + tilePos, painter, drawPosition);
-    }
-  }
+  world.PaintMap(start, start + adjSize, painter, {0, 0});
 
   // Draw actors
-  const RectT<WorldCoordinateType> viewport(start, adjSize);
-  for (const auto &element : world.Actors()) {
+  const RectT viewport(start, adjSize);
+  for (const auto &element: world.Actors()) {
     if (element.actor != nullptr && viewport.Contains(element.position)) {
       const auto relativePosition = element.position - start;
       const auto drawPosition = AbsolutePosition() + relativePosition * tile_size;
@@ -57,12 +50,27 @@ void WorldWidget::DrawWorld(Painter &painter, const World &world) {
 void WorldWidget::ResizeEvent() {
   Widget::ResizeEvent();
   // TODO: Cache worldSizeInTiles
+  _world_bitmap = nullptr;
 }
 
 
 void WorldWidget::Paint(Painter &painterObj) {
   if (_worldToDraw) {
-    DrawWorld(painterObj, *_worldToDraw);
+    if (!_world_bitmap) {
+      const auto targetInfo = painterObj.GetTargetInformation();
+      _world_bitmap = Bitmap::Create(Size(), targetInfo.bit_depth, targetInfo.palette ? *targetInfo.palette : FixedPalette());
+    }
+
+    // Draw everything to a temp bitmap to blitz to the final screen
+    if (const auto tmpPainter = _world_bitmap->BeginDraw()) {
+      DrawWorld(*tmpPainter, *_worldToDraw);
+    }
+    
+    painterObj.BlitSurface(
+        *_world_bitmap,
+        {{0, 0}, _world_bitmap->Size()},
+        AbsolutePosition());
+
   } else {
     painterObj.SetBrushColor({0, 0, 0});
     painterObj.SetNoPen();

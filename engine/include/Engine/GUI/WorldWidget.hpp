@@ -5,6 +5,7 @@ class World;
 class WorldWidget : public Widget {
   const std::unique_ptr<World> &_worldToDraw;
   Vec2D<uint16_t> _cameraCenter;
+  std::unique_ptr<Bitmap> _world_bitmap;
 
   void DrawWorld(Painter &painter, const World &world);
 

@@ -32,7 +32,7 @@ public:
 
   void Draw(Painter &painter, const Vec2D<BitmapSizeType> &position) {
     if (_sprite) {
-      painter.DrawSurface(*_sprite, {{0, 0}, _sprite->Size()}, position);
+      painter.BlitSurface(*_sprite, {{0, 0}, _sprite->Size()}, position);
     }
   }
 

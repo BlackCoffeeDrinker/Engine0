@@ -49,7 +49,7 @@ void World::Remove(NodeID element) {
 }
 
 void World::Tick(std::chrono::milliseconds delta) {
-  for (auto &element : _elements) {
+  for (auto &element: _elements) {
     if (element.actor != nullptr) {
       element.actor->Tick(delta);
     }
@@ -63,10 +63,6 @@ size_t World::NumActors() const {
   return std::ranges::count_if(_elements, [](const auto &element) {
     return element.actor != nullptr;
   });
-}
-
-void World::PaintTile(const Position &tilePosition, Painter &painter, const Vec2D<BitmapSizeType> &origin) const {
-  return _map->PaintTile(tilePosition, painter, origin);
 }
 
 std::vector<World::NodeID> &World::Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const {

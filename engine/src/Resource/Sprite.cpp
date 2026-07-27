@@ -1,4 +1,3 @@
-#include "BitmapData.hpp"
 #include "Painter_PaintDevice.hpp"
 #include <Engine/Platform/ResourceManager.hpp>
 
@@ -10,7 +9,7 @@
 
 namespace e00 {
 struct Sprite::Image {
-  std::unique_ptr<impl::BitmapData> bitmap;
+  std::unique_ptr<Bitmap> bitmap;
   std::chrono::milliseconds duration{};
 };
 
@@ -25,6 +24,15 @@ std::unique_ptr<Sprite> Sprite::Create(const Vec2D<BitmapSizeType> &size, BitDep
 }
 
 Sprite::~Sprite() = default;
+
+size_t Sprite::SizeUsage() {
+  size_t total = 0;
+  for (const auto &image: _images) {
+    if (image->bitmap)
+      total += image->bitmap->SizeUsage();
+  }
+  return sizeof(*this) + _images.size() * sizeof(Image) + total;
+}
 
 std::unique_ptr<Sprite> Sprite::Create(const Vec2D<BitmapSizeType> &size, BitDepth bit_depth, FixedPalette palette) {
   return std::unique_ptr<Sprite>(new Sprite(size, bit_depth, std::move(palette)));
@@ -86,7 +94,7 @@ void Sprite::SetImageIndex(size_t index) {
 
 std::unique_ptr<Painter> Sprite::BeginDraw() {
   if (const auto *image = GetCurrentImage()) {
-    return std::make_unique<SoftwarePainter>(Size(), GetBitDepth(), _palette, *image->bitmap);
+    return std::make_unique<SoftwarePainter>(*image->bitmap);
   }
 
   return nullptr;
@@ -95,9 +103,10 @@ std::unique_ptr<Painter> Sprite::BeginDraw() {
 void Sprite::ReadLineInto(
     BitmapSizeType line,
     BitmapSizeType startX, BitmapSizeType endX,
-    const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const {
+    const TargetInformation &targetInformation,
+    std::span<uint8_t> targetBuffer) const {
   if (const auto *image = GetCurrentImage()) {
-    image->bitmap->ReadLineInto(line, startX, endX, targetInformation, GetBitDepth(), _palette, targetBuffer);
+    image->bitmap->ReadLineInto(line, startX, endX, targetInformation, targetBuffer);
   }
 }
 
@@ -119,14 +128,14 @@ std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::millise
   }
 
   auto frame = std::make_unique<Image>();
-  frame->bitmap = std::make_unique<impl::BitmapData>(Size(), GetBitDepth());
+  frame->bitmap = std::make_unique<Bitmap>(Size(), GetBitDepth());
   frame->duration = duration;
 
   // Copy data
   const auto copyHeight = std::min(Size().y, data->Size().y);
   for (BitmapSizeType y = 0; y < copyHeight; ++y) {
-    auto srcLine = data->GetLineData(y);
-    auto dstLine = frame->bitmap->GetLineSpan(y);
+    auto srcLine = data->helper.GetLineData(data->_data, y);
+    auto dstLine = frame->bitmap->helper.GetLineData(data->_data, y);
     std::memcpy(dstLine.data(), srcLine.data(), std::min(srcLine.size(), dstLine.size()));
   }
 

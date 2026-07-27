@@ -1,4 +1,3 @@
-#include "BitmapData.hpp"
 #include "Painter_PaintDevice.hpp"
 #include "PrivateInclude.hpp"
 
@@ -7,73 +6,155 @@
 #include <span>
 #include <utility>
 
-namespace {
-class SoftwareBitmap : public e00::Bitmap {
-  e00::impl::BitmapData _data;
-  e00::FixedPalette _palette;
-
-public:
-  SoftwareBitmap(const e00::Vec2D<e00::BitmapSizeType> &size, e00::Bitmap::BitDepth bit_depth, e00::FixedPalette palette)
-      : Bitmap(size, bit_depth), _data(size, bit_depth), _palette(std::move(palette)) {
-  }
-
-  SoftwareBitmap(const e00::Vec2D<e00::BitmapSizeType> &size, e00::Bitmap::BitDepth bit_depth, int numColorsInPalette)
-      : Bitmap(size, bit_depth), _data(size, bit_depth) {
-    // Allocate palette?
-    if (numColorsInPalette > 0) {
-      // Validate the number of colors
-      if (numColorsInPalette > 256) {
-        abort();
-      }
-
-      _palette.resize(numColorsInPalette);
-    }
-  }
-  
-  void SetPalette(const e00::FixedPalette &colors) override { _palette = colors; }
-  [[nodiscard]] std::error_code SetPaletteColor(std::size_t index, const e00::Color &color) override {
-    if (index < _palette.size()) {
-      _palette[index] = color;
-      return {};
-    }
-
-    return std::make_error_code(std::errc::invalid_argument);
-  }
-
-  [[nodiscard]] size_t GetNumberOfColorsInPalette() const override { return _palette.size(); }
-  [[nodiscard]] e00::Color GetColorFromPalette(size_t index) const override { return _palette[index]; }
-  [[nodiscard]] uint8_t GetClosestColor(const e00::Color &color) const override { return _palette.findClosestColorIndex(color); }
-  [[nodiscard]] std::unique_ptr<e00::Painter> BeginDraw() override { return std::make_unique<e00::SoftwarePainter>(Size(), GetBitDepth(), _palette, _data); }
-
-  void ReadLineInto(e00::BitmapSizeType line,
-                    e00::BitmapSizeType startX, e00::BitmapSizeType endX,
-                    const TargetInformation &targetInformation,
-                    std::span<uint8_t> targetBuffer) const override {
-    _data.ReadLineInto(line, startX, endX, targetInformation, GetBitDepth(), _palette, targetBuffer);
-  }
-
-  std::span<uint8_t> GetLineData(e00::BitmapSizeType y) override { return _data.GetLineSpan(y); }
-
-  void WriteLine_N(e00::BitmapSizeType y, const std::span<uint8_t> &input, size_t size) override {
-    auto dstLine = _data.GetLineSpan(y);
-    if (size > dstLine.size()) {
-      size = dstLine.size();
-    }
-    std::memcpy(dstLine.data(), input.data(), size);
-  }
-};
-
-}// namespace
-
 namespace e00 {
-Bitmap::~Bitmap() = default;
+namespace detail {
+SoftwareBitmapHelper::SoftwareBitmapHelper() : bit_depth(DrawableSurface::BitDepth::DEPTH_INVALID) {
+}
+
+SoftwareBitmapHelper::SoftwareBitmapHelper(DrawableSurface::BitDepth bit_depth, BitmapSizeType width, BitmapSizeType height)
+    : bit_depth(bit_depth),
+      bytes_per_line(helpers::GetBitmapBufferBytesPerLine(bit_depth, width)),
+      valid_data_per_line(helpers::GetBitmapValidBytesPerLine(bit_depth, width)),
+      buffer_size(helpers::GetBufferSizeForBitmapSize(bit_depth, width, height)) {
+  assert(bit_depth != DrawableSurface::BitDepth::DEPTH_INVALID);
+
+  // make defaults for 16 & 32bits
+  if (bit_depth == DrawableSurface::BitDepth::DEPTH_16) {
+    shift = helpers::BitmapHelper_t<DrawableSurface::BitDepth::DEPTH_16>::DefaultShift;
+    mask = helpers::BitmapHelper_t<DrawableSurface::BitDepth::DEPTH_16>::DefaultMask;
+  } else if (bit_depth == DrawableSurface::BitDepth::DEPTH_32) {
+    shift = helpers::BitmapHelper_t<DrawableSurface::BitDepth::DEPTH_32>::DefaultShift;
+    mask = helpers::BitmapHelper_t<DrawableSurface::BitDepth::DEPTH_32>::DefaultMask;
+  }
+}
+}// namespace detail
 
 std::unique_ptr<Bitmap> Bitmap::Create(const Vec2D<BitmapSizeType> &size, BitDepth bit_depth, FixedPalette palette) {
-  return std::make_unique<SoftwareBitmap>(size, bit_depth, palette);
+  auto ret = std::make_unique<Bitmap>(size, bit_depth);
+  ret->SetPalette(palette);
+  return ret;
 }
 
 std::unique_ptr<Bitmap> Bitmap::Create(const Vec2D<BitmapSizeType> &size, BitDepth bit_depth, int numColorsInPalette) {
-  return std::make_unique<SoftwareBitmap>(size, bit_depth, numColorsInPalette);
+  auto bitmap = std::make_unique<Bitmap>(size, bit_depth);
+  bitmap->SetPalette(FixedPalette(numColorsInPalette));
+  return bitmap;
 }
+
+Bitmap::Bitmap(const Vec2D<BitmapSizeType> &size, BitDepth bit_depth, MemoryAlignment lineAlignment)
+    : DrawableResource(size, bit_depth),
+      helper(bit_depth, size.x, size.y) {
+  _data.resize(helper.buffer_size);
+}
+
+
+Bitmap::~Bitmap() = default;
+
+Color Bitmap::ReadColorAt(BitmapSizeType x, BitmapSizeType y) const {
+  if (const auto srcLine = helper.GetLineData(_data, y); !srcLine.empty()) {
+    switch (GetBitDepth()) {
+      case BitDepth::DEPTH_1: return helpers::BitmapDepth1::ReadColor(srcLine, x) ? _palette[1] : _palette[0];
+      case BitDepth::DEPTH_8: return _palette[helpers::BitmapDepth8::ReadColor(srcLine, x)];
+      case BitDepth::DEPTH_16: return helpers::BitmapDepth16::ReadColor(srcLine, x, GetShift(), GetMask());
+      case BitDepth::DEPTH_32: return helpers::BitmapDepth32::ReadColor(srcLine, x, GetShift(), GetMask());
+      case BitDepth::DEPTH_8_NO_PALETTE: std::abort();
+      case BitDepth::DEPTH_INVALID: std::abort();
+    }
+  }
+
+  return {};
+}
+
+std::unique_ptr<Painter> Bitmap::BeginDraw() {
+  return std::make_unique<SoftwarePainter>(*this);
+}
+
+void Bitmap::ReadLineInto(BitmapSizeType line,
+                          BitmapSizeType startX,
+                          BitmapSizeType endX,
+                          const TargetInformation &targetInformation,
+                          std::span<uint8_t> targetBuffer) const {
+  const auto dstDepth = targetInformation.bit_depth;
+  const auto srcDepth = GetBitDepth();
+  const BitmapSizeType width = endX - startX;
+  const auto *targetPalette = targetInformation.palette;
+
+  // Make sure we have a target palette if we need it
+  if (helpers::needsPalette(dstDepth) && targetPalette == nullptr) {
+    GetDefaultLogger().Error(
+        source_location::current(),
+        "Invalid target: 8-bit destination with null palette");
+    std::abort();
+    return;
+  }
+  
+#ifndef NDEBUG
+  assert(!targetBuffer.empty());
+  assert(targetBuffer.size() >= helpers::GetBitmapValidBytesPerLine(targetInformation.bit_depth, width));
+#endif
+  
+  const auto both8Bit = helpers::is8Bit(srcDepth) && helpers::is8Bit(dstDepth);
+  const auto eitherSideDontNeedPalette = srcDepth == BitDepth::DEPTH_8_NO_PALETTE || dstDepth == BitDepth::DEPTH_8_NO_PALETTE;
+
+  // Optimized path for 8-bit to 8-bit matching
+  // If either is NO_PALETTE, we don't care about palette matching, it's just a raw copy
+  if (both8Bit && (eitherSideDontNeedPalette || (targetPalette && _palette.isSamePalette(*targetPalette)))) {
+    const auto srcLine = helper.GetLineData(_data, line);
+    memcpy(
+        targetBuffer.data(),
+        srcLine.data() + startX,
+        helpers::BitmapDepth8::ValidBytesPerLine(width));
+
+    return;
+  }
+
+  // Optimized path for 32-bit to 32-bit matching (assuming standard layout)
+  if (srcDepth == BitDepth::DEPTH_32 && dstDepth == BitDepth::DEPTH_32 &&
+      targetInformation.shift == GetShift() && targetInformation.mask == GetMask()) {
+    const auto srcLine = helper.GetLineData(_data, line);
+    memcpy(
+        targetBuffer.data(),
+        srcLine.data() + startX * 4,
+        helpers::BitmapDepth32::ValidBytesPerLine(width));
+    return;
+  }
+
+  // Might be able to conver to 8 bit no palette: if a reference one was provided
+  if (dstDepth == BitDepth::DEPTH_8_NO_PALETTE && targetPalette == nullptr) {
+    GetDefaultLogger().Error(
+        source_location::current(),
+        "Cannot convert to DEPTH_8_NO_PALETTE without a reference palette");
+    std::abort();
+  }
+
+  // But we can't do anything if the _source_ is 8 bit no palette
+  if (srcDepth == BitDepth::DEPTH_8_NO_PALETTE) {
+    GetDefaultLogger().Error(
+        source_location::current(),
+        "Cannot convert from DEPTH_8_NO_PALETTE");
+    std::abort();
+  }
+
+  // Generic implementation
+  for (BitmapSizeType x = 0; x < width; ++x) {
+    const auto srcX = startX + x;
+    using Depth = BitDepth;
+
+    // Extract color from source
+    Color c = ReadColorAt(srcX, line);
+
+    // Write color to targetBuffer based on targetInformation
+    using namespace e00::helpers;
+    switch (dstDepth) {
+      case Depth::DEPTH_1: BitmapDepth1::WriteColor(targetBuffer, x, targetPalette->findClosestColorIndex(c)); break;
+      case Depth::DEPTH_8: BitmapDepth8::WriteColor(targetBuffer, x, targetPalette->findClosestColorIndex(c)); break;
+      case Depth::DEPTH_8_NO_PALETTE: BitmapDepth8::WriteColor(targetBuffer, x, targetPalette->findClosestColorIndex(c)); break;
+      case Depth::DEPTH_16: BitmapDepth16::WriteColor(targetBuffer, x, c, targetInformation.shift, targetInformation.mask); break;
+      case Depth::DEPTH_32: BitmapDepth32::WriteColor(targetBuffer, x, c, targetInformation.shift, targetInformation.mask); break;
+      case Depth::DEPTH_INVALID: std::abort();
+    }
+  }
+}
+
 
 }// namespace e00

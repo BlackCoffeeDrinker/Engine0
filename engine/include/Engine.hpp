@@ -52,6 +52,7 @@
 #include <Engine/Resource/Map.hpp>
 #include <Engine/Resource/Palette.hpp>
 #include <Engine/Resource/Sprite.hpp>
+#include <Engine/Resource/WindowedDrawableResource.hpp>
 
 #include <Engine/Action.hpp>
 #include <Engine/ActionCategory.hpp>

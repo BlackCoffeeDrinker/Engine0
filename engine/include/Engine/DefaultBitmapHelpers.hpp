@@ -10,66 +10,6 @@
 #include <Engine/Platform/DrawableSurface.hpp>
 
 namespace e00::helpers {
-template<typename T>
-constexpr uint8_t ExtractAndScaleChannel(T rawcolor, uint32_t shift, uint32_t mask) {
-  if (mask == 0) [[unlikely]]
-    return 0;
-
-  const uint32_t val = (static_cast<uint32_t>(rawcolor) >> shift) & mask;
-
-  // Fast path for common contiguous masks
-  switch (mask) {
-    case 0xFFu: return static_cast<uint8_t>(val);                    // 8-bit
-    case 0x1Fu: return static_cast<uint8_t>((val << 3) | (val >> 2));// 5-bit -> 8-bit
-    case 0x3Fu: return static_cast<uint8_t>((val << 2) | (val >> 4));// 6-bit -> 8-bit
-    default:
-      [[unlikely]] {
-        // Contiguous mask guaranteed
-        const int bits = std::bit_width(mask);// 1..32
-
-        if (bits >= 8) {
-          const int s = bits - 8;// 0..24
-          return static_cast<uint8_t>(val >> s);
-        }
-
-        // bits < 8: cheap replication; white/black preserved, midtones "good enough"
-        const int shift_up = 8 - bits;// 1..7
-        uint32_t v = val << shift_up;
-        v |= v >> bits;// smear high bits into low
-        return static_cast<uint8_t>(v);
-      }
-  }
-}
-
-template<typename T>
-constexpr T CompressAndShiftChannel(uint8_t color_component, uint32_t shift, uint32_t mask) {
-  if (mask == 0) [[unlikely]]
-    return 0;
-
-  uint32_t val = color_component;
-
-  switch (mask) {
-    case 0xFFu: break;           // 8-bit
-    case 0x1Fu: val >>= 3; break;// 8 -> 5
-    case 0x3Fu: val >>= 2; break;// 8 -> 6
-    default:
-      [[unlikely]] {
-        const int bits = std::bit_width(mask);// 1..32
-
-        if (bits < 8) {
-          const int s = 8 - bits;// 1..7
-          val >>= s;
-        } else if (bits > 8) {
-          const int s = bits - 8;// 1..24
-          val <<= s;
-        }
-        break;
-      }
-  }
-
-  val &= mask;
-  return static_cast<T>(val << shift);
-}
 
 template<typename T>
 T load_pixel(std::span<const uint8_t> lineData, std::size_t x) {
@@ -79,7 +19,7 @@ T load_pixel(std::span<const uint8_t> lineData, std::size_t x) {
 }
 
 template<typename T>
-void store_pixel(std::span<uint8_t> &lineData, std::size_t x, T v) {
+void store_pixel(const std::span<uint8_t> &lineData, std::size_t x, T v) {
   std::memcpy(lineData.data() + x * sizeof(T), &v, sizeof(T));
 }
 
@@ -104,13 +44,13 @@ struct BitmapDepth1 {
   static bool ReadColor(std::span<const uint8_t> lineData, BitmapSizeType x) {
     const auto byteIndex = x / 8;
     if (byteIndex >= lineData.size())
-      return false;// or your preferred "out of range" behavior
+      return false;
 
     const auto bitMask = static_cast<uint8_t>(0x80u >> (x % 8));
     return (lineData[byteIndex] & bitMask) != 0;
   }
 
-  static void WriteColor(std::span<uint8_t> &lineData, BitmapSizeType x, bool color) {
+  static void WriteColor(const std::span<uint8_t> &lineData, BitmapSizeType x, bool color) {
     const auto byteIndex = x / 8u;
     if (byteIndex >= lineData.size())
       return;
@@ -137,7 +77,7 @@ struct BitmapDepth8 {
   static uint8_t ReadColor(std::span<const uint8_t> lineData, BitmapSizeType x) {
     return lineData[x];
   }
-  static void WriteColor(std::span<uint8_t> &lineData, BitmapSizeType x, uint8_t color) {
+  static void WriteColor(const std::span<uint8_t> &lineData, BitmapSizeType x, uint8_t color) {
     lineData[x] = color;
   }
 };
@@ -161,12 +101,12 @@ struct BitmapDepth16 {
 
     const Type raw = load_pixel<Type>(lineData, x);
     return {
-        ExtractAndScaleChannel(raw, shift.red, mask.red),
-        ExtractAndScaleChannel(raw, shift.green, mask.green),
-        ExtractAndScaleChannel(raw, shift.blue, mask.blue)};
+        detail::ExtractAndScaleChannel(raw, shift.red, mask.red),
+        detail::ExtractAndScaleChannel(raw, shift.green, mask.green),
+        detail::ExtractAndScaleChannel(raw, shift.blue, mask.blue)};
   }
 
-  static void WriteColor(std::span<uint8_t> &lineData,
+  static void WriteColor(const std::span<uint8_t> &lineData,
                          BitmapSizeType x,
                          const Color &color,
                          const DrawableSurface::RGBInfo &shift = DefaultShift,
@@ -175,9 +115,9 @@ struct BitmapDepth16 {
       return;
 
     Type dstColor = 0;
-    dstColor |= CompressAndShiftChannel<Type>(color.red, shift.red, mask.red);
-    dstColor |= CompressAndShiftChannel<Type>(color.green, shift.green, mask.green);
-    dstColor |= CompressAndShiftChannel<Type>(color.blue, shift.blue, mask.blue);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.red, shift.red, mask.red);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.green, shift.green, mask.green);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.blue, shift.blue, mask.blue);
 
     store_pixel<Type>(lineData, x, dstColor);
   }
@@ -202,12 +142,12 @@ struct BitmapDepth32 {
 
     const Type raw = load_pixel<Type>(lineData, x);
     return {
-        ExtractAndScaleChannel(raw, shift.red, mask.red),
-        ExtractAndScaleChannel(raw, shift.green, mask.green),
-        ExtractAndScaleChannel(raw, shift.blue, mask.blue)};
+        detail::ExtractAndScaleChannel(raw, shift.red, mask.red),
+        detail::ExtractAndScaleChannel(raw, shift.green, mask.green),
+        detail::ExtractAndScaleChannel(raw, shift.blue, mask.blue)};
   }
 
-  static void WriteColor(std::span<uint8_t> &lineData,
+  static void WriteColor(const std::span<uint8_t> &lineData,
                          BitmapSizeType x,
                          const Color &color,
                          const DrawableSurface::RGBInfo &shift = DefaultShift,
@@ -216,9 +156,10 @@ struct BitmapDepth32 {
       return;
 
     Type dstColor = 0;
-    dstColor |= CompressAndShiftChannel<Type>(color.red, shift.red, mask.red);
-    dstColor |= CompressAndShiftChannel<Type>(color.green, shift.green, mask.green);
-    dstColor |= CompressAndShiftChannel<Type>(color.blue, shift.blue, mask.blue);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.red, shift.red, mask.red);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.green, shift.green, mask.green);
+    dstColor |= detail::CompressAndShiftChannel<Type>(color.blue, shift.blue, mask.blue);
+    dstColor |= detail::CompressAndShiftChannel<Type>(0xFF, 24, 0xFF);
 
     store_pixel<Type>(lineData, x, dstColor);
   }
@@ -255,5 +196,33 @@ struct BitmapHelper<DrawableSurface::BitDepth::DEPTH_32> {
 // Convenience alias
 template<DrawableSurface::BitDepth D>
 using BitmapHelper_t = typename BitmapHelper<D>::type;
+
+constexpr size_t GetBitmapBufferBytesPerLine(DrawableSurface::BitDepth depth, size_t width) {
+  switch (depth) {
+    case DrawableSurface::BitDepth::DEPTH_1: return BitmapDepth1::BufferBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_8:
+    case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE: return BitmapDepth8::BufferBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_16: return BitmapDepth16::BufferBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_32: return BitmapDepth32::BufferBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_INVALID: return 0;
+  }
+  return 0;
+}
+
+constexpr size_t GetBitmapValidBytesPerLine(DrawableSurface::BitDepth depth, size_t width) {
+  switch (depth) {
+    case DrawableSurface::BitDepth::DEPTH_1: return BitmapDepth1::ValidBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_8:
+    case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE: return BitmapDepth8::ValidBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_16: return BitmapDepth16::ValidBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_32: return BitmapDepth32::ValidBytesPerLine(width);
+    case DrawableSurface::BitDepth::DEPTH_INVALID: return 0;
+  }
+  return 0;
+}
+
+constexpr size_t GetBufferSizeForBitmapSize(DrawableSurface::BitDepth depth, size_t width, size_t height) {
+  return GetBitmapBufferBytesPerLine(depth, width) * height;
+}
 
 }// namespace e00::helpers

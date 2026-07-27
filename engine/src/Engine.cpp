@@ -41,7 +41,6 @@ Engine::Engine()
     return _strings->GetText(textCode);
   });
   
-  std::launder
 }
 
 Engine::~Engine() = default;
@@ -49,7 +48,6 @@ Engine::~Engine() = default;
 std::error_code Engine::AddText(const std::string &locale, int textCode, const std::string &text) {
   return {};
 }
-
 
 bool Engine::LanguageCode(const std::string &languageCode) {
   return true;

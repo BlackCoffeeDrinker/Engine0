@@ -1,6 +1,5 @@
 
 #include "PngLoader.hpp"
-#include "BitmapData.hpp"
 
 #ifdef DJGPP
 typedef int off_t;
@@ -254,7 +253,7 @@ std::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const 
 
   return {};
 }
-// ... existing code ...
+
 uint8_t PaethPredictor(uint8_t left, uint8_t above, uint8_t upperLeft) {
   const int p = static_cast<int>(left) + static_cast<int>(above) - static_cast<int>(upperLeft);
   const int pa = std::abs(p - static_cast<int>(left));
@@ -275,9 +274,9 @@ uint8_t PaethPredictor(uint8_t left, uint8_t above, uint8_t upperLeft) {
 std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &bitmap) {
   const auto size = bitmap.Size();
   const auto rowBytes = static_cast<size_t>(size.x);
-  const auto expectedSize = static_cast<size_t>(size.y) * (rowBytes + 1);
 
-  if (context.decompressedData.size() < expectedSize) {
+  if (const auto expectedSize = static_cast<size_t>(size.y) * (rowBytes + 1);
+      context.decompressedData.size() < expectedSize) {
     e00::GetDefaultLogger().Error(
         e00::source_location::current(),
         "PNG decompressed data too small: got {}, expected at least {}",
@@ -304,9 +303,7 @@ std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &
     srcOffset += rowBytes;
 
     switch (filterType) {
-      case 0:
-        // None
-        break;
+      case 0: break;// None
 
       case 1:
         // Sub
@@ -351,7 +348,9 @@ std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &
         return std::make_error_code(std::errc::invalid_argument);
     }
 
-    bitmap.WriteLine_N(y, currentRow, rowBytes);
+    if (const auto painter = bitmap.BeginDraw()) {
+      painter->BlitRawLine(y, 0, size.x, currentRow, {e00::DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE});
+    }
 
     previousRow.swap(currentRow);
     std::ranges::fill(currentRow, uint8_t{0});

@@ -69,6 +69,10 @@ public:
     return colors[index];
   }
 
+  [[nodiscard]] size_t SizeUsage() override {
+    return sizeof(*this) + MAX_SIZE * sizeof(Color);
+  }
+
   void set(const size_t index, const Color &color) noexcept {
     if (index >= numberOfColors) {
       abort();

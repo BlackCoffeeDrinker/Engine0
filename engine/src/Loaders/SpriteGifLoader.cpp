@@ -567,21 +567,23 @@ std::error_code ReadImage(e00::Stream &stream, GifContext &context, const std::u
     // Decompression failed?
     return std::make_error_code(std::errc::invalid_argument);
   }
-  
+
   auto image = e00::Bitmap::Create(
       imageContext.dirtyRect.size,
       e00::DrawableSurface::BitDepth::DEPTH_8,
       imageContext.palette);
 
-  for (auto y = 0; y < imageContext.dirtyRect.size.y; ++y) {
-    auto line_data = image->GetLineData(y);
-    const auto lineStartIndex = y * imageContext.dirtyRect.size.x;
 
-    memcpy(
-        line_data.data(),
-        decompressedData.data() + lineStartIndex,
-        imageContext.dirtyRect.size.x);
+  if (const auto painter = image->BeginDraw()) {
+    for (auto y = 0; y < imageContext.dirtyRect.size.y; ++y) {
+      painter->BlitRawLine(
+          y,
+          0, imageContext.dirtyRect.size.x,
+          {decompressedData.data() + y * imageContext.dirtyRect.size.x, imageContext.dirtyRect.size.x},
+          {e00::DrawableSurface::BitDepth::DEPTH_8});
+    }
   }
+
 
   if (imageContext.palette.empty()) {
     image->SetPalette(context.globalPalette);
@@ -601,7 +603,7 @@ bool GifSpriteLoader::SupportsOption(type_t optionTypeid) const {
   return type_id<DiscardPalette>() == optionTypeid;
 }
 
-bool GifSpriteLoader::CanLoad(const LoadContext& context) {
+bool GifSpriteLoader::CanLoad(const LoadContext &context) {
   std::array<std::uint8_t, 6> header{};
   if (context.stream.Read(header)) {
     return false;
@@ -610,7 +612,7 @@ bool GifSpriteLoader::CanLoad(const LoadContext& context) {
   return header == GIF87a || header == GIF89a;
 }
 
-ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext& context) {
+ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext &context) {
   // Read the header
   std::array<std::uint8_t, 6> header{};
   if (const auto ec = context.stream.Read(header)) {
@@ -645,7 +647,7 @@ ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext& context) {
       DrawableSurface::BitDepth::DEPTH_8,
       gif_context.globalPalette);
 
-  for (const auto &option : context.options) {
+  for (const auto &option: context.options) {
     if (option->optionTypeid == type_id<DiscardPalette>()) {
       finalSprite->DiscardPalette();
     }

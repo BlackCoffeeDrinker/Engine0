@@ -1,9 +1,9 @@
 
 #pragma once
 #include "Engine/Config.hpp"
-#include "Engine/Math/Vec2D.hpp"
-#include "Engine/Math/Rect.hpp"
 #include "Engine/Math/Color.hpp"
+#include "Engine/Math/Rect.hpp"
+#include "Engine/Math/Vec2D.hpp"
 #include <span>
 
 namespace e00 {
@@ -18,6 +18,8 @@ class DrawableSurface;
  */
 class Painter {
 protected:
+  Painter() = default;
+
   // Outline
   enum class PenStyle {
     NoPen,
@@ -42,7 +44,7 @@ protected:
   Color _penColor;
 
 public:
-  virtual ~Painter() = default;// Acts as "EndPaint()", restoring hardware modes automatically
+  virtual ~Painter();// Acts as "EndPaint()", restoring hardware modes automatically
 
   void SetNoPen() { _penStyle = PenStyle::NoPen; }
   void SetNoBrush() { _brushStyle = BrushStyle::NoBrush; }
@@ -69,6 +71,14 @@ public:
     _brushStyle = BrushStyle::SolidBrushIndex;
   }
 
+  /**
+   * TODO: Remove ?
+   * @return target information
+   */
+  [[nodiscard]] virtual DrawableSurface::TargetInformation GetTargetInformation() const = 0;
+  
+  [[nodiscard]] virtual BitmapSize GetDrawableSize() const = 0;
+
   // DrawPoint and DrawPoints should only be used for small numbers of points or debugging
   // Color of the points are determined by the current pen settings
   virtual void DrawPoint(const Vec2D<BitmapSizeType> &pos) = 0;
@@ -80,15 +90,20 @@ public:
   }
 
   // Color of the lines are determined by the current pen settings
-  virtual void DrawLine(const Vec2D<BitmapSizeType> &start, const Vec2D<BitmapSizeType> &end);
+  virtual void DrawLine(const Vec2D<BitmapSizeType> &start, const Vec2D<BitmapSizeType> &end) = 0;
+
   // Outline is determined by the current pen settings, and fill is determined by the current brush settings
-  virtual void DrawEllipse(const RectT<BitmapSizeType> &rect);
+  virtual void DrawEllipse(const RectT<BitmapSizeType> &rect) = 0;
+
   // Outline is determined by the current pen settings, and fill is determined by the current brush settings
-  virtual void DrawRect(const RectT<BitmapSizeType> &rect);
+  virtual void DrawRect(const RectT<BitmapSizeType> &rect) = 0;
+
+  // High-speed line blitting interface, pen and brush aren't applied
+  virtual void BlitRawLine(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<const uint8_t> &data, const DrawableSurface::TargetInformation &dataFormatting) = 0;
 
   // High-speed block blitting interface, pen and brush aren't applied
-  virtual void DrawSurface(const DrawableSurface &src,
+  virtual void BlitSurface(const DrawableSurface &src,
                            RectT<BitmapSizeType> srcRect,
-                           Vec2D<BitmapSizeType> dstPos);
+                           Vec2D<BitmapSizeType> dstPos) = 0;
 };
 }// namespace e00

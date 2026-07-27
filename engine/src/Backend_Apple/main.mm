@@ -54,6 +54,15 @@ void RecreateMainSurface() {
     @autoreleasepool {
         surface->setPresentTexture([g_device newTextureWithDescriptor:surface->getDescriptor()]);
     }
+    
+    if (g_mainSurface) {
+        // Copy palette
+        e00::FixedPalette copied(g_mainSurface->GetNumberOfColorsInPalette());
+        for (size_t i = 0; i < g_mainSurface->GetNumberOfColorsInPalette(); i++) {
+            copied[i] = g_mainSurface->GetColorFromPalette(i);
+        }
+        surface->SetPalette(copied);
+    }
 
     g_mainSurface = std::move(surface);
 }

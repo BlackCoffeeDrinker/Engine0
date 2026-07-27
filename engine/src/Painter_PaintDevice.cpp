@@ -3,30 +3,32 @@
 
 namespace e00 {
 
-void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, const Color &color) {
-  if (x >= _targetSize.x || y >= _targetSize.y) return;
-  if (std::span<uint8_t> line = GetTargetLine(y);
+void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, const Color &color) const {
+  if (x >= _target.Size().x || y >= _target.Size().y) return;
+
+  if (const auto line = _target.helper.GetLineData(_target._data, y);
       !line.empty()) {
-    switch (_bit_depth) {
+    switch (_target.GetBitDepth()) {
       case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(line, x, color, _target.GetShift(), _target.GetMask()); break;
       case DrawableSurface::BitDepth::DEPTH_16: helpers::BitmapDepth16::WriteColor(line, x, color, _target.GetShift(), _target.GetMask()); break;
-      case DrawableSurface::BitDepth::DEPTH_8: helpers::BitmapDepth8::WriteColor(line, x, _palette.findClosestColorIndex(color)); break;
+      case DrawableSurface::BitDepth::DEPTH_8: helpers::BitmapDepth8::WriteColor(line, x, _target.GetClosestColor(color)); break;
       case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
         GetDefaultLogger().Error(source_location::current(), "Cannot draw RGB color to DEPTH_8_NO_PALETTE surface");
         std::abort();
-      case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(line, x, _palette.findClosestColorIndex(color)); break;
+      case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(line, x, _target.GetClosestColor(color)); break;
       default: break;
     }
   }
 }
 
-void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, uint8_t index) {
-  if (x >= _targetSize.x || y >= _targetSize.y) return;
-  if (std::span<uint8_t> line = GetTargetLine(y);
+void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, uint8_t index) const {
+  if (x >= _target.Size().x || y >= _target.Size().y) return;
+
+  if (const auto line = _target.helper.GetLineData(_target._data, y);
       !line.empty()) {
-    switch (_bit_depth) {
-      case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(line, x, _palette[index], _target.GetShift(), _target.GetMask()); break;
-      case DrawableSurface::BitDepth::DEPTH_16: helpers::BitmapDepth16::WriteColor(line, x, _palette[index], _target.GetShift(), _target.GetMask()); break;
+    switch (_target.GetBitDepth()) {
+      case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(line, x, _target.GetColorFromPalette(index), _target.GetShift(), _target.GetMask()); break;
+      case DrawableSurface::BitDepth::DEPTH_16: helpers::BitmapDepth16::WriteColor(line, x, _target.GetColorFromPalette(index), _target.GetShift(), _target.GetMask()); break;
       case DrawableSurface::BitDepth::DEPTH_8:
       case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
         helpers::BitmapDepth8::WriteColor(line, x, index);
@@ -37,15 +39,15 @@ void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, uint8_t index
   }
 }
 
-void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) {
+void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) const {
   const BitmapSizeType width = srcRect.size.x;
   const BitmapSizeType height = srcRect.size.y;
 
   // Direct copy for NO_PALETTE cases
-  const DrawableSurface::TargetInformation info8{_bit_depth, nullptr};// targetPalette doesn't matter for NO_PALETTE copy in ReadLineInto
+  const DrawableSurface::TargetInformation info8{_target.GetBitDepth(), nullptr};// targetPalette doesn't matter for NO_PALETTE copy in ReadLineInto
 
   for (BitmapSizeType y = 0; y < height; ++y) {
-    if (auto targetLine = _target.GetLineSpan(dstPos.y + y); !targetLine.empty()) {
+    if (auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y); !targetLine.empty()) {
       src.ReadLineInto(
           srcRect.origin.y + y,
           srcRect.origin.x,
@@ -56,16 +58,16 @@ void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<Bitmap
   }
 }
 
-void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) {
-  BitmapSizeType width = srcRect.size.x;
-  BitmapSizeType height = srcRect.size.y;
+void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) const {
+  const BitmapSizeType width = srcRect.size.x;
+  const BitmapSizeType height = srcRect.size.y;
 
   const auto srcPaletteSize = src.GetNumberOfColorsInPalette();
   FixedPalette srcPalette(srcPaletteSize);
   std::array<uint8_t, 256> colorMap{};
   for (size_t i = 0; i < srcPaletteSize; ++i) {
     srcPalette[i] = src.GetColorFromPalette(i);
-    colorMap[i] = _palette.findClosestColorIndex(srcPalette[i]);
+    colorMap[i] = _target.GetClosestColor(srcPalette[i]);
   }
 
   std::vector<uint8_t> row_buffer(helpers::BitmapDepth8::BufferBytesPerLine(width));
@@ -80,7 +82,7 @@ void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSiz
         info8,
         row_buffer);
 
-    if (auto targetLine = _target.GetLineSpan(dstPos.y + y);
+    if (auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y);
         !targetLine.empty()) {
       for (BitmapSizeType x = 0; x < width; ++x) {
         targetLine[dstPos.x + x] = colorMap[row_buffer[x]];
@@ -88,11 +90,12 @@ void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSiz
     }
   }
 }
-void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) {
+
+void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) const {
   // Optimized path for matching 8-bit with palette mapping
 
-  if (helpers::is8Bit(_bit_depth) && helpers::is8Bit(src.GetBitDepth())) {
-    if (src.GetBitDepth() == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE || _bit_depth == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE) {
+  if (helpers::is8Bit(_target.GetBitDepth()) && helpers::is8Bit(src.GetBitDepth())) {
+    if (src.GetBitDepth() == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE || _target.GetBitDepth() == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE) {
       Copy8BitNoPalette(src, srcRect, dstPos);
     } else {
       Copy8BitTo8Bit(src, srcRect, dstPos);
@@ -112,21 +115,21 @@ void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSi
 
   for (BitmapSizeType y = 0; y < srcRect.size.y; ++y) {
     src.ReadLineInto(srcRect.origin.y + y, srcRect.origin.x, srcRect.origin.x + width, info32, line32);
-    auto targetLine = _target.GetLineSpan(dstPos.y + y);
+    auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y);
     if (targetLine.empty()) continue;
 
     for (BitmapSizeType x = 0; x < width; ++x) {
-      Color c = helpers::BitmapDepth32::ReadColor(line32, x, info32.shift, info32.mask);
+      const auto c = helpers::BitmapDepth32::ReadColor(line32, x, info32.shift, info32.mask);
 
       const auto dest_x = dstPos.x + x;
-      switch (_bit_depth) {
+      switch (_target.GetBitDepth()) {
         case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(targetLine, dest_x, c, _target.GetShift(), _target.GetMask()); break;
         case DrawableSurface::BitDepth::DEPTH_16: helpers::BitmapDepth16::WriteColor(targetLine, dest_x, c, _target.GetShift(), _target.GetMask()); break;
-        case DrawableSurface::BitDepth::DEPTH_8: helpers::BitmapDepth8::WriteColor(targetLine, dest_x, _palette.findClosestColorIndex(c)); break;
+        case DrawableSurface::BitDepth::DEPTH_8: helpers::BitmapDepth8::WriteColor(targetLine, dest_x, _target.GetClosestColor(c)); break;
         case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
           GetDefaultLogger().Error(source_location::current(), "Cannot draw RGB color to DEPTH_8_NO_PALETTE surface");
           std::abort();
-        case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(targetLine, dest_x, _palette.findClosestColorIndex(c)); break;
+        case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(targetLine, dest_x, _target.GetClosestColor(c)); break;
         default: break;
       }
     }
@@ -164,6 +167,34 @@ void SoftwarePainter::DrawRect(const RectT<BitmapSizeType> &rect) {
     DrawLine({x1, y2}, {x2, y2});
     DrawLine({x1, y1}, {x1, y2});
     DrawLine({x2, y1}, {x2, y2});
+  }
+}
+
+void SoftwarePainter::DrawLine(const Vec2D<BitmapSizeType> &start, const Vec2D<BitmapSizeType> &end) {
+  if (_penStyle == PenStyle::NoPen) return;
+
+  int x0 = start.x;
+  int y0 = start.y;
+  const int x1 = end.x;
+  const int y1 = end.y;
+
+  const int dx = std::abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const int dy = -std::abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  int err = dx + dy;
+
+  for (;;) {
+    DrawPoint({static_cast<unsigned short>(x0), static_cast<unsigned short>(y0)});
+
+    if (x0 == x1 && y0 == y1) break;
+    const int e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x0 += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y0 += sy;
+    }
   }
 }
 
@@ -229,35 +260,152 @@ void SoftwarePainter::DrawEllipse(const RectT<BitmapSizeType> &rect) {
   }
 }
 
-void SoftwarePainter::DrawSurface(const DrawableSurface &src,
+void SoftwarePainter::BlitRawLine(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<const uint8_t> &data, const DrawableSurface::TargetInformation &dataFormatting) {
+  if (line >= _target.Size().y) return;
+  if (endX <= startX) return;
+  if (startX >= _target.Size().x) return;
+
+  if (const auto dstLine = _target.helper.GetLineData(_target._data, line); !dstLine.empty()) {
+
+    const BitmapSizeType maxWidth = std::min(static_cast<BitmapSizeType>(endX - startX), static_cast<BitmapSizeType>(_target.Size().x - startX));
+
+    // Calculate width based on source data format
+    BitmapSizeType width = 0;
+    switch (dataFormatting.bit_depth) {
+      case DrawableSurface::BitDepth::DEPTH_32: width = std::min(static_cast<BitmapSizeType>(data.size() / 4), maxWidth); break;
+      case DrawableSurface::BitDepth::DEPTH_16: width = std::min(static_cast<BitmapSizeType>(data.size() / 2), maxWidth); break;
+      case DrawableSurface::BitDepth::DEPTH_8:
+      case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
+        width = std::min(static_cast<BitmapSizeType>(data.size()), maxWidth);
+        break;
+      case DrawableSurface::BitDepth::DEPTH_1: width = std::min(static_cast<BitmapSizeType>(data.size() * 8), maxWidth); break;
+      default: return;
+    }
+
+    // Fast path: direct memcpy when source and destination formats match
+    if (dataFormatting.bit_depth == _target.GetBitDepth()) {
+      bool canUseFastPath = false;
+      size_t bytesToCopy = 0;
+      size_t dstByteOffset = 0;
+
+      switch (dataFormatting.bit_depth) {
+        case DrawableSurface::BitDepth::DEPTH_32:
+          if (dataFormatting.shift == _target.GetShift() && dataFormatting.mask == _target.GetMask()) {
+            canUseFastPath = true;
+            bytesToCopy = width * 4;
+            dstByteOffset = static_cast<size_t>(startX) * 4;
+          }
+          break;
+        case DrawableSurface::BitDepth::DEPTH_16:
+          if (dataFormatting.shift == _target.GetShift() && dataFormatting.mask == _target.GetMask()) {
+            canUseFastPath = true;
+            bytesToCopy = width * 2;
+            dstByteOffset = static_cast<size_t>(startX) * 2;
+          }
+          break;
+        case DrawableSurface::BitDepth::DEPTH_8:
+        case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
+          canUseFastPath = true;
+          bytesToCopy = width;
+          dstByteOffset = startX;
+          break;
+        case DrawableSurface::BitDepth::DEPTH_1:
+          canUseFastPath = true;
+          bytesToCopy = (width + 7) / 8;
+          dstByteOffset = startX / 8;
+          break;
+        default:
+          break;
+      }
+
+      if (canUseFastPath && dstByteOffset < dstLine.size()) {
+        std::memcpy(dstLine.data() + dstByteOffset, data.data(), std::min(bytesToCopy, std::min(data.size(), dstLine.size() - dstByteOffset)));
+        return;
+      }
+    }
+
+    // Copy pixels with format conversion
+    for (BitmapSizeType x = 0; x < width; ++x) {
+      Color srcColor;
+      uint8_t srcIndex = 0;
+
+      // Read source pixel
+      switch (dataFormatting.bit_depth) {
+        case DrawableSurface::BitDepth::DEPTH_32:
+          srcColor = helpers::BitmapDepth32::ReadColor(data, x, dataFormatting.shift, dataFormatting.mask);
+          break;
+        case DrawableSurface::BitDepth::DEPTH_16:
+          srcColor = helpers::BitmapDepth16::ReadColor(data, x, dataFormatting.shift, dataFormatting.mask);
+          break;
+        case DrawableSurface::BitDepth::DEPTH_8:
+          srcIndex = helpers::BitmapDepth8::ReadColor(data, x);
+          if (dataFormatting.palette) {
+            srcColor = (*dataFormatting.palette)[srcIndex];
+          }
+          break;
+        case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
+          srcIndex = helpers::BitmapDepth8::ReadColor(data, x);
+          break;
+        case DrawableSurface::BitDepth::DEPTH_1:
+          srcIndex = helpers::BitmapDepth1::ReadColor(data, x) ? 1 : 0;
+          if (dataFormatting.palette) {
+            srcColor = (*dataFormatting.palette)[srcIndex];
+          }
+          break;
+        default: continue;
+      }
+
+      // Write destination pixel
+      const BitmapSizeType dstX = startX + x;
+      switch (_target.GetBitDepth()) {
+        case DrawableSurface::BitDepth::DEPTH_32:
+          helpers::BitmapDepth32::WriteColor(dstLine, dstX, srcColor, _target.GetShift(), _target.GetMask());
+          break;
+        case DrawableSurface::BitDepth::DEPTH_16:
+          helpers::BitmapDepth16::WriteColor(dstLine, dstX, srcColor, _target.GetShift(), _target.GetMask());
+          break;
+        case DrawableSurface::BitDepth::DEPTH_8:
+          if (dataFormatting.bit_depth == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE) {
+            helpers::BitmapDepth8::WriteColor(dstLine, dstX, srcIndex);
+          } else {
+            helpers::BitmapDepth8::WriteColor(dstLine, dstX, _target.GetClosestColor(srcColor));
+          }
+          break;
+        case DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE:
+          if (dataFormatting.bit_depth == DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE || dataFormatting.bit_depth == DrawableSurface::BitDepth::DEPTH_8) {
+            helpers::BitmapDepth8::WriteColor(dstLine, dstX, srcIndex);
+          } else {
+            GetDefaultLogger().Error(source_location::current(), "Cannot draw RGB color to DEPTH_8_NO_PALETTE surface");
+            std::abort();
+          }
+          break;
+        case DrawableSurface::BitDepth::DEPTH_1:
+          if (dataFormatting.bit_depth == DrawableSurface::BitDepth::DEPTH_1) {
+            helpers::BitmapDepth1::WriteColor(dstLine, dstX, srcIndex > 0);
+          } else {
+            helpers::BitmapDepth1::WriteColor(dstLine, dstX, _target.GetClosestColor(srcColor));
+          }
+          break;
+        default: break;
+      }
+    }
+  }
+}
+
+void SoftwarePainter::BlitSurface(const DrawableSurface &src,
                                   RectT<BitmapSizeType> srcRect,
                                   Vec2D<BitmapSizeType> dstPos) {
   // Clipping
-  if (dstPos.x >= _targetSize.x || dstPos.y >= _targetSize.y) return;
+  if (dstPos.x >= _target.Size().x || dstPos.y >= _target.Size().y) return;
 
   BitmapSizeType width = srcRect.size.x;
   BitmapSizeType height = srcRect.size.y;
 
-  if (dstPos.x + width > _targetSize.x) width = _targetSize.x - dstPos.x;
-  if (dstPos.y + height > _targetSize.y) height = _targetSize.y - dstPos.y;
+  if (dstPos.x + width > _target.Size().x) width = _target.Size().x - dstPos.x;
+  if (dstPos.y + height > _target.Size().y) height = _target.Size().y - dstPos.y;
   if (width == 0 || height == 0) return;
 
   srcRect.size = {width, height};
-
-  // if (src.Type() == type_id<Bitmap>()) {
-  //   auto &bmp = static_cast<const Bitmap &>(src);
-  //   if (DrawBitmapData(bmp, srcRect, dstPos)) {
-  //     return;
-  //   }
-  // }
-  //
-  // if (src.Type() == type_id<Sprite>()) {
-  //   auto &spr = static_cast<const Sprite &>(src);
-  //   if (DrawSpriteData(spr, srcRect, dstPos)) {
-  //     return;
-  //   }
-  // }
-
   DrawGenericData(src, srcRect, dstPos);
 }
 

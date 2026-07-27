@@ -26,6 +26,7 @@ struct Resource {
   virtual ~Resource() = default;
 
   [[nodiscard]] virtual type_t Type() const = 0;
+  [[nodiscard]] virtual size_t SizeUsage() = 0;
 
   template<typename T>
   [[nodiscard]] bool Is() const { return Type() == type_id<T>(); }

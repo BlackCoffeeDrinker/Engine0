@@ -14,7 +14,7 @@ TEST_CASE("Painter - DrawSurface NO_PALETTE", "[painter][no_palette]") {
     SECTION("NO_PALETTE to DEPTH_8") {
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 256);
         auto painter = dst->BeginDraw();
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
         auto data = dst->GetLineData(2);
         CHECK(data[2] == 42);
     }
@@ -22,7 +22,7 @@ TEST_CASE("Painter - DrawSurface NO_PALETTE", "[painter][no_palette]") {
     SECTION("NO_PALETTE to NO_PALETTE") {
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, 0);
         auto painter = dst->BeginDraw();
-        painter->DrawSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
+        painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
         auto data = dst->GetLineData(2);
         CHECK(data[2] == 42);
     }
@@ -34,7 +34,7 @@ TEST_CASE("Painter - DrawSurface NO_PALETTE", "[painter][no_palette]") {
 
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, 0);
         auto painter = dst->BeginDraw();
-        painter->DrawSurface(*src8, {{0, 0}, {5, 5}}, {2, 2});
+        painter->BlitSurface(*src8, {{0, 0}, {5, 5}}, {2, 2});
         auto data = dst->GetLineData(2);
         CHECK(data[2] == 66);
     }
