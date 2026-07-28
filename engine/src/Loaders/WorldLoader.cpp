@@ -54,7 +54,7 @@ std::error_code WorldLoader::ParseTileset(Stream &stream, const std::unique_ptr<
   });
 }
 
-std::error_code WorldLoader::ParseSet(Stream &stream, size_t layerIndex, const std::unique_ptr<Map> &map) {
+std::error_code WorldLoader::ParseSet(Stream &stream, const std::unique_ptr<Map> &map) {
   if (const auto ec = stream.SeekTo(0)) {
     return ec;
   }
@@ -75,7 +75,7 @@ std::error_code WorldLoader::ParseSet(Stream &stream, size_t layerIndex, const s
 
       current = current * 10 + (c - '0');
     } else if (c == ',') {
-      map->Set(layerIndex, idx, current);
+      map->Set(idx, current);
 
       idx.x++;
 
@@ -90,42 +90,19 @@ std::error_code WorldLoader::ParseSet(Stream &stream, size_t layerIndex, const s
   }
 
   if (current != -1) {
-    map->Set(layerIndex, idx, current);
+    map->Set(idx, current);
   }
 
   return {};
 }
 
 std::error_code WorldLoader::HandleMapData(std::string_view key, std::string_view value) {
-  if (key == "layers") {
-    size_t layerCount = 0;
-    if (const auto size_ec = ToSize(value, layerCount)) {
-      GetDefaultLogger().Error(source_location::current(), "Failed to parse width {}", value);
-      return size_ec;
+  if (key == "set") {
+    if (const auto &set = _engine->FindStreamForResource(HashName(value))) {
+      return ParseSet(*set, currentLoadContext.map);
     }
-
-    currentLoadContext.map->SetLayerCount(static_cast<uint16_t>(layerCount));
-    return {};
-  }
-
-  return {};
-}
-
-std::error_code WorldLoader::HandleLayerData(std::string_view key, std::string_view value) {
-  // Key is layer, value is data file name
-  size_t layerIndex;
-  if (const auto size_ec = ToSize(key, layerIndex)) {
-    GetDefaultLogger().Error(source_location::current(), "Failed to parse layer index {}", key);
-    return size_ec;
-  }
-
-  if (layerIndex >= currentLoadContext.map->GetLayerCount()) {
-    GetDefaultLogger().Error(source_location::current(), "Layer index {} out of range", layerIndex);
+    GetDefaultLogger().Error(source_location::current(), "Failed to FindStreamForResource set {}", value);
     return std::make_error_code(std::errc::invalid_argument);
-  }
-
-  if (const auto &set = _engine->FindStreamForResource(HashName(value))) {
-    return ParseSet(*set, layerIndex, currentLoadContext.map);
   }
 
   return {};
@@ -220,7 +197,6 @@ std::error_code WorldLoader::HandleWorldData(std::string_view category, std::str
   // We have a map here!
   if (category == "map") return HandleMapData(key, value);
   if (category == "tileset") return HandleTilesetData(key, value);
-  if (category == "layers") return HandleLayerData(key, value);
   if (category.starts_with(kTilePrefix)) return HandleTileData(category.substr(kTilePrefix.size()), key, value);
   if (category.starts_with(kTileTypeConfigPrefix)) return HandleTileTypeConfigData(category.substr(kTileTypeConfigPrefix.size()), key, value);
 

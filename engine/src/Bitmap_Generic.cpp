@@ -51,7 +51,7 @@ Bitmap::Bitmap(const Vec2D<BitmapSizeType> &size, BitDepth bit_depth, MemoryAlig
 Bitmap::~Bitmap() = default;
 
 Color Bitmap::ReadColorAt(BitmapSizeType x, BitmapSizeType y) const {
-  if (const auto srcLine = helper.GetLineData(_data, y); !srcLine.empty()) {
+  if (const auto srcLine = helper.GetLineData(std::span(_data), y); !srcLine.empty()) {
     switch (GetBitDepth()) {
       case BitDepth::DEPTH_1: return helpers::BitmapDepth1::ReadColor(srcLine, x) ? _palette[1] : _palette[0];
       case BitDepth::DEPTH_8: return _palette[helpers::BitmapDepth8::ReadColor(srcLine, x)];
@@ -69,11 +69,48 @@ std::unique_ptr<Painter> Bitmap::BeginDraw() {
   return std::make_unique<SoftwarePainter>(*this);
 }
 
+size_t Bitmap::MaskBytesPerLine() const {
+  return helpers::BitmapDepth1::BufferBytesPerLine(Size().x);
+}
+
+void Bitmap::EnableTransparencyMask() {
+  if (!_mask.empty()) {
+    return;
+  }
+
+  // Default every pixel to opaque (all bits set)
+  _mask.assign(MaskBytesPerLine() * Size().y, 0xFFu);
+}
+
+void Bitmap::SetMaskPixel(BitmapSizeType x, BitmapSizeType y, bool opaque) {
+  if (_mask.empty() || y >= Size().y || x >= Size().x) {
+    return;
+  }
+
+  const auto bytesPerLine = MaskBytesPerLine();
+  const auto line = std::span(_mask).subspan(y * bytesPerLine, bytesPerLine);
+  helpers::BitmapDepth1::WriteColor(line, x, opaque);
+}
+
+bool Bitmap::IsOpaqueAt(BitmapSizeType x, BitmapSizeType y) const {
+  if (_mask.empty()) {
+    return true;
+  }
+
+  if (y >= Size().y || x >= Size().x) {
+    return true;
+  }
+
+  const auto bytesPerLine = MaskBytesPerLine();
+  const auto line = std::span(_mask).subspan(y * bytesPerLine, bytesPerLine);
+  return helpers::BitmapDepth1::ReadColor(line, x);
+}
+
 void Bitmap::ReadLineInto(BitmapSizeType line,
                           BitmapSizeType startX,
                           BitmapSizeType endX,
                           const TargetInformation &targetInformation,
-                          std::span<uint8_t> targetBuffer) const {
+                          const std::span<uint8_t> &targetBuffer) const {
   const auto dstDepth = targetInformation.bit_depth;
   const auto srcDepth = GetBitDepth();
   const BitmapSizeType width = endX - startX;
@@ -87,19 +124,19 @@ void Bitmap::ReadLineInto(BitmapSizeType line,
     std::abort();
     return;
   }
-  
+
 #ifndef NDEBUG
   assert(!targetBuffer.empty());
   assert(targetBuffer.size() >= helpers::GetBitmapValidBytesPerLine(targetInformation.bit_depth, width));
 #endif
-  
+
   const auto both8Bit = helpers::is8Bit(srcDepth) && helpers::is8Bit(dstDepth);
   const auto eitherSideDontNeedPalette = srcDepth == BitDepth::DEPTH_8_NO_PALETTE || dstDepth == BitDepth::DEPTH_8_NO_PALETTE;
 
   // Optimized path for 8-bit to 8-bit matching
   // If either is NO_PALETTE, we don't care about palette matching, it's just a raw copy
   if (both8Bit && (eitherSideDontNeedPalette || (targetPalette && _palette.isSamePalette(*targetPalette)))) {
-    const auto srcLine = helper.GetLineData(_data, line);
+    const auto srcLine = helper.GetLineData(std::span(_data), line);
     memcpy(
         targetBuffer.data(),
         srcLine.data() + startX,
@@ -111,7 +148,7 @@ void Bitmap::ReadLineInto(BitmapSizeType line,
   // Optimized path for 32-bit to 32-bit matching (assuming standard layout)
   if (srcDepth == BitDepth::DEPTH_32 && dstDepth == BitDepth::DEPTH_32 &&
       targetInformation.shift == GetShift() && targetInformation.mask == GetMask()) {
-    const auto srcLine = helper.GetLineData(_data, line);
+    const auto srcLine = helper.GetLineData(std::span(_data), line);
     memcpy(
         targetBuffer.data(),
         srcLine.data() + startX * 4,
@@ -153,6 +190,12 @@ void Bitmap::ReadLineInto(BitmapSizeType line,
       case Depth::DEPTH_32: BitmapDepth32::WriteColor(targetBuffer, x, c, targetInformation.shift, targetInformation.mask); break;
       case Depth::DEPTH_INVALID: std::abort();
     }
+  }
+}
+
+void Bitmap::ReadTransparencyMaskLineInto(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<uint8_t> &targetBuffer) const {
+  if (HasTransparencyMask()) {
+    // TODO
   }
 }
 

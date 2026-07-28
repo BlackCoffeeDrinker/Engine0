@@ -6,7 +6,7 @@ namespace e00 {
 void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, const Color &color) const {
   if (x >= _target.Size().x || y >= _target.Size().y) return;
 
-  if (const auto line = _target.helper.GetLineData(_target._data, y);
+  if (const auto line = _target.helper.GetLineData(std::span(_target._data), y);
       !line.empty()) {
     switch (_target.GetBitDepth()) {
       case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(line, x, color, _target.GetShift(), _target.GetMask()); break;
@@ -18,13 +18,17 @@ void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, const Color &
       case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(line, x, _target.GetClosestColor(color)); break;
       default: break;
     }
+
+    if (_target.HasTransparencyMask()) {
+      _target.SetMaskPixel(x, y, true);
+    }
   }
 }
 
 void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, uint8_t index) const {
   if (x >= _target.Size().x || y >= _target.Size().y) return;
 
-  if (const auto line = _target.helper.GetLineData(_target._data, y);
+  if (const auto line = _target.helper.GetLineData(std::span(_target._data), y);
       !line.empty()) {
     switch (_target.GetBitDepth()) {
       case DrawableSurface::BitDepth::DEPTH_32: helpers::BitmapDepth32::WriteColor(line, x, _target.GetColorFromPalette(index), _target.GetShift(), _target.GetMask()); break;
@@ -36,6 +40,10 @@ void SoftwarePainter::PutPixel(BitmapSizeType x, BitmapSizeType y, uint8_t index
       case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(line, x, index > 0); break;
       default: break;
     }
+
+    if (_target.HasTransparencyMask()) {
+      _target.SetMaskPixel(x, y, true);
+    }
   }
 }
 
@@ -43,17 +51,43 @@ void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<Bitmap
   const BitmapSizeType width = srcRect.size.x;
   const BitmapSizeType height = srcRect.size.y;
 
+  const auto srcHasTransparency = src.HasTransparencyMask();
+  std::vector<uint8_t> mask;
+  std::vector<uint8_t> lineBuffer;
+  if (srcHasTransparency) {
+    mask.resize(helpers::BitmapDepth1::BufferBytesPerLine(srcRect.size.x), 1);
+    lineBuffer.resize(helpers::BitmapDepth8::BufferBytesPerLine(srcRect.size.x));
+  }
+
   // Direct copy for NO_PALETTE cases
   const DrawableSurface::TargetInformation info8{_target.GetBitDepth(), nullptr};// targetPalette doesn't matter for NO_PALETTE copy in ReadLineInto
-
   for (BitmapSizeType y = 0; y < height; ++y) {
-    if (auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y); !targetLine.empty()) {
-      src.ReadLineInto(
-          srcRect.origin.y + y,
-          srcRect.origin.x,
-          srcRect.origin.x + width,
-          info8,
-          targetLine.subspan(dstPos.x));
+    if (auto targetLine = _target.helper.GetLineData(std::span(_target._data), dstPos.y + y); !targetLine.empty()) {
+      const auto &destinationSpan = targetLine.subspan(dstPos.x);
+
+      if (!srcHasTransparency) {
+        src.ReadLineInto(
+            srcRect.origin.y + y,
+            srcRect.origin.x,
+            srcRect.origin.x + width,
+            info8,
+            destinationSpan);
+      } else {
+        src.ReadLineInto(
+            srcRect.origin.y + y,
+            srcRect.origin.x,
+            srcRect.origin.x + width,
+            info8,
+            lineBuffer);
+
+        src.ReadTransparencyMaskLineInto(
+            srcRect.origin.y + y,
+            srcRect.origin.x,
+            srcRect.origin.x + width,
+            mask);
+
+        // TODO: Only copy the non-transparent pixels
+      }
     }
   }
 }
@@ -61,6 +95,12 @@ void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<Bitmap
 void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSizeType> srcRect, Vec2D<BitmapSizeType> dstPos) const {
   const BitmapSizeType width = srcRect.size.x;
   const BitmapSizeType height = srcRect.size.y;
+
+  const auto srcHasTransparency = src.HasTransparencyMask();
+  std::vector<uint8_t> mask;
+  //if (srcHasTransparency) {
+  mask.resize(helpers::BitmapDepth1::BufferBytesPerLine(srcRect.size.x), 1);
+  //}
 
   const auto srcPaletteSize = src.GetNumberOfColorsInPalette();
   FixedPalette srcPalette(srcPaletteSize);
@@ -82,10 +122,12 @@ void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSiz
         info8,
         row_buffer);
 
-    if (auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y);
+    if (auto targetLine = _target.helper.GetLineData(std::span(_target._data), dstPos.y + y);
         !targetLine.empty()) {
       for (BitmapSizeType x = 0; x < width; ++x) {
-        targetLine[dstPos.x + x] = colorMap[row_buffer[x]];
+        if (helpers::BitmapDepth1::ReadColor(mask, x) == 1) {
+          targetLine[dstPos.x + x] = colorMap[row_buffer[x]];
+        }
       }
     }
   }
@@ -113,12 +155,26 @@ void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSi
 
   std::vector<uint8_t> line32(helpers::BitmapDepth32::BufferBytesPerLine(width));
 
+  const bool srcHasMask = src.HasTransparencyMask();
+  const bool dstHasMask = _target.HasTransparencyMask();
+  std::vector<uint8_t> maskBuffer;
+  if (srcHasMask) {
+    maskBuffer.resize(helpers::BitmapDepth1::BufferBytesPerLine(width));
+  }
+
   for (BitmapSizeType y = 0; y < srcRect.size.y; ++y) {
     src.ReadLineInto(srcRect.origin.y + y, srcRect.origin.x, srcRect.origin.x + width, info32, line32);
-    auto targetLine = _target.helper.GetLineData(_target._data, dstPos.y + y);
+    auto targetLine = _target.helper.GetLineData(std::span(_target._data), dstPos.y + y);
     if (targetLine.empty()) continue;
+    if (srcHasMask) {
+      src.ReadTransparencyMaskLineInto(srcRect.origin.y + y, srcRect.origin.x, srcRect.origin.x + width, maskBuffer);
+    }
 
     for (BitmapSizeType x = 0; x < width; ++x) {
+      if (srcHasMask && !helpers::BitmapDepth1::ReadColor(maskBuffer, x)) {
+        continue;
+      }
+
       const auto c = helpers::BitmapDepth32::ReadColor(line32, x, info32.shift, info32.mask);
 
       const auto dest_x = dstPos.x + x;
@@ -132,6 +188,10 @@ void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSi
         case DrawableSurface::BitDepth::DEPTH_1: helpers::BitmapDepth1::WriteColor(targetLine, dest_x, _target.GetClosestColor(c)); break;
         default: break;
       }
+
+      if (dstHasMask) {
+        _target.SetMaskPixel(dest_x, dstPos.y + y, true);
+      }
     }
   }
 }
@@ -139,6 +199,7 @@ void SoftwarePainter::DrawGenericData(const DrawableSurface &src, RectT<BitmapSi
 void SoftwarePainter::DrawPoint(const Vec2D<BitmapSizeType> &pos) {
   switch (_penStyle) {
     case PenStyle::NoPen: break;
+    case PenStyle::TransparentPen: _target.SetMaskPixel(pos.x, pos.y, false); break;
     case PenStyle::SolidLineColor: PutPixel(pos.x, pos.y, _penColor); break;
     case PenStyle::SolidLineIndex: PutPixel(pos.x, pos.y, _penIndex); break;
   }
@@ -265,8 +326,7 @@ void SoftwarePainter::BlitRawLine(BitmapSizeType line, BitmapSizeType startX, Bi
   if (endX <= startX) return;
   if (startX >= _target.Size().x) return;
 
-  if (const auto dstLine = _target.helper.GetLineData(_target._data, line); !dstLine.empty()) {
-
+  if (const auto dstLine = _target.helper.GetLineData(std::span(_target._data), line); !dstLine.empty()) {
     const BitmapSizeType maxWidth = std::min(static_cast<BitmapSizeType>(endX - startX), static_cast<BitmapSizeType>(_target.Size().x - startX));
 
     // Calculate width based on source data format
@@ -282,7 +342,8 @@ void SoftwarePainter::BlitRawLine(BitmapSizeType line, BitmapSizeType startX, Bi
       default: return;
     }
 
-    // Fast path: direct memcpy when source and destination formats match
+    // Fast path: direct memcpy when source and destination formats match (only when there's no
+    // per-pixel mask to honor, since a memcpy can't skip individual transparent pixels)
     if (dataFormatting.bit_depth == _target.GetBitDepth()) {
       bool canUseFastPath = false;
       size_t bytesToCopy = 0;
@@ -390,6 +451,15 @@ void SoftwarePainter::BlitRawLine(BitmapSizeType line, BitmapSizeType startX, Bi
       }
     }
   }
+}
+
+void SoftwarePainter::BlitMaskedLine(
+    BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX,
+    const std::span<const uint8_t> &data, const std::span<const uint8_t> &mask,
+    const DrawableSurface::TargetInformation &dataFormatting) {
+  assert(mask.size() >= helpers::BitmapDepth1::ValidBytesPerLine(endX - startX));
+
+  // TODO
 }
 
 void SoftwarePainter::BlitSurface(const DrawableSurface &src,

@@ -6,6 +6,7 @@ namespace apple {
 void MetalSurfacePainter::DrawPoint(const e00::Vec2D<e00::BitmapSizeType> &pos) {
   switch (_penStyle) {
     case PenStyle::NoPen: break;
+    case PenStyle::TransparentPen: break;
     case PenStyle::SolidLineColor: e00::helpers::BitmapDepth32::WriteColor(GetLineData(pos.y), pos.x, _penColor); break;
     case PenStyle::SolidLineIndex: e00::helpers::BitmapDepth32::WriteColor(GetLineData(pos.y), pos.x, _palette[_penIndex]); break;
   }
@@ -187,12 +188,23 @@ void MetalSurfacePainter::BlitRawLine(e00::BitmapSizeType line, e00::BitmapSizeT
   }
 }
 
+void MetalSurfacePainter::BlitMaskedLine(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<const uint8_t> &data, const std::span<const uint8_t> &mask, const e00::DrawableSurface::TargetInformation &dataFormatting) {
+  // Does not support transparent lines
+  std::abort();
+}
+
 void MetalSurfacePainter::BlitSurface(const e00::DrawableSurface &src,
                                       e00::RectT<unsigned short> srcRect,
                                       e00::Vec2D<unsigned short> dstPos) {
   const e00::DrawableSurface::TargetInformation dstInfo{e00::DrawableSurface::BitDepth::DEPTH_8, &_palette};
 
   std::vector<uint8_t> dst(srcRect.size.x);
+
+  const bool srcHasMask = src.HasTransparencyMask();
+  std::vector<uint8_t> maskBuffer;
+  if (srcHasMask) {
+    maskBuffer.resize(e00::helpers::BitmapDepth1::BufferBytesPerLine(srcRect.size.x));
+  }
 
   for (e00::BitmapSizeType y = 0; y < srcRect.size.y; ++y) {
     src.ReadLineInto(srcRect.From().y + y,
@@ -201,10 +213,14 @@ void MetalSurfacePainter::BlitSurface(const e00::DrawableSurface &src,
                      dst);
 
     for (size_t i = 0; i < dst.size(); ++i) {
+      if (srcHasMask && !e00::helpers::BitmapDepth1::ReadColor(maskBuffer, static_cast<e00::BitmapSizeType>(i))) {
+        continue;
+      }
+
       const auto value = dst[i];
       if (value >= _palette.size())
         continue;
-      
+
       e00::helpers::BitmapDepth32::WriteColor(
           GetLineData(dstPos.y + y), dstPos.x + i,
           _palette[value]);

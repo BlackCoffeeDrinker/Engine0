@@ -15,6 +15,7 @@ class MetalSurfacePainter : public e00::Painter {
   [[nodiscard]] e00::Color GetPenColor() const {
     switch (_penStyle) {
       case PenStyle::NoPen: return {};
+      case PenStyle::TransparentPen: return {};
       case PenStyle::SolidLineColor: return _penColor;
       case PenStyle::SolidLineIndex: return _palette[_penIndex];
     }
@@ -23,6 +24,7 @@ class MetalSurfacePainter : public e00::Painter {
   [[nodiscard]] e00::Color GetBrushColor() const {
     switch (_brushStyle) {
       case BrushStyle::NoBrush: return {};
+      case BrushStyle::TransparentBrush: return {};
       case BrushStyle::SolidBrushColor: return _brushColor;
       case BrushStyle::SolidBrushIndex: return _palette[_brushIndex];
     }
@@ -75,6 +77,7 @@ public:
   void DrawEllipse(const e00::RectT<unsigned short> &rect) override;
   void DrawRect(const e00::RectT<unsigned short> &rect) override;
   void BlitRawLine(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<const uint8_t> &data, const e00::DrawableSurface::TargetInformation &dataFormatting) override;
+  void BlitMaskedLine(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<const uint8_t> &data, const std::span<const uint8_t> &mask, const e00::DrawableSurface::TargetInformation &dataFormatting) override;
   void BlitSurface(const e00::DrawableSurface &src, e00::RectT<unsigned short> srcRect, e00::Vec2D<unsigned short> dstPos) override;
 };
 }// namespace apple

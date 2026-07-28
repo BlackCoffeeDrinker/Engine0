@@ -66,7 +66,7 @@ public:
    * After calling this function, GetBitDepth() will return DEPTH_8_NO_PALETTE.
    */
   virtual void DiscardPalette() = 0;
-  
+
   [[nodiscard]] bool HasSamePalette(const DrawableSurface &other) const {
     // If either this or the other surface is 8-bit with no palette, they are considered to have the same palette
     if (GetBitDepth() == BitDepth::DEPTH_8_NO_PALETTE || other.GetBitDepth() == BitDepth::DEPTH_8_NO_PALETTE) {
@@ -96,6 +96,14 @@ public:
    * @return true if this surface is hardware accelerated (e.g., in VRAM) 
    */
   [[nodiscard]] virtual bool IsHardwareAccelerated() const { return false; }
+
+  /**
+   * Check if this surface currently carries a 1-bit transparency mask.
+   * A surface without an enabled mask is treated as fully opaque.
+   *
+   * @return true if this surface has a transparency mask enabled
+   */
+  [[nodiscard]] virtual bool HasTransparencyMask() const { return false; }
 
   /**
    * 
@@ -129,8 +137,12 @@ public:
   virtual void ReadLineInto(
       BitmapSizeType line,
       BitmapSizeType startX, BitmapSizeType endX,
-      const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const = 0;
+      const TargetInformation &targetInformation, const std::span<uint8_t> &targetBuffer) const = 0;
 
+  virtual void ReadTransparencyMaskLineInto(
+      BitmapSizeType line,
+      BitmapSizeType startX, BitmapSizeType endX,
+      const std::span<uint8_t> &targetBuffer) const = 0;
 
   // For debugging
   std::error_code SaveToBMP(WritableStream &writableStream) const;

@@ -225,7 +225,8 @@ struct SoftwareBitmapHelper {
     WriteRaw(data, position, raw);
   }
 
-  [[nodiscard]] std::span<const uint8_t> GetLineData(const std::span<const uint8_t> &data, BitmapSizeType y) const {
+  template<typename T>
+  [[nodiscard]] std::span<T> GetLineData(const std::span<T> &data, BitmapSizeType y) const {
 #ifndef NDEBUG
     assert(valid_data_per_line != 0);
     assert(bytes_per_line != 0);
@@ -234,7 +235,8 @@ struct SoftwareBitmapHelper {
     return data.subspan(y * bytes_per_line, valid_data_per_line);
   }
 
-  [[nodiscard]] std::span<uint8_t> GetLineData(const std::span<uint8_t> &data, BitmapSizeType y) {
+  template<typename T>
+  [[nodiscard]] std::span<T> GetLineData(const std::span<T> &data, BitmapSizeType y) {
 #ifndef NDEBUG
     assert(valid_data_per_line != 0);
     assert(bytes_per_line != 0);

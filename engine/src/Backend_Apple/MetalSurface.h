@@ -53,7 +53,9 @@ public:
   void ReadLineInto(
       e00::BitmapSizeType line,
       e00::BitmapSizeType startX, e00::BitmapSizeType endX,
-      const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const override;
+      const TargetInformation &targetInformation, const std::span<uint8_t> &targetBuffer) const override;
+  
+  void ReadTransparencyMaskLineInto(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<uint8_t> &targetBuffer) const override;
 
   id<MTLTexture> PresentTexture() const { return _presentTexture; }
   void setPresentTexture(id<MTLTexture> pt) { _presentTexture = pt; }

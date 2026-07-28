@@ -23,6 +23,7 @@ protected:
   // Outline
   enum class PenStyle {
     NoPen,
+    TransparentPen,
     SolidLineColor,
     SolidLineIndex,
   };
@@ -30,6 +31,7 @@ protected:
   // Fill
   enum class BrushStyle {
     NoBrush,
+    TransparentBrush,
     SolidBrushColor,
     SolidBrushIndex,
   };
@@ -47,7 +49,9 @@ public:
   virtual ~Painter();// Acts as "EndPaint()", restoring hardware modes automatically
 
   void SetNoPen() { _penStyle = PenStyle::NoPen; }
+  void SetTransparentPen() { _penStyle = PenStyle::TransparentPen; }
   void SetNoBrush() { _brushStyle = BrushStyle::NoBrush; }
+  void SetTransparentBrush() { _brushStyle = BrushStyle::TransparentBrush; }
 
   void SetPenSolid(uint16_t penWidth, const Color &color) {
     _penWidth = penWidth;
@@ -76,7 +80,6 @@ public:
    * @return target information
    */
   [[nodiscard]] virtual DrawableSurface::TargetInformation GetTargetInformation() const = 0;
-  
   [[nodiscard]] virtual BitmapSize GetDrawableSize() const = 0;
 
   // DrawPoint and DrawPoints should only be used for small numbers of points or debugging
@@ -99,7 +102,24 @@ public:
   virtual void DrawRect(const RectT<BitmapSizeType> &rect) = 0;
 
   // High-speed line blitting interface, pen and brush aren't applied
-  virtual void BlitRawLine(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<const uint8_t> &data, const DrawableSurface::TargetInformation &dataFormatting) = 0;
+  virtual void BlitRawLine(BitmapSizeType line,
+                           BitmapSizeType startX, BitmapSizeType endX,
+                           const std::span<const uint8_t> &data,
+                           const DrawableSurface::TargetInformation &dataFormatting) = 0;
+
+  /**
+   * 
+   * @param line Line number
+   * @param startX Start X coordinate
+   * @param endX End X coordinate
+   * @param data Bitmap data in destination format
+   * @param mask Mask data in DEPTH_1 (1 byte = 8 pixels)
+   * @param dataFormatting Format in data
+   */
+  virtual void BlitMaskedLine(BitmapSizeType line,
+                              BitmapSizeType startX, BitmapSizeType endX,
+                              const std::span<const uint8_t> &data, const std::span<const uint8_t> &mask,
+                              const DrawableSurface::TargetInformation &dataFormatting) = 0;
 
   // High-speed block blitting interface, pen and brush aren't applied
   virtual void BlitSurface(const DrawableSurface &src,

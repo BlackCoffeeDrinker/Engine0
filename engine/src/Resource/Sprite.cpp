@@ -100,13 +100,24 @@ std::unique_ptr<Painter> Sprite::BeginDraw() {
   return nullptr;
 }
 
+bool Sprite::HasTransparencyMask() const {
+  if (const auto *image = GetCurrentImage()) {
+    return image->bitmap->HasTransparencyMask();
+  }
+  return false;
+}
+
 void Sprite::ReadLineInto(
     BitmapSizeType line,
     BitmapSizeType startX, BitmapSizeType endX,
     const TargetInformation &targetInformation,
-    std::span<uint8_t> targetBuffer) const {
+    const std::span<uint8_t> &targetBuffer) const {
   if (const auto *image = GetCurrentImage()) {
     image->bitmap->ReadLineInto(line, startX, endX, targetInformation, targetBuffer);
+  }
+}
+void Sprite::ReadTransparencyMaskLineInto(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<uint8_t> &targetBuffer) const {
+  if (HasTransparencyMask()) {
   }
 }
 
@@ -134,9 +145,20 @@ std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::millise
   // Copy data
   const auto copyHeight = std::min(Size().y, data->Size().y);
   for (BitmapSizeType y = 0; y < copyHeight; ++y) {
-    auto srcLine = data->helper.GetLineData(data->_data, y);
-    auto dstLine = frame->bitmap->helper.GetLineData(data->_data, y);
+    auto srcLine = data->helper.GetLineData(std::span(data->_data), y);
+    auto dstLine = frame->bitmap->helper.GetLineData(std::span(data->_data), y);
     std::memcpy(dstLine.data(), srcLine.data(), std::min(srcLine.size(), dstLine.size()));
+  }
+
+  // Copy/allocate the transparency mask from the source bitmap, if present
+  if (data->HasTransparencyMask()) {
+    frame->bitmap->EnableTransparencyMask();
+    const auto copyWidth = std::min(Size().x, data->Size().x);
+    for (BitmapSizeType y = 0; y < copyHeight; ++y) {
+      for (BitmapSizeType x = 0; x < copyWidth; ++x) {
+        frame->bitmap->SetMaskPixel(x, y, data->IsOpaqueAt(x, y));
+      }
+    }
   }
 
   *it = std::move(frame);

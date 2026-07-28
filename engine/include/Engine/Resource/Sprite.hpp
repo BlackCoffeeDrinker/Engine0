@@ -70,11 +70,16 @@ public:
 
   [[nodiscard]] std::unique_ptr<Painter> BeginDraw() override;
 
+  [[nodiscard]] bool HasTransparencyMask() const override;
+
   void ReadLineInto(
       BitmapSizeType line,
       BitmapSizeType startX, BitmapSizeType endX,
-      const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const override;
+      const TargetInformation &targetInformation, const std::span<uint8_t> &targetBuffer) const override;
 
+  void ReadTransparencyMaskLineInto(BitmapSizeType line,
+                                    BitmapSizeType startX, BitmapSizeType endX,
+                                    const std::span<uint8_t> &targetBuffer) const override;
   /**
    * Adds a frame to the end of the frame list
    * 

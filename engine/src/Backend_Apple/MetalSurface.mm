@@ -53,8 +53,12 @@ std::unique_ptr<e00::DrawableSurface> MetalSurface::CreateOptimizedSurface(const
 void MetalSurface::ReadLineInto(
     e00::BitmapSizeType line,
     e00::BitmapSizeType startX, e00::BitmapSizeType endX,
-    const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const {
+    const TargetInformation &targetInformation, const std::span<uint8_t>& targetBuffer) const {
    std::abort();
+}
+
+void MetalSurface::ReadTransparencyMaskLineInto(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<uint8_t> &targetBuffer) const {
+    std::abort();
 }
 
 bool MetalSurface::UploadToTexture(id<MTLDevice> device) {

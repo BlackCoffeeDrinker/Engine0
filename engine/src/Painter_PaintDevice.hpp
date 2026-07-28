@@ -31,6 +31,7 @@ public:
   void DrawRect(const RectT<BitmapSizeType> &rect) override;
   void DrawLine(const Vec2D<BitmapSizeType> &start, const Vec2D<BitmapSizeType> &end) override;
   void BlitRawLine(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<const uint8_t> &data, const DrawableSurface::TargetInformation &dataFormatting) override;
+  void BlitMaskedLine(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const std::span<const uint8_t> &data, const std::span<const uint8_t> &mask, const DrawableSurface::TargetInformation &dataFormatting) override;
   void BlitSurface(const DrawableSurface &src,
                    RectT<BitmapSizeType> srcRect,
                    Vec2D<BitmapSizeType> dstPos) override;

@@ -18,7 +18,12 @@ class Bitmap : public DrawableResource {
   FixedPalette _palette;
   std::vector<uint8_t> _data;
 
+  // Optional 1-bit opacity mask, packed the same way DEPTH_1 pixel data is packed
+  // (bit=1 opaque / bit=0 transparent). Empty when the surface has no mask.
+  std::vector<uint8_t> _mask;
+
   [[nodiscard]] Color ReadColorAt(BitmapSizeType x, BitmapSizeType y) const;
+  [[nodiscard]] size_t MaskBytesPerLine() const;
 
 public:
   enum class MemoryAlignment {
@@ -42,7 +47,32 @@ public:
   [[nodiscard]] const auto &GetMask() const noexcept { return helper.mask; }
   void SetPalette(const FixedPalette &colors) { _palette = colors; }
 
-  void ReadLineInto(BitmapSizeType line, BitmapSizeType startX, BitmapSizeType endX, const TargetInformation &targetInformation, std::span<uint8_t> targetBuffer) const override;
+  [[nodiscard]] bool HasTransparencyMask() const override { return !_mask.empty(); }
+
+  /**
+   * Enables the transparency mask on this bitmap (idempotent).
+   * Every pixel defaults to opaque until explicitly marked transparent.
+   */
+  void EnableTransparencyMask();
+
+  /**
+   * Marks a single pixel as opaque or transparent. No-op if the mask isn't enabled.
+   */
+  void SetMaskPixel(BitmapSizeType x, BitmapSizeType y, bool opaque);
+
+  /**
+   * @return true if the pixel at (x, y) is opaque; always true when there's no mask.
+   */
+  [[nodiscard]] bool IsOpaqueAt(BitmapSizeType x, BitmapSizeType y) const;
+
+  void ReadLineInto(BitmapSizeType line,
+                    BitmapSizeType startX, BitmapSizeType endX,
+                    const TargetInformation &targetInformation,
+                    const std::span<uint8_t> &targetBuffer) const override;
+
+  void ReadTransparencyMaskLineInto(BitmapSizeType line,
+                                    BitmapSizeType startX, BitmapSizeType endX,
+                                    const std::span<uint8_t> &targetBuffer) const override;
 
   [[nodiscard]] std::error_code SetPaletteColor(std::size_t index, const Color &color) {
     if (index < _palette.size()) [[likely]] {

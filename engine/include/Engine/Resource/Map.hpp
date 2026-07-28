@@ -3,6 +3,7 @@
 #include <Engine/ResourcePtr.hpp>
 
 #include <Engine/Resource/DrawableResource.hpp>
+#include <utility>
 
 namespace e00 {
 class Painter;
@@ -12,34 +13,49 @@ class Painter;
  */
 class Map : public Resource {
   struct TileOptions {};
-
-  const Vec2D<WorldCoordinateType> _map_size;
-  std::vector<TileOptions> _options;
-
-  struct Layer {
-    std::vector<TileIdType> map_tiles;
-  };
-  struct SourceSheet {
-    ResourcePtrT<DrawableResource> tileset{};
+  
+  struct SourceTileset {
+    ResourcePtrT<DrawableResource> source_sheet{};
     uint16_t margin{};
     uint16_t spacing{};
     uint16_t tiles_per_row{};
-    uint16_t count_rows{};
+
+    TileIdType start_tile_id{};
+
+    Vec2D<BitmapSizeType> tile_size{0, 0};         // Size of a tile in the `tileset`
+    DrawableSurface::TargetInformation target_info;//< Cached target information for `tilesets`
+    detail::SoftwareBitmapHelper bmp_desc;         //< Bitmap helper for `tilesets`
+
+    void SetTileset(ResourcePtrT<DrawableResource> set) {
+      source_sheet = std::move(set);
+      ComputeVolatileValues();
+    }
+
+    void SetTileSize(const Vec2D<BitmapSizeType> &size) {
+      tile_size = size;
+      ComputeVolatileValues();
+    }
+
+    [[nodiscard]] RectT<BitmapSizeType> GetTileRect(TileIdType tile_id) const;
+    [[nodiscard]] size_t GetTileBufferSize() const;
+  private:
+    void ComputeVolatileValues();
   };
 
-  // region Tileset Bitmap
-  detail::SoftwareBitmapHelper _bmp_desc;        //< Bitmap helper for `_tilesets`
-  Vec2D<BitmapSizeType> _tileset_tile_size{0, 0};// Size of a tile in the tileset
-  FixedPalette _palette{0};                      //< Palette of the tiles
-  std::vector<std::vector<uint8_t>> _tilesets{}; //< Bitmap data of the tiles
-  SourceSheet _source_sheet{};                   //< Currently only one source sheet
-  // endregion
+  const Vec2D<WorldCoordinateType> _map_size;
+  std::vector<TileOptions> _options;
+  FixedPalette _palette;
 
-  // region Layer data
-  std::vector<Layer> _layers{};
-  // endregion
+  SourceTileset _source_tilesets;
+  std::map<TileIdType, std::vector<uint8_t>> _tilesets{};//< Bitmap data of the tiles
+  std::vector<TileIdType> _map_tiles;
 
+  [[nodiscard]] std::set<WorldCoordinateType> extractTilesFromRect(const RectT<WorldCoordinateType> &rect) const;
   [[nodiscard]] WorldCoordinateType LayerSize() const { return _map_size.Area(); }
+  [[nodiscard]] SourceTileset &GetTilesetSource(TileIdType tileId) {
+    (void) tileId;
+    return _source_tilesets;
+  }
 
   [[nodiscard]] WorldCoordinateType PositionToLinear(const Position &pos) const {
     if (pos > _map_size) [[unlikely]] {
@@ -54,43 +70,32 @@ class Map : public Resource {
   void LoadTileId(TileIdType tile_id);
 
 public:
-  Map() : _map_size(0, 0) {}
+  Map() : _map_size(0, 0), _source_tilesets() {}
   Map(WorldCoordinateType width, WorldCoordinateType height)
       : _map_size(width, height),
-        _options(LayerSize()) {}
-
+        _options(LayerSize()),
+        _source_tilesets(),
+        _map_tiles(LayerSize()) {}
 
   ~Map() override = default;
 
   [[nodiscard]] size_t SizeUsage() override;
   [[nodiscard]] type_t Type() const override { return type_id<Map>(); }
   explicit operator bool() const noexcept { return _map_size.x > 0 && _map_size.y > 0; }
-  [[nodiscard]] const ResourcePtrT<DrawableResource> &Tileset() const { return _source_sheet.tileset; }
   [[nodiscard]] WorldCoordinateType Width() const { return _map_size.x; }
   [[nodiscard]] WorldCoordinateType Height() const { return _map_size.y; }
   [[nodiscard]] Vec2D<WorldCoordinateType> Size() const { return _map_size; }
-
-  void SetLayerCount(uint16_t layerCount) {
-    _layers.resize(layerCount);
-    for (auto &layer : _layers) {
-      layer.map_tiles.resize(LayerSize());
-    }
-  }
-  [[nodiscard]] auto GetLayerCount() const { return _layers.size(); }
+  [[nodiscard]] Vec2D<BitmapSizeType> TileSize() const { return _source_tilesets.tile_size; }
 
   void SetTileset(ResourcePtrT<DrawableResource> set);
-  void SetTilesetSpacing(uint16_t spacing) { _source_sheet.spacing = spacing; }
-
-  [[nodiscard]] const Vec2D<BitmapSizeType> &TileSize() const { return _tileset_tile_size; }
+  void SetTilesetSpacing(uint16_t spacing) { _source_tilesets.spacing = spacing; }
   void SetTileSize(const Vec2D<BitmapSizeType> &size);
-  
-  bool Set(uint8_t layer, const Position &position, TileIdType tileId) {
+
+  bool Set(const Position &position, TileIdType tileId) {
     if (const auto i = PositionToLinear(position);
         ValidDataPosition(i)) [[likely]] {
-      if (layer < _layers.size()) {
-        _layers[layer].map_tiles[i] = tileId;
-        return true;
-      }
+      _map_tiles[i] = tileId;
+      return true;
     }
 
     return false;
