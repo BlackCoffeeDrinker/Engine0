@@ -1,0 +1,20 @@
+{
+    "automappingRulesFile": "",
+    "commands": [
+    ],
+    "compatibilityVersion": 1100,
+    "extensionsPath": "extensions",
+    "folders": [
+        "."
+    ],
+    "properties": [
+        {
+            "name": "COLLIDE",
+            "propertytype": "",
+            "type": "bool",
+            "value": false
+        }
+    ],
+    "propertyTypes": [
+    ]
+}

@@ -14,6 +14,13 @@ class AnimationFrame:
 
 
 @dataclass
+class TsxTile:
+    tile_id: int
+    class_name: str | None = None
+    collision: bool = False
+
+
+@dataclass
 class TsxTileset:
     image_path: Path
     tile_width: int
@@ -21,6 +28,7 @@ class TsxTileset:
     columns: int
     tile_count: int
     animations: dict[int, list[AnimationFrame]] = field(default_factory=dict)
+    tiles: dict[int, TsxTile] = field(default_factory=dict)
 
 
 def parse_tsx(tsx_path: Path) -> TsxTileset:
@@ -47,8 +55,25 @@ def parse_tsx(tsx_path: Path) -> TsxTileset:
     image_path = (tsx_path.parent / source).resolve()
 
     animations: dict[int, list[AnimationFrame]] = {}
+    tiles: dict[int, TsxTile] = {}
     for tile_el in root.findall("tile"):
         tile_id = int(tile_el.get("id"))
+
+        class_name = tile_el.get("type") or None
+
+        collision = False
+        properties_el = tile_el.find("properties")
+        if properties_el is not None:
+            for property_el in properties_el.findall("property"):
+                # Only the `collision` property name is honored. The legacy `COLLIDE`
+                # property found on some tiles in the source data is a mistake and is
+                # intentionally ignored.
+                if (property_el.get("name") or "").lower() == "collision":
+                    collision = (property_el.get("value") or "").lower() in ("true", "1", "yes")
+
+        if class_name is not None or collision:
+            tiles[tile_id] = TsxTile(tile_id=tile_id, class_name=class_name, collision=collision)
+
         animation_el = tile_el.find("animation")
         if animation_el is None:
             continue
@@ -67,4 +92,5 @@ def parse_tsx(tsx_path: Path) -> TsxTileset:
         columns=columns,
         tile_count=tile_count,
         animations=animations,
+        tiles=tiles,
     )

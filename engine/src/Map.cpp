@@ -70,26 +70,43 @@ void Map::SetTileSize(const Vec2D<BitmapSizeType> &size) {
   _source_tilesets.SetTileSize(size);
 }
 
-std::set<WorldCoordinateType> Map::extractTilesFromRect(const RectT<WorldCoordinateType> &rect) const {
-  const auto start = rect.From();
-  const auto end = rect.To();
-  std::set<WorldCoordinateType> tiles;
+void Map::renderTileId(Painter &painter, const BitmapSize &painter_origin, const Vec2D<unsigned short> tilePos, const std::vector<unsigned short>::value_type tileId) {
+  assert(tileId != 0);
 
-  for (WorldCoordinateType y = start.y; y < end.y; y++) {
-    for (WorldCoordinateType x = start.x; x < end.x; x++) {
-      const auto mapIndex = PositionToLinear({x, y});
-      assert(ValidDataPosition(mapIndex));
-      tiles.insert(_map_tiles[mapIndex]);
-    }
+  const auto &sourceSet = GetTilesetSource(tileId);
+  const auto &it = _tilesets.find(tileId);
+  
+  assert(it != _tilesets.end() && !it->second.empty());
+
+  const Vec2D<BitmapSizeType> origin = tilePos * sourceSet.tile_size + painter_origin;
+
+  for (BitmapSizeType bitmap_y = 0; bitmap_y < sourceSet.tile_size.y; bitmap_y++) {
+    painter.BlitRawLine(
+        origin.y + bitmap_y,
+        origin.x, origin.x + sourceSet.tile_size.x,
+        sourceSet.bmp_desc.GetLineData(std::span(it->second), bitmap_y),
+        sourceSet.bmp_desc.GetTargetInformation());
   }
-
-  return tiles;
 }
-void Map::PaintMap(const RectT<WorldCoordinateType> &rect, Painter &painter, const BitmapSize &painter_origin) {
 
-  // Ensure every tile is loaded
+void Map::PaintGround(const RectT<WorldCoordinateType> &rect, Painter &painter, const BitmapSize &painter_origin) {
   {
-    const auto tiles = extractTilesFromRect(rect);
+    const auto start = rect.From();
+    const auto end = rect.To();
+
+    std::set<WorldCoordinateType> tiles;
+
+    for (WorldCoordinateType y = start.y; y < end.y; y++) {
+      for (WorldCoordinateType x = start.x; x < end.x; x++) {
+        const auto mapIndex = PositionToLinear({x, y});
+        assert(ValidDataPosition(mapIndex));
+
+        if (TileIdType tile = _map_tiles[mapIndex]; tile > 0) {
+          tiles.insert(tile);
+        }
+      }
+    }
+
     for (const auto &tile: tiles) {
       LoadTileId(tile);
     }
@@ -100,20 +117,11 @@ void Map::PaintMap(const RectT<WorldCoordinateType> &rect, Painter &painter, con
       const Vec2D tilePos = {x, y};
       const auto mapIndex = PositionToLinear(rect.origin + tilePos);
       const auto tileId = _map_tiles.at(mapIndex);
-      const auto &it = _tilesets.find(tileId);
-      if (it == _tilesets.end() || it->second.empty()) {
+      if (tileId == 0) {
         continue;
       }
 
-      const auto &sourceSet = GetTilesetSource(tileId);
-      const Vec2D<BitmapSizeType> origin = tilePos * sourceSet.tile_size + painter_origin;
-      for (BitmapSizeType bitmap_y = 0; bitmap_y < sourceSet.tile_size.y; bitmap_y++) {
-        painter.BlitRawLine(
-            origin.y + bitmap_y,
-            origin.x, origin.x + sourceSet.tile_size.x,
-            sourceSet.bmp_desc.GetLineData(std::span(it->second), bitmap_y),
-            sourceSet.bmp_desc.GetTargetInformation());
-      }
+      renderTileId(painter, painter_origin, tilePos, tileId);
     }
   }
 }

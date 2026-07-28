@@ -79,3 +79,31 @@ class AtlasBuilder:
             transparent_index=self.image.transparent_index,
             pixels=pixels,
         )
+
+
+def compact(atlas: AtlasBuilder, used_tile_ids: set[int]) -> tuple[AtlasBuilder, dict[int, int]]:
+    """Build a new, smaller atlas containing only `used_tile_ids`. The engine ignores a
+    final map cell value of 0 ("no tile"), so unlike before, no atlas slot needs to be
+    wasted on a forced blank/transparent tile - every atlas slot holds real tile data.
+    Returns the new atlas and a mapping from old tile id -> new (compacted, 0-based)
+    local tile id."""
+    base_image = IndexedImage(
+        width=atlas.image.width,
+        height=0,
+        palette=atlas.image.palette,
+        transparent_index=atlas.image.transparent_index,
+        pixels=bytearray(),
+    )
+    new_atlas = AtlasBuilder(
+        base_image,
+        tile_width=atlas.tile_width,
+        tile_height=atlas.tile_height,
+        columns=atlas.columns,
+        tile_count=0,
+    )
+
+    remap: dict[int, int] = {}
+    for old_id in sorted(used_tile_ids):
+        remap[old_id] = new_atlas.append_tile(atlas.get_tile(old_id))
+
+    return new_atlas, remap

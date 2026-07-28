@@ -52,7 +52,7 @@ public:
   [[nodiscard]] size_t NumActors() const;
 
   void PaintMap(const Position &start, const Position &end, Painter &painter, const BitmapSize &painterOrigin) const {
-    _map->PaintMap({start, end}, painter, painterOrigin);
+    _map->PaintGround({start, end}, painter, painterOrigin);
   }
 
   std::vector<NodeID> &Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const;

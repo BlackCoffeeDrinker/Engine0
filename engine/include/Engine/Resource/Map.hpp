@@ -50,7 +50,6 @@ class Map : public Resource {
   std::map<TileIdType, std::vector<uint8_t>> _tilesets{};//< Bitmap data of the tiles
   std::vector<TileIdType> _map_tiles;
 
-  [[nodiscard]] std::set<WorldCoordinateType> extractTilesFromRect(const RectT<WorldCoordinateType> &rect) const;
   [[nodiscard]] WorldCoordinateType LayerSize() const { return _map_size.Area(); }
   [[nodiscard]] SourceTileset &GetTilesetSource(TileIdType tileId) {
     (void) tileId;
@@ -88,10 +87,13 @@ public:
   [[nodiscard]] Vec2D<BitmapSizeType> TileSize() const { return _source_tilesets.tile_size; }
 
   void SetTileset(ResourcePtrT<DrawableResource> set);
-  void SetTilesetSpacing(uint16_t spacing) { _source_tilesets.spacing = spacing; }
   void SetTileSize(const Vec2D<BitmapSizeType> &size);
+  void renderTileId(Painter &painter, const BitmapSize &painter_origin, Vec2D<unsigned short> tilePos, std::vector<unsigned short>::value_type tileId);
+  void SetTilesetStartingTileId(TileIdType id) { _source_tilesets.start_tile_id = id; }
+  void SetTilesetSpacing(uint16_t spacing) { _source_tilesets.spacing = spacing; }
+  void SetTilesetMargin(uint16_t spacing) { _source_tilesets.margin = spacing; }
 
-  bool Set(const Position &position, TileIdType tileId) {
+  bool SetGround(const Position &position, TileIdType tileId) {
     if (const auto i = PositionToLinear(position);
         ValidDataPosition(i)) [[likely]] {
       _map_tiles[i] = tileId;
@@ -100,7 +102,17 @@ public:
 
     return false;
   }
+  
+  bool SetAbove(const Position &position, TileIdType tileId) {
+    if (const auto i = PositionToLinear(position);
+        ValidDataPosition(i)) [[likely]] {
+      //_above[i * LayerSize()] = tileId;
+      return true;
+    }
 
-  void PaintMap(const RectT<WorldCoordinateType> &rect, Painter &painter, const BitmapSize &painter_origin);
+    return false;
+  }
+
+  void PaintGround(const RectT<WorldCoordinateType> &rect, Painter &painter, const BitmapSize &painter_origin);
 };
 }// namespace e00

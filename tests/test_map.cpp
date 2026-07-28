@@ -21,7 +21,7 @@ TEST_CASE("PaintMap does not crash when tile size was never configured", "[map]"
   auto target = e00::Bitmap::Create({64, 64}, e00::DrawableSurface::BitDepth::DEPTH_32);
   auto painter = target->BeginDraw();
 
-  REQUIRE_NOTHROW(map->PaintMap({{0, 0}, {4, 4}}, *painter, {0, 0}));
+  REQUIRE_NOTHROW(map->PaintGround({{0, 0}, {4, 4}}, *painter, {0, 0}));
 }
 
 /*
