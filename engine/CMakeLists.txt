@@ -13,7 +13,6 @@ add_library(Engine00 STATIC
         src/InputEvent.cpp
         src/InternalActions.cpp
         src/InternalActions.hpp
-        src/Map.cpp
         src/World.cpp
         src/Bitmap_Generic.cpp
         src/IniParser.cpp
@@ -21,6 +20,15 @@ add_library(Engine00 STATIC
         src/ResourceManager.cpp
         src/StreamFactory.cpp
         src/DrawableSurface.cpp
+        src/Painter_PaintDevice.hpp
+        src/Painter_PaintDevice.cpp
+        src/Logger.cpp
+        src/TranslatableText.cpp
+        src/TranslatableText.hpp
+        src/Painter_Generic.cpp
+        src/WindowedDrawableResource.cpp
+        src/WorldLoader.hpp
+        src/WorldLoader.cpp
 
         src/GUI/Widget.cpp
         src/GUI/Font.cpp
@@ -49,8 +57,8 @@ add_library(Engine00 STATIC
         src/ScriptEngine/Lua/UserDataHolder.cpp
         src/ScriptEngine/Lua/NamedFunction.hpp
 
-        src/Loaders/WorldLoader.cpp
-        src/Loaders/WorldLoader.hpp
+        src/Loaders/TilesetLoader.cpp
+        src/Loaders/TilesetLoader.hpp
         src/Loaders/BitmapLoader.cpp
         src/Loaders/BitmapLoader.hpp
         src/Loaders/SpriteGifLoader.cpp
@@ -62,15 +70,7 @@ add_library(Engine00 STATIC
 
         src/Resource/ResourceLoader.cpp
         src/Resource/Sprite.cpp
-
-        src/Painter_PaintDevice.hpp
-        src/Painter_PaintDevice.cpp
-        src/Logger.cpp
-        src/TranslatableText.cpp
-        src/TranslatableText.hpp
-        src/Painter_Generic.cpp
-        src/WindowedDrawableResource.cpp
-
+        src/Resource/Tileset.cpp
 )
 
 target_include_directories(Engine00
@@ -207,68 +207,6 @@ endif ()
 #######################################################################################################################
 target_sources(Engine00Interface INTERFACE
         include/Engine.hpp
-        include/Engine/Config.hpp
-        include/Engine/Action.hpp
-        include/Engine/Actor.hpp
-        include/Engine/Engine.hpp
-        include/Engine/ActionCategory.hpp
-        include/Engine/ActionInstance.hpp
-        include/Engine/World.hpp
-        include/Engine/Resource.hpp
-        include/Engine/ResourcePtr.hpp
-        include/Engine/GameClock.hpp
-        include/Engine/DefaultBitmapHelpers.hpp
-
-        include/Engine/Platform/Painter.hpp
-        include/Engine/Platform/ResourceLoaderOptions.hpp
-        include/Engine/Platform/ResourceManager.hpp
-        include/Engine/Platform/ResourceLoader.hpp
-        include/Engine/Platform/StreamFactory.hpp
-        include/Engine/Platform/DrawableSurface.hpp
-        include/Engine/Platform/InputSystem.hpp
-        include/Engine/Platform/InputEvent.hpp
-        include/Engine/Platform/Stream.hpp
-
-        include/Engine/Math/SpacePartition.hpp
-        include/Engine/Math/Vec2D.hpp
-        include/Engine/Math/Rect.hpp
-        include/Engine/Math/Color.hpp
-        include/Engine/Math/AABB.hpp
-
-        include/Engine/Detail/StringFormat.hpp
-        include/Engine/Detail/TypeId.hpp
-        include/Engine/Detail/PropertySet.hpp
-        include/Engine/Detail/Property.hpp
-
-        include/Engine/Resource/Map.hpp
-        include/Engine/Resource/Palette.hpp
-        include/Engine/Resource/Font.hpp
-        include/Engine/Resource/DrawableResource.hpp
-        include/Engine/Resource/Bitmap.hpp
-        include/Engine/Resource/Sprite.hpp
-        include/Engine/Resource/WindowedDrawableResource.hpp
-
-        include/Engine/GUI/FontGlyph.hpp
-        include/Engine/GUI/Menu.hpp
-        include/Engine/GUI/Widget.hpp
-        include/Engine/GUI/WorldWidget.hpp
-        include/Engine/GUI/LabelWidget.hpp
-
-        include/Engine/Logging/SourceLocation.hpp
-        include/Engine/Logging/Logger.hpp
-
-        include/Engine/Scripting/BoxedCast.hpp
-        include/Engine/Scripting/BoxedValue.hpp
-        include/Engine/Scripting/FunctionParams.hpp
-        include/Engine/Scripting/ProxyFunction.hpp
-        include/Engine/Scripting/ScriptEngine.hpp
-        include/Engine/Scripting/detail/AttributeAccess.hpp
-        include/Engine/Scripting/detail/CallUtils.hpp
-        include/Engine/Scripting/detail/CastHelpers.hpp
-        include/Engine/Scripting/detail/FunctionSignature.hpp
-        include/Engine/Scripting/detail/HandleReturn.hpp
-        include/Engine/Scripting/detail/NativeFunctionT.hpp
-        include/Engine/Scripting/detail/Utils.hpp
 )
 
 if (DJGPP)

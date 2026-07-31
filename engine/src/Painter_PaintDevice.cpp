@@ -59,8 +59,9 @@ void SoftwarePainter::Copy8BitNoPalette(const DrawableSurface &src, RectT<Bitmap
     lineBuffer.resize(helpers::BitmapDepth8::BufferBytesPerLine(srcRect.size.x));
   }
 
-  // Direct copy for NO_PALETTE cases
-  const DrawableSurface::TargetInformation info8{_target.GetBitDepth(), nullptr};// targetPalette doesn't matter for NO_PALETTE copy in ReadLineInto
+  // Direct copy for NO_PALETTE cases: request raw index bytes so `ReadLineInto` doesn't
+  // require a palette, regardless of whether the actual source/destination is DEPTH_8 or DEPTH_8_NO_PALETTE.
+  const DrawableSurface::TargetInformation info8{DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, nullptr};
   for (BitmapSizeType y = 0; y < height; ++y) {
     if (auto targetLine = _target.helper.GetLineData(std::span(_target._data), dstPos.y + y); !targetLine.empty()) {
       const auto &destinationSpan = targetLine.subspan(dstPos.x);
@@ -98,9 +99,8 @@ void SoftwarePainter::Copy8BitTo8Bit(const DrawableSurface &src, RectT<BitmapSiz
 
   const auto srcHasTransparency = src.HasTransparencyMask();
   std::vector<uint8_t> mask;
-  //if (srcHasTransparency) {
-  mask.resize(helpers::BitmapDepth1::BufferBytesPerLine(srcRect.size.x), 1);
-  //}
+  // Default to fully opaque (all bits set) so every pixel is copied when there's no transparency mask.
+  mask.resize(helpers::BitmapDepth1::BufferBytesPerLine(srcRect.size.x), 0xFFu);
 
   const auto srcPaletteSize = src.GetNumberOfColorsInPalette();
   FixedPalette srcPalette(srcPaletteSize);

@@ -6,16 +6,27 @@
 
 using namespace e00;
 
+namespace {
+std::vector<uint8_t> ReadIndexLine(const Bitmap &bmp, BitmapSizeType y, BitmapSizeType width) {
+    std::vector<uint8_t> buffer(width);
+    bmp.ReadLineInto(y, 0, width, DrawableSurface::TargetInformation{DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, nullptr, {}, {}}, buffer);
+    return buffer;
+}
+}// namespace
+
 TEST_CASE("Painter - DrawSurface NO_PALETTE", "[painter][no_palette]") {
     auto src = Bitmap::Create({5, 5}, DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, 0);
-    auto srcLine = src->GetLineData(0);
-    srcLine[0] = 42; // Index 42
+    {
+        auto srcPainter = src->BeginDraw();
+        srcPainter->SetPenSolid(1, 42); // Index 42
+        srcPainter->DrawPoint({0, 0});
+    }
 
     SECTION("NO_PALETTE to DEPTH_8") {
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 256);
         auto painter = dst->BeginDraw();
         painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
-        auto data = dst->GetLineData(2);
+        auto data = ReadIndexLine(*dst, 2, 10);
         CHECK(data[2] == 42);
     }
 
@@ -23,19 +34,22 @@ TEST_CASE("Painter - DrawSurface NO_PALETTE", "[painter][no_palette]") {
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, 0);
         auto painter = dst->BeginDraw();
         painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
-        auto data = dst->GetLineData(2);
+        auto data = ReadIndexLine(*dst, 2, 10);
         CHECK(data[2] == 42);
     }
 
     SECTION("DEPTH_8 to NO_PALETTE") {
         auto src8 = Bitmap::Create({5, 5}, DrawableSurface::BitDepth::DEPTH_8, 256);
-        auto srcLine8 = src8->GetLineData(0);
-        srcLine8[0] = 66;
+        {
+            auto src8Painter = src8->BeginDraw();
+            src8Painter->SetPenSolid(1, 66);
+            src8Painter->DrawPoint({0, 0});
+        }
 
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, 0);
         auto painter = dst->BeginDraw();
         painter->BlitSurface(*src8, {{0, 0}, {5, 5}}, {2, 2});
-        auto data = dst->GetLineData(2);
+        auto data = ReadIndexLine(*dst, 2, 10);
         CHECK(data[2] == 66);
     }
 
@@ -54,7 +68,7 @@ TEST_CASE("Painter - PutPixel NO_PALETTE", "[painter][no_palette]") {
     SECTION("PutPixel with Index") {
         painter->SetPenSolid(1, 123); // Index 123
         painter->DrawPoint({1, 1});
-        auto data = dst->GetLineData(1);
+        auto data = ReadIndexLine(*dst, 1, 10);
         CHECK(data[1] == 123);
     }
 }

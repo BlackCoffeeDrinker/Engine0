@@ -6,6 +6,7 @@ class TestResource : public e00::Resource {
 public:
   TestResource(e00::Vec2D<uint16_t>, e00::DrawableSurface::BitDepth) {}
   [[nodiscard]] e00::type_t Type() const override { return e00::type_id<TestResource>(); }
+  [[nodiscard]] size_t SizeUsage() override { return 0; }
 };
 
 class AnEngine : public e00::Engine {
@@ -56,15 +57,19 @@ TEST_CASE("Engine can return it's name") {
 TEST_CASE("Resource PTR", "[core]") {
 
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().Make<TestResource>("Test Bitmap 1"_id, e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8);
+    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().Make<TestResource>("Test Bitmap 2"_id, e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8);
+    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().Make<TestResource>("Test Bitmap 3"_id, e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8);
+    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().Make<TestResource>("Test Bitmap 4"_id, e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8);
+    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
   }
 }

@@ -21,30 +21,28 @@ WorldWidget::WorldWidget(const std::unique_ptr<World> &worldToDraw) : _worldToDr
 }
 
 void WorldWidget::DrawWorld(Painter &painter, const World &world) {
-  const auto tile_size = world.TileSize();
 
-  // Compute the ## of tiles needed
-  const auto worldSizeInTiles = Size() / tile_size;
-
-  // Adjust the "viewport"; do not go over the map
-  const Vec2D adjSize(worldSizeInTiles.Clamp(world.Size()));
-
-  // Compute window
+  const Vec2D adjSize(Size().Clamp(world.WorldPixelSize()));
   const Vec2D start = {
-      computeStartForCenter(_cameraCenter.x, adjSize.x, world.Width()),
-      computeStartForCenter(_cameraCenter.y, adjSize.y, world.Height())};
+      computeStartForCenter(_cameraCenter.x, adjSize.x, world.WorldPixelSize().x),
+      computeStartForCenter(_cameraCenter.y, adjSize.y, world.WorldPixelSize().y)};
 
-  world.PaintMap(start, start + adjSize, painter, {0, 0});
+  world.Paint(painter, start, start + adjSize, {0, 0});
 
-  // Draw actors
-  const RectT viewport(start, adjSize);
-  for (const auto &element: world.Actors()) {
-    if (element.actor != nullptr && viewport.Contains(element.position)) {
-      const auto relativePosition = element.position - start;
-      const auto drawPosition = AbsolutePosition() + relativePosition * tile_size;
-      element.actor->Draw(painter, drawPosition);
-    }
-  }
+  // const auto tile_size = world.TileSize();
+  //
+  // // Compute the ## of tiles needed
+  // const auto worldSizeInTiles = Size() / tile_size;
+  //
+  // // Adjust the "viewport"; do not go over the map
+  // const Vec2D adjSize(worldSizeInTiles.Clamp(world.Size()));
+  //
+  // // Compute window
+  // const Vec2D start = {
+  //     computeStartForCenter(_cameraCenter.x, adjSize.x, world.Width()),
+  //     computeStartForCenter(_cameraCenter.y, adjSize.y, world.Height())};
+  //
+  // world.Paint(start, start + adjSize, painter, {0, 0});
 }
 
 void WorldWidget::ResizeEvent() {
@@ -65,7 +63,7 @@ void WorldWidget::Paint(Painter &painterObj) {
     if (const auto tmpPainter = _world_bitmap->BeginDraw()) {
       DrawWorld(*tmpPainter, *_worldToDraw);
     }
-    
+
     painterObj.BlitSurface(
         *_world_bitmap,
         {{0, 0}, _world_bitmap->Size()},

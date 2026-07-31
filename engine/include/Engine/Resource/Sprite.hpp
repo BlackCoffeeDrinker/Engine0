@@ -1,7 +1,9 @@
 #pragma once
 
-#include <Engine/Resource/DrawableResource.hpp>
 #include <chrono>
+
+#include <Engine/Resource/DrawableResource.hpp>
+#include <Engine/ResourcePtr.hpp>
 
 namespace e00 {
 /**

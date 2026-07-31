@@ -20,11 +20,15 @@ TEST_CASE("Font rendering test", "[font]") {
     // Check if some pixels are drawn
     // We can't easily check the content of the BMP here without more complex logic,
     // but we can at least ensure it doesn't crash and maybe check a few pixels in the bitmap if we had access to them.
-    // Bitmap has GetLineData.
-    
+    // Read the raw pixel data back out via ReadLineInto, using the bitmap's own shift/mask so the
+    // bytes we get back match the internal representation.
+    e00::DrawableSurface::TargetInformation info{
+        e00::DrawableSurface::BitDepth::DEPTH_32, nullptr, target->GetShift(), target->GetMask()};
+
     bool found_fg = false;
+    std::vector<uint8_t> line(100 * 4);
     for (uint16_t y = 0; y < 20; ++y) {
-        auto line = target->GetLineData(y);
+        target->ReadLineInto(y, 0, 100, info, line);
         for (size_t i = 0; i < line.size(); ++i) {
             if (line[i] != 0) {
                 found_fg = true;

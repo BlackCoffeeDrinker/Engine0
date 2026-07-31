@@ -8,10 +8,9 @@ TEST_CASE("PaintMap does not crash when tile size was never configured", "[map]"
   e00::ResourceManager::GlobalResourceManager().SetAlias("labeled_overworldtiles.png"_id, "tests/labeled_overworldtiles.png");
 
   auto map = e00::ResourceManager::GlobalResourceManager().TakeOwnership(std::make_unique<e00::Map>(4, 4));
-  map->SetLayerCount(1);
   for (e00::WorldCoordinateType y = 0; y < map->Height(); y++) {
     for (e00::WorldCoordinateType x = 0; x < map->Width(); x++) {
-      REQUIRE(map->Set(0, e00::Position(x, y), 1));
+      REQUIRE(map->Set(e00::TilePosition(x, y), 1));
     }
   }
 
@@ -21,7 +20,7 @@ TEST_CASE("PaintMap does not crash when tile size was never configured", "[map]"
   auto target = e00::Bitmap::Create({64, 64}, e00::DrawableSurface::BitDepth::DEPTH_32);
   auto painter = target->BeginDraw();
 
-  REQUIRE_NOTHROW(map->PaintGround({{0, 0}, {4, 4}}, *painter, {0, 0}));
+  REQUIRE_NOTHROW(map->Paint({{0, 0}, {4, 4}}, *painter, {0, 0}));
 }
 
 /*

@@ -4,8 +4,8 @@
 
 #include "tests.hpp"
 
+#include "../engine/src/WorldLoader.hpp"
 #include "Loaders/BitmapLoader.hpp"
-#include "Loaders/WorldLoader.hpp"
 #include "Loaders/PngLoader.hpp"
 
 class SetupResourceManager : public Catch::EventListenerBase {

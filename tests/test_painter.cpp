@@ -6,6 +6,18 @@
 
 using namespace e00;
 
+namespace {
+// Reads back raw pixel index/color-index data from a Bitmap line, mirroring what the old
+// GetLineData() used to expose directly. Using DEPTH_8_NO_PALETTE as the target format
+// forces ReadLineInto to take its raw-memcpy fast path, so no palette lookup/mapping happens.
+std::vector<uint8_t> ReadIndexLine(const Bitmap &bmp, BitmapSizeType y, BitmapSizeType width) {
+    std::vector<uint8_t> buf(width);
+    const DrawableSurface::TargetInformation info{DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, nullptr, {}, {}};
+    bmp.ReadLineInto(y, 0, width, info, buf);
+    return buf;
+}
+}// namespace
+
 TEST_CASE("Painter - Basic Drawing", "[painter]") {
     auto bmp = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 256);
     (void)bmp->SetPaletteColor(1, Color(255, 0, 0)); // Red
@@ -19,9 +31,9 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             painter->SetPenSolid(1, 2); // Index 2
             painter->DrawPoint({2, 2});
         }
-        auto data1 = bmp->GetLineData(1);
+        auto data1 = ReadIndexLine(*bmp, 1, 10);
         CHECK(data1[1] == 1);
-        auto data2 = bmp->GetLineData(2);
+        auto data2 = ReadIndexLine(*bmp, 2, 10);
         CHECK(data2[2] == 2);
     }
 
@@ -31,7 +43,7 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             painter->SetPenSolid(1, Color(255, 0, 0)); // Red -> Index 1
             painter->DrawPoint({3, 3});
         }
-        auto data = bmp->GetLineData(3);
+        auto data = ReadIndexLine(*bmp, 3, 10);
         CHECK(data[3] == 1);
     }
 
@@ -64,7 +76,7 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             painter->SetPenSolid(1, 1);
             painter->DrawPoints({{0, 0}, {1, 0}, {2, 0}});
         }
-        auto data = bmp->GetLineData(0);
+        auto data = ReadIndexLine(*bmp, 0, 10);
         CHECK(data[0] == 1);
         CHECK(data[1] == 1);
         CHECK(data[2] == 1);
@@ -79,18 +91,18 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             painter->DrawLine({1, 1}, {3, 3}); // Diagonal
         }
         // Horizontal line
-        auto data0 = bmp->GetLineData(0);
+        auto data0 = ReadIndexLine(*bmp, 0, 10);
         for (int x = 0; x <= 5; ++x) CHECK(data0[x] == 1);
         
         // Vertical line
         for (int y = 1; y <= 5; ++y) {
-            auto data = bmp->GetLineData(y);
+            auto data = ReadIndexLine(*bmp, y, 10);
             CHECK(data[0] == 1);
         }
 
         // Diagonal line
         for (int i = 1; i <= 3; ++i) {
-            auto data = bmp->GetLineData(i);
+            auto data = ReadIndexLine(*bmp, i, 10);
             CHECK(data[i] == 1);
         }
     }
@@ -104,20 +116,20 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
                 painter->DrawRect({{1, 1}, {4, 4}});
             }
             // Top and bottom edges
-            auto data1 = bmp->GetLineData(1);
-            auto data4 = bmp->GetLineData(4);
+            auto data1 = ReadIndexLine(*bmp, 1, 10);
+            auto data4 = ReadIndexLine(*bmp, 4, 10);
             for (int x = 1; x <= 4; ++x) {
                 CHECK(data1[x] == 1);
                 CHECK(data4[x] == 1);
             }
             // Left and right edges
             for (int y = 1; y <= 4; ++y) {
-                auto data = bmp->GetLineData(y);
+                auto data = ReadIndexLine(*bmp, y, 10);
                 CHECK(data[1] == 1);
                 CHECK(data[4] == 1);
             }
             // Center should be empty (0)
-            auto data2 = bmp->GetLineData(2);
+            auto data2 = ReadIndexLine(*bmp, 2, 10);
             CHECK(data2[2] == 0);
         }
 
@@ -129,15 +141,15 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
                 painter->DrawRect({{1, 1}, {3, 3}});
             }
             for (int y = 1; y <= 3; ++y) {
-                auto data = bmp->GetLineData(y);
+                auto data = ReadIndexLine(*bmp, y, 10);
                 for (int x = 1; x <= 3; ++x) {
                     CHECK(data[x] == 2);
                 }
             }
             // Border should not be touched outside the rect
-            auto data0 = bmp->GetLineData(0);
+            auto data0 = ReadIndexLine(*bmp, 0, 10);
             CHECK(data0[0] == 0);
-            auto data4 = bmp->GetLineData(4);
+            auto data4 = ReadIndexLine(*bmp, 4, 10);
             CHECK(data4[4] == 0);
         }
 
@@ -150,20 +162,20 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             }
             // Check fill (center)
             for (int y = 2; y <= 3; ++y) {
-                auto data = bmp->GetLineData(y);
+                auto data = ReadIndexLine(*bmp, y, 10);
                 for (int x = 2; x <= 3; ++x) {
                     CHECK(data[x] == 2);
                 }
             }
             // Check outline
-            auto data1 = bmp->GetLineData(1);
-            auto data4 = bmp->GetLineData(4);
+            auto data1 = ReadIndexLine(*bmp, 1, 10);
+            auto data4 = ReadIndexLine(*bmp, 4, 10);
             for (int x = 1; x <= 4; ++x) {
                 CHECK(data1[x] == 1);
                 CHECK(data4[x] == 1);
             }
             for (int y = 1; y <= 4; ++y) {
-                auto data = bmp->GetLineData(y);
+                auto data = ReadIndexLine(*bmp, y, 10);
                 CHECK(data[1] == 1);
                 CHECK(data[4] == 1);
             }
@@ -179,11 +191,11 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
             }
             // Center is (4, 4). Radius is 4.5? Rect size is 9, so radius is 4.
             // Points should be approximately on a circle.
-            auto data0 = bmp->GetLineData(0);
+            auto data0 = ReadIndexLine(*bmp, 0, 10);
             CHECK(data0[4] == 1); // Top
-            auto data8 = bmp->GetLineData(8);
+            auto data8 = ReadIndexLine(*bmp, 8, 10);
             CHECK(data8[4] == 1); // Bottom
-            auto data4 = bmp->GetLineData(4);
+            auto data4 = ReadIndexLine(*bmp, 4, 10);
             CHECK(data4[0] == 1); // Left
             CHECK(data4[8] == 1); // Right
             CHECK(data4[4] == 0); // Center should be empty
@@ -196,7 +208,7 @@ TEST_CASE("Painter - Basic Drawing", "[painter]") {
                 painter->SetBrushIndex(2);
                 painter->DrawEllipse({{0, 0}, {9, 9}});
             }
-            auto data4 = bmp->GetLineData(4);
+            auto data4 = ReadIndexLine(*bmp, 4, 10);
             CHECK(data4[4] == 2); // Center should be filled
         }
     }
@@ -212,7 +224,7 @@ TEST_CASE("Painter - State Management", "[painter]") {
     SECTION("SetNoPen") {
         painter->SetNoPen();
         painter->DrawPoint({0, 0});
-        auto data = bmp->GetLineData(0);
+        auto data = ReadIndexLine(*bmp, 0, 10);
         CHECK(data[0] == 0);
     }
     
@@ -220,7 +232,7 @@ TEST_CASE("Painter - State Management", "[painter]") {
         painter->SetNoBrush();
         painter->DrawRect({{0, 0}, {5, 5}});
         // Center of rect should be empty
-        auto data = bmp->GetLineData(2);
+        auto data = ReadIndexLine(*bmp, 2, 10);
         CHECK(data[2] == 0);
     }
 }
@@ -242,7 +254,7 @@ TEST_CASE("Painter - Clipping", "[painter]") {
         painter->DrawLine({5, 5}, {15, 15});
         // Should draw from (5,5) to (9,9)
         for (int i = 5; i <= 9; ++i) {
-            auto data = bmp->GetLineData(i);
+            auto data = ReadIndexLine(*bmp, i, 10);
             CHECK(data[i] == 1);
         }
     }
@@ -252,7 +264,7 @@ TEST_CASE("Painter - Clipping", "[painter]") {
         painter->SetBrushIndex(2);
         painter->DrawRect({{5, 5}, {10, 10}}); // Rect goes to (14, 14), but target is 10x10
         for (int y = 5; y <= 9; ++y) {
-            auto data = bmp->GetLineData(y);
+            auto data = ReadIndexLine(*bmp, y, 10);
             for (int x = 5; x <= 9; ++x) {
                 CHECK(data[x] == 2);
             }
@@ -263,8 +275,11 @@ TEST_CASE("Painter - Clipping", "[painter]") {
 TEST_CASE("Painter - DrawSurface", "[painter]") {
     auto src = Bitmap::Create({5, 5}, DrawableSurface::BitDepth::DEPTH_8, 2);
     (void)src->SetPaletteColor(1, Color(255, 255, 255));
-    auto srcData = src->GetLineData(0);
-    srcData[0] = 1;
+    {
+        auto srcPainter = src->BeginDraw();
+        srcPainter->SetPenSolid(1, static_cast<uint8_t>(1));
+        srcPainter->DrawPoint({0, 0});
+    }
 
     auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 2);
     (void)dst->SetPaletteColor(1, Color(255, 255, 255));
@@ -273,7 +288,7 @@ TEST_CASE("Painter - DrawSurface", "[painter]") {
 
     SECTION("Normal DrawSurface") {
         painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {2, 2});
-        auto data = dst->GetLineData(2);
+        auto data = ReadIndexLine(*dst, 2, 10);
         CHECK(data[2] == 1);
     }
 
@@ -281,7 +296,7 @@ TEST_CASE("Painter - DrawSurface", "[painter]") {
         painter->BlitSurface(*src, {{0, 0}, {5, 5}}, {8, 8});
         // Source is 5x5, starting at (8,8) in 10x10.
         // It should draw pixels at (8,8) up to (9,9).
-        auto data8 = dst->GetLineData(8);
+        auto data8 = ReadIndexLine(*dst, 8, 10);
         CHECK(data8[8] == 1);
         
         // Check out of bounds doesn't crash
@@ -292,11 +307,14 @@ TEST_CASE("Painter - DrawSurface", "[painter]") {
     SECTION("Sub-rect DrawSurface") {
         auto src2 = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 2);
         (void)src2->SetPaletteColor(1, Color(255, 255, 255));
-        auto srcData = src2->GetLineData(5);
-        srcData[5] = 1; // Point at (5,5)
+        {
+            auto src2Painter = src2->BeginDraw();
+            src2Painter->SetPenSolid(1, static_cast<uint8_t>(1));
+            src2Painter->DrawPoint({5, 5}); // Point at (5,5)
+        }
 
         painter->BlitSurface(*src2, {{5, 5}, {2, 2}}, {0, 0});
-        auto data = dst->GetLineData(0);
+        auto data = ReadIndexLine(*dst, 0, 10);
         CHECK(data[0] == 1);
     }
 }

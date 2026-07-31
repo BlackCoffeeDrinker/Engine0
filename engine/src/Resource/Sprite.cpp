@@ -1,11 +1,10 @@
-#include "Painter_PaintDevice.hpp"
-#include <Engine/Platform/ResourceManager.hpp>
 
+#include "PrivateInclude.hpp"
+
+#include "Painter_PaintDevice.hpp"
 
 #include <memory>
 #include <utility>
-
-#include "PrivateInclude.hpp"
 
 namespace e00 {
 struct Sprite::Image {
@@ -142,11 +141,16 @@ std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::millise
   frame->bitmap = std::make_unique<Bitmap>(Size(), GetBitDepth());
   frame->duration = duration;
 
+  // Preserve the source bitmap's palette so per-pixel palette lookups on the
+  // copied frame remain valid (indices decoded into the source data must map
+  // into the same set of colors on the frame).
+  frame->bitmap->SetPalette(data->_palette);
+
   // Copy data
   const auto copyHeight = std::min(Size().y, data->Size().y);
   for (BitmapSizeType y = 0; y < copyHeight; ++y) {
     auto srcLine = data->helper.GetLineData(std::span(data->_data), y);
-    auto dstLine = frame->bitmap->helper.GetLineData(std::span(data->_data), y);
+    auto dstLine = frame->bitmap->helper.GetLineData(std::span(frame->bitmap->_data), y);
     std::memcpy(dstLine.data(), srcLine.data(), std::min(srcLine.size(), dstLine.size()));
   }
 

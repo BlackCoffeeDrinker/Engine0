@@ -1,6 +1,11 @@
 #pragma once
 
+#include <Engine/Config.hpp>
+#include <Engine/Math/Vec2D.hpp>
+#include <Engine/Platform/Painter.hpp>
+
 namespace e00 {
+class Sprite;
 
 /**
  * \brief Abstract class for all objects placed in a world
@@ -37,9 +42,7 @@ public:
   }
 
   void Size(const Vec2D<WorldCoordinateType> &newSize) { _size = newSize; }
-
   [[nodiscard]] auto Size() const { return _size; }
-
   [[nodiscard]] auto Type() const noexcept { return _type; }
 };
 }// namespace e00

@@ -110,6 +110,7 @@ class ResourceManager {
     // Check if a stream exists for this resource
     if (!CanLoad(id, type_id<T>())) {
       GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}: data was not found", id);
+      std::abort();
       return nullptr;
     }
 

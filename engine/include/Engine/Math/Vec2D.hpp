@@ -78,7 +78,9 @@ T distance(const Vec2D<T> &a, const Vec2D<T> &b) {
   return detail::sqrt(static_cast<double>(distance2(a, b)));
 }
 
-using Position = Vec2D<WorldCoordinateType>;
+using TilePosition = Vec2D<WorldCoordinateType>; //< Tiles
+using WorldPosition = Vec2D<WorldCoordinateType>; //< Pixels
+using BitmapPosition = Vec2D<BitmapSizeType>; //< Pixels
 using BitmapSize = Vec2D<BitmapSizeType>;
 
 }// namespace e00

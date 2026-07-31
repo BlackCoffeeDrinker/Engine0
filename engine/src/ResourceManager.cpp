@@ -108,6 +108,7 @@ bool ResourceManager::CanLoad(ResourceId id, type_t type) {
       })) {
     // No loader found for this type
     GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}: no loader found", id);
+    std::abort();
     return false;
   }
 

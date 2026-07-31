@@ -10,10 +10,15 @@ TEST_CASE("Load Sample Gif", "[resources]") {
   const auto stream = TestFileStream::CreateFromFilename("tests/sample_1.gif");
   REQUIRE(stream != nullptr);
 
-  REQUIRE(loader.CanLoad(*stream));
+  const e00::ResourceLoader::LoadContext ctx{
+      .stream = *stream,
+      .targetTypeId = e00::type_id<e00::Sprite>(),
+      .options = {}};
+
+  REQUIRE(loader.CanLoad(ctx));
   (void) stream->SeekTo(0);
 
-  if (const auto sp = loader.ReadLoad(*stream, e00::type_id<e00::Sprite>());
+  if (const auto sp = loader.ReadLoad(ctx);
       sp.IsType<e00::Sprite>()) {
     auto& sprite = sp.resource->As<e00::Sprite>();
     REQUIRE(sprite.Size().x == 10);
@@ -32,10 +37,15 @@ TEST_CASE("Load Sample Animated Gif", "[resources]") {
   const auto stream = TestFileStream::CreateFromFilename("tests/sample-animated-400x300.gif");
   REQUIRE(stream != nullptr);
 
-  REQUIRE(loader.CanLoad(*stream));
+  const e00::ResourceLoader::LoadContext ctx{
+      .stream = *stream,
+      .targetTypeId = e00::type_id<e00::Sprite>(),
+      .options = {}};
+
+  REQUIRE(loader.CanLoad(ctx));
   (void) stream->SeekTo(0);
 
-  if (const auto sp = loader.ReadLoad(*stream, e00::type_id<e00::Sprite>());
+  if (const auto sp = loader.ReadLoad(ctx);
       sp.IsType<e00::Sprite>()) {
     auto& sprite = sp.resource->As<e00::Sprite>();
     

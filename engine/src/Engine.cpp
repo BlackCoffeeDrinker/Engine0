@@ -1,7 +1,12 @@
-#include <PrivateInclude.hpp>
+#include "PrivateInclude.hpp"
 
 #include "InternalActions.hpp"
 #include "TranslatableText.hpp"
+#include "WorldLoader.hpp"
+
+#include <Engine/World.hpp>
+
+#include <memory>
 
 namespace e00 {
 Action Engine::BuiltInAction_Quit() {
@@ -34,13 +39,13 @@ Engine::Engine()
       _old_state(EngineState::FIRST_TICK),
       _script_engine(ScriptEngine::Create()),
       _root_widget(std::make_unique<Widget>()),
-      _strings(std::make_unique<TranslatableText>()) {
+      _strings(std::make_unique<TranslatableText>()),
+      _platform_data(nullptr) {
   GetDefaultLogger().Verbose(source_location::current(), "E0 Starting");
 
   _script_engine->register_function("GetText", [this](int textCode) -> std::string {
     return _strings->GetText(textCode);
   });
-  
 }
 
 Engine::~Engine() = default;
@@ -83,22 +88,52 @@ std::error_code Engine::LoadWorld(const std::string &world_name) {
     _current_world.reset();
   }
 
-  GetDefaultLogger().Verbose(source_location::current(), "Loading world: {}", world_name);
-
   auto &resource_manager = ResourceManager::GlobalResourceManager();
-  auto map = resource_manager.LoadResourceDirectly<Map>(HashName(world_name), DiscardPalette{});
-  if (!map) {
-    GetDefaultLogger().Error(source_location::current(), "Failed to load map {}", world_name);
-    return std::make_error_code(std::errc::invalid_argument);
+  if (const auto worldIni = resource_manager.FindStreamForResource(HashName(world_name))) {
+    impl::WorldLoader loader(&resource_manager);
+    const auto worldData = loader.Load(*worldIni);
+    if (worldData.height == 0 || worldData.width == 0) {
+      GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, invalid size", world_name);
+      return std::make_error_code(std::errc::invalid_argument);
+    }
+    if (worldData.tilesets.empty()) {
+      GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, no tilesets", world_name);
+      return std::make_error_code(std::errc::invalid_argument);
+    }
+    if (worldData.groundSet.empty()) {
+      GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, no ground set", world_name);
+      return std::make_error_code(std::errc::invalid_argument);
+    }
+
+    auto world = std::unique_ptr<World>(new World(
+        world_name,
+        {static_cast<WorldCoordinateType>(worldData.width), static_cast<WorldCoordinateType>(worldData.height)}));
+    for (const auto &tileset: worldData.tilesets) {
+      world->AddTileset(tileset.startTileId, resource_manager.LazyResource<Tileset>(HashName(tileset.tilesetResourceName)));
+    }
+
+    // Copy the ground & above
+    const std::array layers{&worldData.groundSet, &worldData.aboveSet};
+
+    for (size_t layer = 0; layer < layers.size(); layer++) {
+      for (size_t i = 0; i < layers[layer]->size(); ++i) {
+        const auto &value = layers[layer]->at(i);
+        const TilePosition position(i % worldData.width, i / worldData.width);
+        if (!world->SetMapTile(layer, position, value)) {
+          return std::make_error_code(std::errc::invalid_argument);
+        }
+      }
+    }
+    
+    // Do the actors
+
+    _current_world = std::move(world);
+    OnWorldLoaded(_current_world);
+    return {};
   }
 
-  _current_world = std::make_unique<World>(world_name);
-  std::ignore = _current_world->AddMap(std::move(map));
-
-  GetDefaultLogger().Verbose(source_location::current(), "World loaded: {}", world_name);
-  OnWorldLoaded(_current_world);
-
-  return {};
+  GetDefaultLogger().Error(source_location::current(), "Failed to load world {}", world_name);
+  return std::make_error_code(std::errc::invalid_argument);
 }
 
 void Engine::Tick(const std::chrono::milliseconds &delta) noexcept {

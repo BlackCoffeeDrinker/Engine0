@@ -6,13 +6,28 @@
 
 using namespace e00;
 
+namespace {
+// Reads back raw pixel index/color-index data from a Bitmap line, mirroring what the old
+// GetLineData() used to expose directly. Using DEPTH_8_NO_PALETTE as the target format
+// forces ReadLineInto to take its raw-memcpy fast path, so no palette lookup/mapping happens.
+std::vector<uint8_t> ReadIndexLine(const Bitmap &bmp, BitmapSizeType y, BitmapSizeType width) {
+    std::vector<uint8_t> buf(width);
+    const DrawableSurface::TargetInformation info{DrawableSurface::BitDepth::DEPTH_8_NO_PALETTE, nullptr, {}, {}};
+    bmp.ReadLineInto(y, 0, width, info, buf);
+    return buf;
+}
+}// namespace
+
 TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
     SECTION("8-bit to 32-bit conversion") {
         auto src = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 256);
         (void)src->SetPaletteColor(1, Color(255, 0, 0)); // Red
         
-        auto srcData = src->GetLineData(0);
-        srcData[0] = 1; // Set first pixel to index 1 (red)
+        {
+            auto srcPainter = src->BeginDraw();
+            srcPainter->SetPenSolid(1, static_cast<uint8_t>(1)); // Set first pixel to index 1 (red)
+            srcPainter->DrawPoint({0, 0});
+        }
 
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_32);
         {
@@ -55,7 +70,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
             painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
 
-        auto dstData = dst->GetLineData(0);
+        auto dstData = ReadIndexLine(*dst, 0, 10);
         CHECK(dstData[0] == 1);
     }
     
@@ -64,8 +79,12 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         (void)src->SetPaletteColor(0, Color(0, 0, 0));
         (void)src->SetPaletteColor(1, Color(255, 255, 255));
         
-        auto srcData = src->GetLineData(0);
-        srcData[0] = 0x80; // 1000 0000 in binary -> first pixel is index 1 (white)
+        {
+            // 1000 0000 in binary -> first pixel is index 1 (white)
+            auto srcPainter = src->BeginDraw();
+            srcPainter->SetPenSolid(1, static_cast<uint8_t>(1));
+            srcPainter->DrawPoint({0, 0});
+        }
         
         auto dst = Bitmap::Create({16, 1}, DrawableSurface::BitDepth::DEPTH_32);
         {
@@ -97,8 +116,11 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         (void)src->SetPaletteColor(0, Color(0, 0, 0));
         (void)src->SetPaletteColor(1, Color(255, 0, 0)); // Red at index 1
         
-        auto srcData = src->GetLineData(0);
-        srcData[0] = 1;
+        {
+            auto srcPainter = src->BeginDraw();
+            srcPainter->SetPenSolid(1, static_cast<uint8_t>(1));
+            srcPainter->DrawPoint({0, 0});
+        }
 
         auto dst = Bitmap::Create({10, 10}, DrawableSurface::BitDepth::DEPTH_8, 2);
         (void)dst->SetPaletteColor(0, Color(0, 0, 0));
@@ -109,7 +131,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
             painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
         
-        auto dstData = dst->GetLineData(0);
+        auto dstData = ReadIndexLine(*dst, 0, 10);
         CHECK(dstData[0] == 1);
 
         // Test where red is at different index
@@ -123,7 +145,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
             painter->BlitSurface(*src, {{0, 0}, {10, 10}}, {0, 0});
         }
         
-        auto dstData3 = dst3->GetLineData(0);
+        auto dstData3 = ReadIndexLine(*dst3, 0, 10);
         CHECK(dstData3[0] == 2);
     }
 
@@ -132,8 +154,12 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
         (void)src->SetPaletteColor(0, Color(0, 0, 0));
         (void)src->SetPaletteColor(1, Color(0, 255, 0)); // Green
         
-        auto srcData = src->GetLineData(0);
-        srcData[0] = 0xAA; // 1010 1010 -> pixels 0, 2, 4, 6 are index 1 (green)
+        {
+            // 1010 1010 -> pixels 0, 2, 4, 6 are index 1 (green)
+            auto srcPainter = src->BeginDraw();
+            srcPainter->SetPenSolid(1, static_cast<uint8_t>(1));
+            srcPainter->DrawPoints({{0, 0}, {2, 0}, {4, 0}, {6, 0}});
+        }
         
         auto dst = Bitmap::Create({8, 1}, DrawableSurface::BitDepth::DEPTH_8, 2);
         (void)dst->SetPaletteColor(0, Color(0, 0, 0));
@@ -144,7 +170,7 @@ TEST_CASE("Bitmap Blitting - Bit Depth Conversion", "[blitting]") {
             painter->BlitSurface(*src, {{0, 0}, {8, 1}}, {0, 0});
         }
         
-        auto dstData = dst->GetLineData(0);
+        auto dstData = ReadIndexLine(*dst, 0, 8);
         CHECK(dstData[0] == 1);
         CHECK(dstData[1] == 0);
         CHECK(dstData[2] == 1);

@@ -5,7 +5,7 @@
 #include "Loaders/BitmapLoader.hpp"
 #include "Loaders/PaletteLoader.h"
 #include "Loaders/PngLoader.hpp"
-#include "Loaders/WorldLoader.hpp"
+#include "Loaders/TilesetLoader.hpp"
 
 namespace {
 constexpr e00::ResourceId default_palette_name = e00::HashName("defaultpalette");
@@ -48,8 +48,8 @@ std::error_code Init() {
   // TODO: Add default resource loaders
   std::ignore = resource_manager.AddLoader<impl::BitmapLoader>();
   std::ignore = resource_manager.AddLoader<impl::PNGLoader>();
-  std::ignore = resource_manager.AddLoader<impl::WorldLoader>();
   std::ignore = resource_manager.AddLoader<impl::PaletteLoader>();
+  std::ignore = resource_manager.AddLoader<impl::TilesetLoader>();
 
   return {};
 }

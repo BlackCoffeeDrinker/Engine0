@@ -85,7 +85,7 @@ struct SoftwareBitmapHelper {
     return {bit_depth, nullptr, shift, mask};
   }
 
-  [[nodiscard]] size_t BufferPosition(const Position &position) const {
+  [[nodiscard]] size_t BufferPosition(const BitmapPosition &position) const {
     switch (bit_depth) {
       // DEPTH_1 packs 8 pixels per uint8_t
       case DrawableSurface::BitDepth::DEPTH_1: return position.y * bytes_per_line + position.x / 8;
@@ -98,7 +98,7 @@ struct SoftwareBitmapHelper {
     return {};
   }
 
-  [[nodiscard]] uint32_t ReadRaw(const std::span<const uint8_t> &data, const Position &position) const {
+  [[nodiscard]] uint32_t ReadRaw(const std::span<const uint8_t> &data, const BitmapPosition &position) const {
     const auto byteIndex = BufferPosition(position);
     if (byteIndex >= data.size())
       return 0;
@@ -126,7 +126,7 @@ struct SoftwareBitmapHelper {
     return {};
   }
 
-  [[nodiscard]] Color ReadColor(const std::span<const uint8_t> &data, FixedPalette *palette, const Position &position) const {
+  [[nodiscard]] Color ReadColor(const std::span<const uint8_t> &data, FixedPalette *palette, const BitmapPosition &position) const {
     const auto raw = ReadRaw(data, position);
     switch (bit_depth) {
       case DrawableSurface::BitDepth::DEPTH_1:
@@ -146,7 +146,7 @@ struct SoftwareBitmapHelper {
     return {};
   }
 
-  void WriteRaw(const std::span<uint8_t> &data, const Position &position, uint32_t value) const {
+  void WriteRaw(const std::span<uint8_t> &data, const BitmapPosition &position, uint32_t value) const {
     const auto byteIndex = BufferPosition(position);
     if (byteIndex >= data.size())
       return;
@@ -181,7 +181,7 @@ struct SoftwareBitmapHelper {
     }
   }
 
-  void WriteColor(const std::span<uint8_t> &data, FixedPalette *palette, const Position &position, Color color) const {
+  void WriteColor(const std::span<uint8_t> &data, FixedPalette *palette, const BitmapPosition &position, Color color) const {
     uint32_t raw = 0;
     switch (bit_depth) {
       case DrawableSurface::BitDepth::DEPTH_1:
@@ -207,7 +207,7 @@ struct SoftwareBitmapHelper {
     WriteRaw(data, position, raw);
   }
 
-  void WriteIndex(const std::span<uint8_t> &data, const Position &position, uint8_t index) const {
+  void WriteIndex(const std::span<uint8_t> &data, const BitmapPosition &position, uint8_t index) const {
     uint32_t raw = 0;
     switch (bit_depth) {
       case DrawableSurface::BitDepth::DEPTH_1:
