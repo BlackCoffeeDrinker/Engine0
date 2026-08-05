@@ -64,7 +64,6 @@ WorldLoader::WorldLoader(ResourceManager *manager) : _engine(manager) {}
 WorldLoader::~WorldLoader() = default;
 
 std::error_code WorldLoader::HandleActorData(std::string_view actor_name, std::string_view key, std::string_view value) {
-  GetDefaultLogger().Info(source_location::current(), "Parsing actor data for actor {}: {} = {}", actor_name, key, value);
   if (!currentLoadContext.actors.contains(std::string(actor_name))) {
     currentLoadContext.actors[std::string(actor_name)] = {};
   }
@@ -80,11 +79,7 @@ std::error_code WorldLoader::HandleActorData(std::string_view actor_name, std::s
     // Position is <x>, <y> (spaces might be present or not)
     actor.position.x = std::stoi(std::string(value.substr(0, value.find(','))));
     actor.position.y = std::stoi(std::string(value.substr(value.find(',') + 1)));
-  } else if (key == "size") {
-    // Size is <width>, <height> (spaces might be present or not)
-    actor.size.x = std::stoi(std::string(value.substr(0, value.find(','))));
-    actor.size.y = std::stoi(std::string(value.substr(value.find(',') + 1)));
-  }
+  } 
 
   return {};
 }

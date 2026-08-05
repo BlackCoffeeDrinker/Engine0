@@ -9,6 +9,8 @@
 #include <queue>
 #include <system_error>
 
+#include <Engine/Actor.hpp>
+
 namespace e00 {
 
 class TranslatableText;
@@ -34,6 +36,8 @@ class Engine {
   EngineState _old_state;// Previous engine state, previous tick
 
   std::string _current_locale;
+
+  std::map<ResourceId, std::unique_ptr<Actor>> _actors;//< Currently loaded actors (index by their source)
 
   std::priority_queue<ActionInstance> _actions_to_execute;//< Actions in queue
   std::unique_ptr<ScriptEngine> _script_engine;           //< Persistent script engine
@@ -207,7 +211,7 @@ public:
    * @return reference to the root widget
    */
   Widget *RootWidget();
-  
+
   // All platform
   [[nodiscard]] auto GetPlatformData() const noexcept { return _platform_data; }
   void SetPlatformData(PlatformData *data) noexcept { _platform_data = data; }

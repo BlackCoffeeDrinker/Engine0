@@ -66,7 +66,7 @@ void World::GridInsert(NodeID index, const Vec2D<WorldCoordinateType> &position)
   }
 }
 
-NodeID World::Insert(Actor *actor, const Vec2D<WorldCoordinateType> &position) {
+NodeID World::Insert(std::string name, Actor *actor, const Vec2D<WorldCoordinateType> &position) {
   // Is this actor in this world ?
   if (WorldTileSize() < position) {
     return InvalidNodeID;
@@ -76,6 +76,7 @@ NodeID World::Insert(Actor *actor, const Vec2D<WorldCoordinateType> &position) {
   for (auto i = 0u; i < _elements.size(); i++) {
     auto &element = _elements.at(i);
     if (element.actor == nullptr) {
+      element.name = std::move(name);
       element.actor = actor;
       element.position = position;
 

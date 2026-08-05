@@ -32,6 +32,7 @@ class World {
   };
 
   struct Element {
+    std::string name;
     Actor *actor{nullptr};
     Vec2D<WorldCoordinateType> position{0, 0};
     uint16_t nextInCell{std::numeric_limits<uint16_t>::max()};
@@ -102,7 +103,7 @@ public:
   void Paint(Painter &painter, const BitmapPosition &start, const BitmapPosition &end, const BitmapSize &painterOrigin) const;
 
   std::vector<NodeID> &Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const;
-  NodeID Insert(Actor *actor, const WorldPosition &position);
+  NodeID Insert(std::string name, Actor *actor, const WorldPosition &position);
   void Update(NodeID element, const WorldPosition &position);
   void Remove(NodeID element);
 

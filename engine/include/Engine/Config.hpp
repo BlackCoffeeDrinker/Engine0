@@ -70,4 +70,39 @@ E00_ALWAYS_INLINE T relaxed_load(T const *t) {
 
 constexpr size_t MaxActorsInWorld = 512;
 }// namespace detail
+
+using ActorId = uint32_t;
+
+constexpr ActorId ActorHashName(std::string_view str) noexcept {
+  ActorId hash = 1257225422U;
+  for (const auto c: str) {
+    const char up = (c >= 'a' && c <= 'z') ? (c - 32) : c;
+    hash ^= static_cast<ActorId>(up);
+    hash *= 16777619U;
+  }
+  return hash;
+}
+
+// User-defined literal for ultra-clean code syntax: e00_actor
+constexpr ActorId operator""_actor(const char *str, size_t len) noexcept {
+  return ActorHashName(std::string_view(str, len));
+}
+
+using ResourceId = uint32_t;
+
+constexpr ResourceId HashName(std::string_view str) noexcept {
+  ResourceId hash = 2166136261U;
+  for (const auto c: str) {
+    const char up = (c >= 'a' && c <= 'z') ? (c - 32) : c;
+    hash ^= static_cast<ResourceId>(up);
+    hash *= 16777619U;
+  }
+  return hash;
+}
+
+// User-defined literal for ultra-clean code syntax: e00_id
+constexpr ResourceId operator""_id(const char *str, size_t len) noexcept {
+  return HashName(std::string_view(str, len));
+}
+
 }// namespace e00

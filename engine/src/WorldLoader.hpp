@@ -7,7 +7,6 @@ namespace e00::impl {
 class WorldLoader {
   ResourceManager *_engine = nullptr;
 
-
 public:
   struct TilesetDef {
     size_t startTileId = 0;
@@ -17,7 +16,6 @@ public:
   struct ActorDef {
     std::string source;
     BitmapPosition position;
-    BitmapSize size;
   };
 
   struct CurrentLoadContext {

@@ -1,3 +1,4 @@
+#include "ActorLoader.hpp"
 #include "PrivateInclude.hpp"
 
 #include "InternalActions.hpp"
@@ -7,6 +8,7 @@
 #include <Engine/World.hpp>
 
 #include <memory>
+#include <ranges>
 
 namespace e00 {
 Action Engine::BuiltInAction_Quit() {
@@ -82,12 +84,6 @@ bool Engine::IsPaused() const noexcept {
 }
 
 std::error_code Engine::LoadWorld(const std::string &world_name) {
-  if (_current_world) {
-    // TODO: _script_engine->call<...>("world_unload")
-    OnWorldUnload(_current_world);
-    _current_world.reset();
-  }
-
   auto &resource_manager = ResourceManager::GlobalResourceManager();
   if (const auto worldIni = resource_manager.FindStreamForResource(HashName(world_name))) {
     impl::WorldLoader loader(&resource_manager);
@@ -109,6 +105,8 @@ std::error_code Engine::LoadWorld(const std::string &world_name) {
         world_name,
         {static_cast<WorldCoordinateType>(worldData.width), static_cast<WorldCoordinateType>(worldData.height)}));
     for (const auto &tileset: worldData.tilesets) {
+      // TODO: Same tileset as before (maybe with different startTileId) ? Reuse and don't reload
+
       world->AddTileset(tileset.startTileId, resource_manager.LazyResource<Tileset>(HashName(tileset.tilesetResourceName)));
     }
 
@@ -124,8 +122,60 @@ std::error_code Engine::LoadWorld(const std::string &world_name) {
         }
       }
     }
-    
+
     // Do the actors
+    impl::ActorLoader actorLoader(&resource_manager);
+    for (const auto &[name, def]: worldData.actors) {
+      const auto resourceId = HashName(def.source);
+
+      if (!_actors.contains(resourceId)) {
+        if (const auto actorIni = resource_manager.FindStreamForResource(resourceId)) {
+          if (auto actor = actorLoader.LoadActor(*actorIni)) {
+            _actors.emplace(resourceId, std::move(actor));
+          } else {
+            // Something went wrong, log it
+            GetDefaultLogger().Error(source_location::current(), "Failed to load actor {}", name);
+            return std::make_error_code(std::errc::invalid_argument);
+          }
+        } else {
+          // Something went wrong, log it
+          GetDefaultLogger().Error(source_location::current(), "Failed find source for actor {}: {}", name, def.source);
+          return std::make_error_code(std::errc::invalid_argument);
+        }
+      }
+
+      // Loaded and need to be registered as `name`
+      world->Insert(
+          name,
+          _actors.at(resourceId).get(),
+          def.position);
+    }
+
+    if (_current_world) {
+      // TODO: _script_engine->call<...>("world_unload")
+      OnWorldUnload(_current_world);
+
+      // Make a list of used actors in this new world
+      std::vector<ResourceId> actorsUsed(worldData.actors.size());
+      for (const auto &name: worldData.actors | std::views::keys) {
+        actorsUsed.push_back(HashName(name));
+      }
+
+      // Make a list of actors to unload
+      std::vector<ResourceId> actorsToUnload;
+      for (const auto &name: _actors | std::views::keys) {
+        if (!std::ranges::contains(actorsUsed, name)) {
+          actorsToUnload.push_back(name);
+        }
+      }
+
+      // Unload actors that aren't used in this new world
+      for (const auto &name: actorsToUnload) {
+        _actors.erase(name);
+      }
+
+      _current_world.reset();
+    }
 
     _current_world = std::move(world);
     OnWorldLoaded(_current_world);

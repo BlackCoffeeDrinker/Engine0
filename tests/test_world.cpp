@@ -50,9 +50,9 @@ TEST_CASE("Query returns actors across multiple grid cells", "[world]") {
   NPCActor actorB;
   NPCActor actorC;
 
-  const auto nodeA = world.Insert(&actorA, {1, 1}); // cell (0,0)
-  const auto nodeB = world.Insert(&actorB, {5, 5}); // cell (1,1)
-  const auto nodeC = world.Insert(&actorC, {9, 9}); // cell (2,2)
+  const auto nodeA = world.Insert(TODO, &actorA, {1, 1}); // cell (0,0)
+  const auto nodeB = world.Insert(TODO, &actorB, {5, 5}); // cell (1,1)
+  const auto nodeC = world.Insert(TODO, &actorC, {9, 9}); // cell (2,2)
 
   REQUIRE(nodeA != e00::World::InvalidNodeID);
   REQUIRE(nodeB != e00::World::InvalidNodeID);
@@ -81,8 +81,8 @@ TEST_CASE("Query respects cell boundaries", "[world]") {
   NPCActor outsideActor;
 
   // Cell size is 4x4 tiles: (3,3) is the last tile of cell (0,0), (4,4) is the first tile of cell (1,1)
-  const auto insideNode = world.Insert(&insideActor, {3, 3});
-  const auto outsideNode = world.Insert(&outsideActor, {4, 4});
+  const auto insideNode = world.Insert(TODO, &insideActor, {3, 3});
+  const auto outsideNode = world.Insert(TODO, &outsideActor, {4, 4});
 
   REQUIRE(insideNode != e00::World::InvalidNodeID);
   REQUIRE(outsideNode != e00::World::InvalidNodeID);
@@ -101,7 +101,7 @@ TEST_CASE("Removed actor no longer appears in Query after Tick", "[world]") {
   world.AddMap(e00::ResourceManager::GlobalResourceManager().TakeOwnership(std::make_unique<e00::Map>(16, 16)));
 
   NPCActor actor;
-  const auto node = world.Insert(&actor, {2, 2});
+  const auto node = world.Insert(TODO, &actor, {2, 2});
   REQUIRE(node != e00::World::InvalidNodeID);
 
   world.Tick(std::chrono::milliseconds(0));

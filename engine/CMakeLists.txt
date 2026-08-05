@@ -71,6 +71,8 @@ add_library(Engine00 STATIC
         src/Resource/ResourceLoader.cpp
         src/Resource/Sprite.cpp
         src/Resource/Tileset.cpp
+        src/ActorLoader.cpp
+        src/ActorLoader.hpp
 )
 
 target_include_directories(Engine00
