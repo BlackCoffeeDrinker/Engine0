@@ -11,6 +11,7 @@ target_sources(Engine00
         OpenStream.cpp
         MetalSurfacePainter.cpp
         MetalSurfacePainter.hpp
+        PlatformExtras.cpp
 )
 
 target_link_libraries(Engine00 PUBLIC

@@ -36,3 +36,20 @@ target_link_libraries(Engine00_Tests
 include(CTest)
 include(Catch)
 catch_discover_tests(Engine00_Tests)
+
+# Isolated actor test target: kept separate from Engine00_Tests because several pre-existing
+# files in that target (test_map.cpp, test_widget.cpp, test_world.cpp, tests_script.cpp, tests.cpp)
+# currently fail to compile for reasons unrelated to the actor work (removed `Map` class, a
+# `ResourceManager::AddLoader<WorldLoader>` template mismatch, and scripting-engine binding bugs).
+add_executable(Engine00_ActorTests
+        test_actor_mobile.cpp
+        test_actor_chest.cpp
+        test_actor_door.cpp
+        test_engine_actor_persistence.cpp
+        test_world_facing.cpp
+        test_world_loader_entries.cpp)
+target_include_directories(Engine00_ActorTests PRIVATE ../engine/src)
+target_link_libraries(Engine00_ActorTests
+        PRIVATE Engine00
+        PRIVATE Catch2::Catch2WithMain)
+catch_discover_tests(Engine00_ActorTests)

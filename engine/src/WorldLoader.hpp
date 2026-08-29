@@ -15,7 +15,8 @@ public:
   
   struct ActorDef {
     std::string source;
-    BitmapPosition position;
+    WorldPosition position;
+    std::map<std::string, std::string> default_properties;
   };
 
   struct CurrentLoadContext {
@@ -29,10 +30,12 @@ public:
     std::vector<TileIdType> aboveSet;
     
     std::map<std::string, ActorDef> actors;
+    std::map<std::string, WorldPosition> entries;
   };
 
 private:
   std::error_code HandleActorData(std::string_view actor_name, std::string_view key, std::string_view value);
+  std::error_code HandleEntryData(std::string_view entry_name, std::string_view key, std::string_view value);
   std::error_code HandleWorldData(std::string_view category, std::string_view key,
                                   std::string_view value);
 

@@ -91,5 +91,14 @@ public:
    */
   std::error_code AddFrame(ResourcePtrT<Bitmap> data, std::chrono::milliseconds duration);
   std::error_code AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration);
+
+  /**
+   * Convenience helper that paints the sprite's current frame at `position`, mirroring
+   * `Tileset::Paint`, so actors don't need to hand-roll `Painter::BlitSurface` calls.
+   *
+   * @param painter the painter to draw with
+   * @param position the position to draw at
+   */
+  void Paint(Painter &painter, const BitmapPosition &position);
 };
 }// namespace e00

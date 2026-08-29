@@ -180,4 +180,8 @@ std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::millise
 std::error_code Sprite::AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration) {
   return AddFrame(ResourceManager::GlobalResourceManager().TakeOwnership(std::move(data)), duration);
 }
+
+void Sprite::Paint(Painter &painter, const BitmapPosition &position) {
+  painter.BlitSurface(*this, {{0, 0}, Size()}, Vec2D<BitmapSizeType>{position.x, position.y});
+}
 }// namespace e00

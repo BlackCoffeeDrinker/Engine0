@@ -1,5 +1,4 @@
 #include "BitmapLoader.hpp"
-#include "lodepng.h"
 
 namespace e00::impl {
 BitmapLoader::BitmapLoader() = default;

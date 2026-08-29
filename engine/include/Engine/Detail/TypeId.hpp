@@ -1,9 +1,9 @@
 #pragma once
 #include <cstddef>
+#include <functional>
+#include <memory>
 #include <string_view>
 #include <type_traits>
-#include <memory>
-#include <functional>
 
 #if defined(__clang__)
 #if __has_feature(cxx_rtti)
@@ -55,6 +55,7 @@ constexpr std::string_view type_name() {
 #endif
 #endif
 }
+#undef RTTI_ENABLED
 
 /*
  The platforms we build for probably don't support RTTI
@@ -67,11 +68,21 @@ constexpr type_t type_id() {
   return fnv1a_hash(type_name<T>());
 }
 
-#undef RTTI_ENABLED
 
-constexpr type_t int_id    = type_id<int>();
+struct TypedObject {
+  virtual ~TypedObject() = default;
+  [[nodiscard]] virtual type_t Type() const = 0;
+};
+
+template<typename T>
+struct TypedObjectT : virtual TypedObject {
+  [[nodiscard]] type_t Type() const override { return type_id<T>(); }
+};
+
+
+constexpr type_t int_id = type_id<int>();
 constexpr type_t const_int = type_id<const int>();
-constexpr type_t ptr_int   = type_id<int*>();
+constexpr type_t ptr_int = type_id<int *>();
 
 /**
  * Non-polymorphic type information to be held at runtime

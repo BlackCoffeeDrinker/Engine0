@@ -10,6 +10,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os.path
 import sys
 from pathlib import Path
 
@@ -36,19 +37,19 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--tileset-name",
         default=None,
         help="Base name/resource key for the output tileset resource .ini "
-        "(default: '<map-name>tileset')",
+             "(default: '<map-name>tileset')",
     )
     parser.add_argument(
         "--bitmap-resource-key",
         default=None,
         help="Resource key for the atlas bitmap referenced by the tileset .ini "
-        "(default: '--atlas-name' without its extension)",
+             "(default: '--atlas-name' without its extension)",
     )
     parser.add_argument(
         "--emit-dat",
         action="store_true",
         help="Write separate .dat file(s) for the [set]/[setaboveplayer] tile data instead "
-        "of inline `data =` rows",
+             "of inline `data =` rows",
     )
     parser.add_argument(
         "--palette",
@@ -59,14 +60,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def convert(
-    tmx_path: Path,
-    out_dir: Path,
-    map_name: str,
-    atlas_name: str,
-    tileset_name: str | None = None,
-    bitmap_resource_key: str | None = None,
-    emit_dat: bool = False,
-    palette_path: Path | None = None,
+        tmx_path: Path,
+        out_dir: Path,
+        map_name: str,
+        atlas_name: str,
+        tileset_name: str | None = None,
+        bitmap_resource_key: str | None = None,
+        emit_dat: bool = False,
+        palette_path: Path | None = None,
 ) -> None:
     if tileset_name is None:
         tileset_name = f"{map_name}tileset"
@@ -168,6 +169,15 @@ def convert(
         animations=animations,
     )
     png_codec.encode(atlas.image, atlas_path)
+    
+    for obj in tmx_map.objects:
+        if obj.sprite_id is None:
+            continue
+        sprite_path = f"{out_dir}/s{obj.sprite_id}.ini"
+        if os.path.exists(sprite_path):
+            continue
+        # TODO: Write sprite ini
+        print(f"{obj.name}: {obj.x}, {obj.y}")
 
     print(f"Wrote {ini_path}")
     print(f"Wrote {tileset_ini_path}")

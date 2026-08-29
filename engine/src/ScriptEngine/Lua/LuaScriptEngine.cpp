@@ -1,21 +1,19 @@
 #include "LuaScriptEngine.hpp"
 
-#include <sstream>
-
-#include "TrampolineData.hpp"
-#include "LuaToNativeTrampoline.hpp"
+#include "BoxedToLuaConverter.hpp"
+#include "Error.hpp"
 #include "LuaToBoxedConverter.hpp"
+#include "LuaToNativeTrampoline.hpp"
 #include "NamedFunction.hpp"
 #include "RefFunction.hpp"
-#include "BoxedToLuaConverter.hpp"
+#include "TrampolineData.hpp"
 #include "UserDataHolder.hpp"
-#include "Error.hpp"
 
 namespace {
 void *l_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
   // auto *engine = static_cast<e00::impl::scripting::lua::LuaScriptEngine *>(ud);
-  (void)ud;
-  (void)osize; /* not used */
+  (void) ud;
+  (void) osize; /* not used */
 
   if (nsize == 0) {
     free(ptr);
@@ -31,25 +29,28 @@ int lua_log(lua_State *L) {
   auto *engine = static_cast<lua::LuaScriptEngine *>(lua_touserdata(L, lua_upvalueindex(2)));
 
   // make the string
-  std::stringstream ss;
+  std::string output;
   const auto args_count = lua_gettop(L);
 
   for (int i = 0; i < args_count; i++) {
     auto boxed_value = lua_to_boxed_value_guess(L, i + 1);
 
     if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<std::string>())) {
-      ss << cast<std::string>(boxed_value);
+      const auto strvalue = cast<std::string>(boxed_value);
+      output += strvalue;
     } else if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<int>())) {
-      ss << cast<int>(boxed_value);
+      const auto intvalue = cast<int>(boxed_value);
+      output += std::to_string(intvalue);
     } else if (boxed_value.get_type_info().bare_equal_type_info(e00::user_type<float>())) {
-      ss << cast<float>(boxed_value);
+      const auto floatvalue = cast<float>(boxed_value);
+      output += std::to_string(floatvalue);
     }
 
     // TODO: Support userdata
   }
 
   // is it level 0 (info) or 1 (error)
-  engine->log_from_lua(level, ss.str());
+  engine->log_from_lua(level, output);
 
   return 0;
 }
@@ -57,9 +58,9 @@ int lua_log(lua_State *L) {
 
 namespace e00::scripting::lua {
 LuaScriptEngine::LuaScriptEngine()
-  : ScriptEngine(),
-    _state(lua_newstate(&l_alloc, this)),
-    _bad_method(nullptr) {
+    : ScriptEngine(),
+      _state(lua_newstate(&l_alloc, this)),
+      _bad_method(nullptr) {
   // Make our genetic metatable for userdata
   // The if is technically not required as there's no chance we re-execute this
   if (luaL_newmetatable(_state, UserDataHolder::MetaTableName)) {
@@ -142,7 +143,7 @@ std::error_code LuaScriptEngine::parse(const std::string &code) {
     return nullptr;
   };
 
-  ReaderState state{ code, 0 };
+  ReaderState state{code, 0};
   if (auto ec = lua_ret_to_error_code(lua_load(_state, reader, &state, "native_load", nullptr))) {
     return ec;
   }
@@ -173,7 +174,7 @@ std::error_code LuaScriptEngine::parse(const std::unique_ptr<e00::Stream> &strea
     return nullptr;
   };
 
-  ReaderState state{ {}, stream };
+  ReaderState state{{}, stream};
 
   if (auto ec = lua_ret_to_error_code(lua_load(_state, reader, &state, "parse(stream)", nullptr))) {
     return ec;
@@ -207,7 +208,6 @@ const std::unique_ptr<scripting::ProxyFunction> &LuaScriptEngine::get_method_for
   return _bad_method;
 }
 void LuaScriptEngine::log_from_lua(int level, const std::string_view &str) {
-
 }
 
 }// namespace e00::scripting::lua

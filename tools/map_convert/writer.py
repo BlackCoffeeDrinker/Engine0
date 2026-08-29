@@ -52,14 +52,19 @@ def write_ini(
         lines.append("source =")
 
     for obj in objects:
+        obj_source = f"{obj.type.lower()}"
+
         lines.extend([
             "",
             f"[object:{obj.name}]",
-            f"source = actor_{obj.type.lower()}",
+            f"source = {obj_source}",
             f"position = {obj.x}, {obj.y}",
-            f"size = {obj.width}, {obj.height}",
         ])
-
+        if obj.sprite_id is not None and "sprite" not in obj.instance_attr.keys():
+            lines.append(f"sprite = sprite_{obj.sprite_id}")
+        for property_name, property_value in obj.instance_attr.items():
+            lines.append(f"{property_name} = {property_value}")
+        
     lines.append("")
     Path(ini_path).write_text("\n".join(lines))
 

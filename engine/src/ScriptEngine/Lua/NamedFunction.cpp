@@ -2,7 +2,6 @@
 
 #include "NamedFunction.hpp"
 
-#include <iostream>
 #include <utility>
 
 #include "BoxedToLuaConverter.hpp"

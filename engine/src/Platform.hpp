@@ -3,6 +3,11 @@
 
 #include <Engine.hpp>
 
+#include <cstdint>
+#include <span>
+#include <string>
+#include <string_view>
+
 namespace platform {
 using ThreadId = int;
 constexpr ThreadId InvalidThreadId = -1;
@@ -197,4 +202,15 @@ Surface &GetMainSurface();
  * @return A surface that matches the main screen format perfectly.
  */
 std::unique_ptr<e00::DrawableSurface> Optimize(const e00::DrawableSurface &source, bool preferHW);
+
+// Native menu bar (Win31 implements a real HMENU; other backends no-op).
+struct MenuItem {
+  std::string label;
+  int actionId = 0; // 0 = BuiltInAction_Quit by convention on Win31
+};
+
+void SetMenu(e00::Engine &engine, std::span<const MenuItem> items);
+
+// Minimal PCM push API (Win31 uses waveOut; other backends no-op).
+void QueueAudioSamples(std::span<const int16_t> pcmMono16, uint32_t sampleRateHz);
 }// namespace platform

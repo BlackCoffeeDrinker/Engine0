@@ -71,8 +71,17 @@ add_library(Engine00 STATIC
         src/Resource/ResourceLoader.cpp
         src/Resource/Sprite.cpp
         src/Resource/Tileset.cpp
-        src/ActorLoader.cpp
-        src/ActorLoader.hpp
+         src/Actors/ActorChest.cpp
+         src/Actors/ActorChest.hpp
+         src/Actors/ActorMobile.cpp
+         src/Actors/ActorMobile.hpp
+         src/Actors/ActorDoor.cpp
+         src/Actors/ActorDoor.hpp
+         src/Actors/ActorWarpDoor.cpp
+         src/Actors/ActorWarpDoor.hpp
+         src/Actors/ActorDecoration.cpp
+         src/Actors/ActorDecoration.hpp
+        src/Utils.cpp
 )
 
 target_include_directories(Engine00
@@ -99,7 +108,7 @@ target_compile_definitions(Engine00Interface
 
 # Add third-party libraries
 target_link_libraries(Engine00Interface INTERFACE magic_enum)
-target_link_libraries(Engine00 PRIVATE Lua ini nlohmann_json::nlohmann_json lodepng zlibstatic)
+target_link_libraries(Engine00 PRIVATE Lua ini zlibstatic)
 target_link_libraries(Engine00 PUBLIC Engine00Interface)
 
 # Disable RTTI for this target across different compilers
@@ -109,7 +118,7 @@ else ()
     target_compile_options(Engine00 PUBLIC "-fno-rtti")
 endif ()
 
-if (DJGPP)
+if (DJGPP OR WIN31)
     target_compile_definitions(Engine00 PUBLIC "-DLUA_32BITS")
 endif ()
 
@@ -125,6 +134,11 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     target_compile_options(Engine00Interface INTERFACE -fasynchronous-unwind-tables)
     target_compile_options(Engine00Interface INTERFACE -Wl,-pie -Wl,-z,now -Wl,-z,relro)
 
+    # Enforce the engine's no-exceptions design intent. Applied to Engine00's own sources only
+    # (not the INTERFACE target), so consumers such as Catch2-based test executables that still
+    # rely on exceptions (e.g. REQUIRE_NOTHROW) aren't forced to build without them.
+    target_compile_options(Engine00 PRIVATE -fno-exceptions)
+
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "AppleClang")
     message(STATUS "Using CLANG")
 
@@ -132,6 +146,11 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_CXX_COMPILER_ID} ST
 
     target_compile_options(Engine00Interface INTERFACE -Wall -Wno-implicit-fallthrough -Wmissing-prototypes -Wno-unused-command-line-argument -pedantic)
     target_compile_options(Engine00Interface INTERFACE -fasynchronous-unwind-tables)
+
+    # Enforce the engine's no-exceptions design intent. Applied to Engine00's own sources only
+    # (not the INTERFACE target), so consumers such as Catch2-based test executables that still
+    # rely on exceptions (e.g. REQUIRE_NOTHROW) aren't forced to build without them.
+    target_compile_options(Engine00 PRIVATE -fno-exceptions)
 
 elseif (MSVC)
     message(STATUS "Using MSVC")
@@ -217,7 +236,9 @@ if (DJGPP)
 elseif (APPLE)
     message(STATUS "Building for Apple OSX")
     add_subdirectory(src/Backend_Apple)
+elseif (WIN31)
+    message(STATUS "Building for Windows 3.1 / Win32s")
+    add_subdirectory(src/Backend_Win31)
 else ()
-    message(STATUS "Building for the SDL platform")
-    add_subdirectory(src/Backend_SDL)
+    message(FATAL_ERROR "OS Target not yet known")
 endif ()

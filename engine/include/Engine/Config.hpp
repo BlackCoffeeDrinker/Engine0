@@ -1,16 +1,10 @@
 #pragma once
 
+#include <cstdint>
 #include <cstdlib>
+#include <string_view>
 
-#ifdef _WIN32
-#if E00_LIBRARY_EXPORT == 1
-#define E00_API __declspec(dllexport)
-#else
-#define E00_API __declspec(dllimport)
-#endif
-#else
 #define E00_API
-#endif
 
 #if __has_builtin(__atomic_add_fetch) && defined(__ATOMIC_RELAXED) && defined(__ATOMIC_ACQ_REL)
 #define E00_HAS_BUILTIN_ATOMIC_SUPPORT
@@ -68,9 +62,13 @@ E00_ALWAYS_INLINE T relaxed_load(T const *t) {
 #endif
 }
 
-constexpr size_t MaxActorsInWorld = 512;
 }// namespace detail
 
+constexpr size_t MaxActorsInWorld = 512;
+constexpr size_t MaxActorsTotal = 1024;
+constexpr size_t MaxInputBindings = 128;
+constexpr size_t MaxPendingActions = 128;
+constexpr size_t MaxResourceLoaders = 16;
 using ActorId = uint32_t;
 
 constexpr ActorId ActorHashName(std::string_view str) noexcept {

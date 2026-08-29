@@ -14,7 +14,7 @@ void Tileset::ComputeVolatileValues() {
   }
 }
 
-void Tileset::Paint(Painter &painter, TileIdType tileId, const Vec2D<BitmapSizeType> &position) {
+void Tileset::Paint(Painter &painter, TileIdType tileId, const BitmapPosition &position) {
   if (tileId > 0) [[likely]] {
     assert(_tiles_per_row != 0 && _source_sheet != nullptr);
 
@@ -25,7 +25,8 @@ void Tileset::Paint(Painter &painter, TileIdType tileId, const Vec2D<BitmapSizeT
     const auto sourceX = static_cast<BitmapSizeType>(_margin + tileX * (_tile_size.x + _spacing));
     const auto sourceY = static_cast<BitmapSizeType>(_margin + tileY * (_tile_size.y + _spacing));
 
-    painter.BlitSurface(*_source_sheet, {sourceX, sourceY, _tile_size.x, _tile_size.y}, position);
+    painter.BlitSurface(*_source_sheet, {sourceX, sourceY, _tile_size.x, _tile_size.y},
+                        Vec2D<BitmapSizeType>{position.x, position.y});
   }
 }
 

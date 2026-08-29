@@ -29,7 +29,10 @@ ResourceLoader &ResourceManager::InvalidLoader() {
 
 std::error_code ResourceManager::AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd) {
   loaderToAdd->SetResourceLoader(this);
-  _loaders.push_back(std::move(loaderToAdd));
+  if (!_loaders.push_back(std::move(loaderToAdd))) {
+    GetDefaultLogger().Error(source_location::current(), "Unable to add loader: no more free slots ({})", MaxResourceLoaders);
+    return std::make_error_code(std::errc::not_enough_memory);
+  }
   return {};
 }
 
@@ -48,7 +51,12 @@ std::unique_ptr<Stream> ResourceManager::FindStreamForResource(ResourceId id, ty
 
   if (aliasIt != _aliases.end()) {
     GetDefaultLogger().Info(source_location::current(), "Alias found for {} -> {}", id, aliasIt->filename);
-    return _stream_factory.OpenStream(aliasIt->filename);
+    if (auto stream = _stream_factory.OpenStream(aliasIt->filename)) {
+      return stream;
+    }
+
+    GetDefaultLogger().Error(source_location::current(), "Failed to open alias stream for {} -> {}", id, aliasIt->filename);
+    return nullptr;
   }
 
   GetDefaultLogger().Error(source_location::current(), "No alias found for {}", id);
@@ -118,6 +126,7 @@ bool ResourceManager::CanLoad(ResourceId id, type_t type) {
   }
 
   GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}: data was not found", id);
+  std::abort();
   return false;
 }
 

@@ -4,14 +4,6 @@ CPMAddPackage(
         GIT_TAG v0.9.5
 )
 
-CPMAddPackage(
-        NAME nlohmann_json
-        VERSION 3.12.0
-        GITHUB_REPOSITORY nlohmann/json
-        OPTIONS
-        "JSON_BuildTests OFF"
-)
-
 # Add ZLIB
 CPMAddPackage(
         NAME zlib
@@ -20,13 +12,6 @@ CPMAddPackage(
         OPTIONS
         "CMAKE_POSITION_INDEPENDENT_CODE True"
 )
-#######################################################################################################################
-## LodePNG
-#######################################################################################################################
-add_library(lodepng OBJECT lodepng/lodepng.cpp lodepng/lodepng.h)
-target_include_directories(lodepng SYSTEM INTERFACE lodepng)
-target_compile_definitions(lodepng PUBLIC LODEPNG_NO_COMPILE_ENCODER)
-source_group("Vendor: Lodepng" FILES lodepng/lodepng.cpp lodepng/lodepng.h)
 
 #######################################################################################################################
 ## INI
@@ -34,13 +19,6 @@ source_group("Vendor: Lodepng" FILES lodepng/lodepng.cpp lodepng/lodepng.h)
 add_library(ini OBJECT inih/ini.c inih/ini.h)
 target_include_directories(ini SYSTEM INTERFACE inih)
 target_compile_definitions(ini PUBLIC INI_STOP_ON_FIRST_ERROR=1)
-
-#######################################################################################################################
-## SDL
-#######################################################################################################################
-if (NOT DJGPP)
-        add_subdirectory(SDL ${CMAKE_BINARY_DIR}/SDLBuild EXCLUDE_FROM_ALL)
-endif ()
 
 #######################################################################################################################
 ## LUA

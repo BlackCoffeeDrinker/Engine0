@@ -3,27 +3,9 @@
 
 #include "IniParser.hpp"
 
-#include <charconv>
 
 namespace {
 constexpr std::string_view kTileIdPrefix = "id:";
-
-template<typename RealType>
-std::error_code ToSize(const std::string_view &str, size_t &size) {
-  if (const auto value = std::from_chars(str.data(), str.data() + str.size(), size);
-      value.ec != std::errc{}) {
-    return std::make_error_code(value.ec);
-  }
-
-  if (size > std::numeric_limits<RealType>::max()) {
-    return std::make_error_code(std::errc::invalid_argument);
-  }
-  if (size < std::numeric_limits<RealType>::min()) {
-    return std::make_error_code(std::errc::invalid_argument);
-  }
-
-  return {};
-}
 }// namespace
 
 namespace e00::impl {
@@ -67,8 +49,6 @@ std::error_code TilesetLoader::HandleTileSpecificSection(TileIdType tileId, std:
   if (!_tileProperties.contains(tileId)) {
     _tileProperties[tileId] = {};
   }
-  
-  
 
   return {};
 }

@@ -18,10 +18,10 @@ protected:
   BoxedValue do_call(const FunctionParams &params) const override {
     const BoxedValue &bv = params[0];
     if (bv.is_const()) {
-      const Class *o = CastHelper<const Class *>::cast(bv);
+      const Class *o = bv.cast<const Class*>();
       return do_call_impl<T>(o);
     } else {
-      Class *o = CastHelper<Class *>::cast(bv);
+      Class *o = bv.cast<Class*>();
       return do_call_impl<T>(o);
     }
   }

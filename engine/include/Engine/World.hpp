@@ -7,14 +7,13 @@
 #include <Engine/ActionInstance.hpp>
 #include <Engine/Actor.hpp>
 #include <Engine/Config.hpp>
+#include <Engine/Detail/FixedMap.hpp>
 #include <Engine/Math/Rect.hpp>
 #include <Engine/Math/Vec2D.hpp>
-#include <Engine/Platform/Painter.hpp>
 #include <Engine/Resource/Tileset.hpp>
 #include <Engine/ResourcePtr.hpp>
 
 namespace e00 {
-using NodeID = size_t;
 
 /**
  * A `World` is a collection of actors at a position with a state
@@ -32,34 +31,33 @@ class World {
   };
 
   struct Element {
-    std::string name;
     Actor *actor{nullptr};
-    Vec2D<WorldCoordinateType> position{0, 0};
-    uint16_t nextInCell{std::numeric_limits<uint16_t>::max()};
 
     [[nodiscard]] RectT<WorldCoordinateType> bounds() const {
       assert(actor != nullptr);
-      return {position, actor->Size()};
+      const auto &pos = actor->Position();
+      return {Vec2D{pos.x, pos.y}, actor->Size()};
     }
 
-    [[nodiscard]] WorldCoordinateType DistanceTo(const Vec2D<WorldCoordinateType> &point) const {
-      return position.DistanceTo(point);
+    [[nodiscard]] WorldCoordinateType DistanceTo(const WorldPosition &point) const {
+      assert(actor != nullptr);
+      return actor->Position().DistanceTo(point);
     }
+
+    void SetPosition(const WorldPosition &newPosition) { actor->SetPosition(newPosition); }
+    [[nodiscard]] auto Position() const noexcept { return actor->Position(); }
+    [[nodiscard]] auto Facing() const noexcept { return actor->Facing(); }
   };
 
-  const Vec2D<WorldCoordinateType> _map_size;
-  std::string _name;
+  const TilePosition _map_size;
+  const std::string _name;
 
   SourceTileset _source_tileset;
   Layer _ground_layer;
   Layer _above_actors_layer;
 
-  std::array<Element, detail::MaxActorsInWorld> _elements;
-
-  static constexpr size_t _gridCellSizeInTiles = 4;
-  size_t _gridWidth{0};
-  size_t _gridHeight{0};
-  std::vector<uint16_t> _cellHeads;
+  FixedMap<ActorId, Element, MaxActorsInWorld> _elements;
+  std::chrono::milliseconds _elapsedTime{0};// << Accumulated world time, used to drive sprite animation frame selection
 
   [[nodiscard]] WorldCoordinateType LayerSize() const { return _map_size.Area(); }
   [[nodiscard]] bool ValidDataPosition(const size_t position) const { return LayerSize() > position; }
@@ -68,7 +66,7 @@ class World {
     return _source_tileset;
   }
 
-  [[nodiscard]] WorldCoordinateType PositionToLinear(const WorldPosition &pos) const {
+  [[nodiscard]] WorldCoordinateType PositionToLinear(const TilePosition &pos) const {
     if (pos > _map_size) [[unlikely]] {
       return std::numeric_limits<WorldCoordinateType>::max();
     }
@@ -78,34 +76,55 @@ class World {
 
   void PaintLayer(const Layer &layer, Painter &painter, const RectT<TileIdType> &layerTileRect, const BitmapSize &painterOrigin) const;
 
-  void GridInit(size_t widthInTiles, size_t heightInTiles);
-  void GridClear();
-  void GridInsert(NodeID index, const Vec2D<WorldCoordinateType> &position);
-
 public:
-  static constexpr NodeID InvalidNodeID = std::numeric_limits<NodeID>::max();
-  explicit World(std::string name, Vec2D<WorldCoordinateType> mapSize);
+  static constexpr ActorId InvalidNodeID = std::numeric_limits<ActorId>::max();
+  explicit World(std::string name, TilePosition mapSize);
 
   ~World();
 
-  [[nodiscard]] auto WorldTileSize() const { return _map_size; }
-  [[nodiscard]] auto WorldPixelSize() const { return _map_size * _source_tileset.tileset->TileSize(); }
+  [[nodiscard]] const std::string &Name() const noexcept { return _name; }
 
-  [[nodiscard]] size_t NumActors() const {
-    return std::ranges::count_if(_elements, [](const auto &element) {
-      return element.actor != nullptr;
-    });
+  [[nodiscard]] auto WorldTileSize() const { return _map_size; }
+  [[nodiscard]] WorldPosition WorldPixelSize() const {
+    if (!_source_tileset.tileset) {
+      return WorldPosition{_map_size.x, _map_size.y};
+    }
+    const auto &tileSize = _source_tileset.tileset->TileSize();
+    if (tileSize.x == 0 || tileSize.y == 0) {
+      return WorldPosition{_map_size.x, _map_size.y};
+    }
+    return ToWorldPosition(_map_size, tileSize);
   }
 
   bool AddTileset(TileIdType startTileId, const ResourcePtrT<Tileset> &tileset);
   bool SetMapTile(uint8_t layer, const TilePosition &position, TileIdType tileId);
 
-  void Paint(Painter &painter, const BitmapPosition &start, const BitmapPosition &end, const BitmapSize &painterOrigin) const;
+  void Paint(Painter &painter, const WorldPosition &start, const WorldPosition &end, const BitmapPosition &painterOrigin) const;
 
-  std::vector<NodeID> &Query(const RectT<WorldCoordinateType> &bounds, std::vector<NodeID> &output) const;
-  NodeID Insert(std::string name, Actor *actor, const WorldPosition &position);
-  void Update(NodeID element, const WorldPosition &position);
-  void Remove(NodeID element);
+  std::vector<ActorId> &Query(const WorldRect &bounds, std::vector<ActorId> &output) const;
+  ActorId Insert(ActorId actorId, Actor *actor, const WorldPosition &position);
+  void Update(ActorId element, const WorldPosition &position);
+  void Remove(ActorId element);
+
+  /**
+   * @param element the node to query
+   * @return the position of the given node, or {0, 0} if invalid
+   */
+  [[nodiscard]] WorldPosition PositionOf(ActorId element) const;
+
+  /**
+   * @return the world's accumulated elapsed time, updated once per `Tick`; used to drive
+   *         sprite animation frame selection at draw time.
+   */
+  [[nodiscard]] std::chrono::milliseconds ElapsedTime() const noexcept { return _elapsedTime; }
+
+  /**
+   * Dispatches an interaction to the actor at `element`.
+   *
+   * @param element the node to interact with
+   * @return true if the interaction was handled
+   */
+  bool Interact(ActorId element);
 
   void Tick(std::chrono::milliseconds delta);
   bool ProcessAction(const ActionInstance &action);

@@ -1,13 +1,15 @@
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <expected>
-#include <list>
 #include <memory>
 #include <string>
 #include <system_error>
 
+#include <Engine/Detail/FixedItemContainer.hpp>
 #include <Engine/Logging/SourceLocation.hpp>
+#include <Engine/Logging/Logger.hpp>
 #include <Engine/Platform/ResourceLoaderOptions.hpp>
 #include <Engine/Platform/Stream.hpp>
 #include <Engine/Platform/StreamFactory.hpp>
@@ -41,8 +43,8 @@ class ResourceManager {
   StreamFactory &_stream_factory;
 
   std::vector<AliasEntry> _aliases;
-  std::vector<std::unique_ptr<detail::ControlBlock>> _loaded_resources_cb;// << A lightweight control block tracking system
-  std::list<std::unique_ptr<ResourceLoader>> _loaders;                    // << all the known loaders
+  std::vector<std::unique_ptr<detail::ControlBlock>> _loaded_resources_cb;              // << A lightweight control block tracking system
+  FixedItemContainer<std::unique_ptr<ResourceLoader>, MaxResourceLoaders> _loaders;// << all the known loaders
 
   /**
    * Finds a control block for a given resource id and type

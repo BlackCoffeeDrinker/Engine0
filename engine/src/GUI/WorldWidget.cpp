@@ -21,13 +21,17 @@ WorldWidget::WorldWidget(const std::unique_ptr<World> &worldToDraw) : _worldToDr
 }
 
 void WorldWidget::DrawWorld(Painter &painter, const World &world) {
+  const auto worldPx = world.WorldPixelSize();
+  const BitmapSize worldSize{worldPx.x, worldPx.y};
+  const BitmapSize adjSize = Size().Clamp(worldSize);
+  const BitmapPosition start{
+      computeStartForCenter(_cameraCenter.x, adjSize.x, worldPx.x),
+      computeStartForCenter(_cameraCenter.y, adjSize.y, worldPx.y)};
+  const BitmapPosition end{
+      static_cast<BitmapSizeType>(start.x + adjSize.x),
+      static_cast<BitmapSizeType>(start.y + adjSize.y)};
 
-  const Vec2D adjSize(Size().Clamp(world.WorldPixelSize()));
-  const Vec2D start = {
-      computeStartForCenter(_cameraCenter.x, adjSize.x, world.WorldPixelSize().x),
-      computeStartForCenter(_cameraCenter.y, adjSize.y, world.WorldPixelSize().y)};
-
-  world.Paint(painter, start, start + adjSize, {0, 0});
+  world.Paint(painter, start, end, {0, 0});
 
   // const auto tile_size = world.TileSize();
   //

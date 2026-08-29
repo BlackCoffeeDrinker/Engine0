@@ -204,12 +204,7 @@ std::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const 
   }
 
   std::vector<uint8_t> compressedData;
-  try {
-    compressedData.resize(size);
-  } catch (const std::bad_alloc &) {
-    e00::GetDefaultLogger().Error(e00::source_location::current(), "Failed to allocate {} bytes for IDAT chunk", size);
-    return std::make_error_code(std::errc::not_enough_memory);
-  }
+  compressedData.resize(size);
 
   if (const auto ec = stream.Read(compressedData)) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "Failed to read IDAT chunk: {} (requested {} bytes, available {} bytes)", ec.message(), size, stream.AvailableToRead());

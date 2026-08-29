@@ -2,6 +2,9 @@
 
 #include <utility>
 
+#include <Engine/Detail/StringFormat.hpp>
+#include <Engine/Platform/SystemTime.hpp>
+
 #include "SourceLocation.hpp"
 
 namespace e00 {
@@ -18,7 +21,7 @@ struct LogMessage {
   experimental::source_location location;
   LoggingSeverity level;
   std::string_view payload;
-  std::chrono::system_clock::time_point time;
+  platform::system_clock::time_point time;
 };
 }// namespace detail
 
@@ -49,7 +52,7 @@ class Logger {
         loc,
         sev,
         payload,
-        std::chrono::system_clock::now()};
+        platform::system_clock::now()};
 
     // Send it to all interested sinks
     //for (auto &sink: _sinks) {

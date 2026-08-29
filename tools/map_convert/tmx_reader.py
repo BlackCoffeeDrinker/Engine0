@@ -26,6 +26,8 @@ class TmxObject:
     y: int
     width: int
     height: int
+    sprite_id: int|None
+    instance_attr: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -103,16 +105,23 @@ def parse_tmx(tmx_path: Path) -> TmxMap:
     objects: list[TmxObject] = []
     for objectgroup_el in root.findall("objectgroup"):
         for object_el in objectgroup_el.findall("object"):
-            objects.append(
-                TmxObject(
-                    name=object_el.get("name", ""),
-                    type=object_el.get("type", ""),
-                    x=int(float(object_el.get("x"))),
-                    y=int(float(object_el.get("y"))),
-                    width=int(float(object_el.get("width"))),
-                    height=int(float(object_el.get("height"))),
-                )
-            )
+            object_gid = object_el.get("gid")
+            if object_gid is not None:
+                object_gid = int(float(object_gid))
+
+            tmx_object = TmxObject(name=object_el.get("name", ""), type=object_el.get("type", ""),
+                                   x=int(float(object_el.get("x"))), y=int(float(object_el.get("y"))),
+                                   width=int(float(object_el.get("width"))),
+                                   height=int(float(object_el.get("height"))),
+                                   sprite_id=object_gid)
+
+            # Check for properties
+            propep_el = object_el.find("properties")
+            if propep_el is not None:
+                for property_el in propep_el.findall("property"):
+                    tmx_object.instance_attr[property_el.get("name")] = property_el.get("value")
+
+            objects.append(tmx_object)
 
     return TmxMap(
         width=width,

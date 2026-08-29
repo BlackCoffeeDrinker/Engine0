@@ -2,8 +2,6 @@
 
 #include "Platform.hpp"
 
-#include <mutex>
-
 namespace {
 std::string make_name(const std::string &parent_name, const std::string &name) {
   return parent_name.empty() ? name : parent_name + "." + name;
@@ -22,13 +20,12 @@ Logger::Logger(const Logger &parentLogger, const std::string &name)
       _unique_sink(platform::CreateSink(_name)) {
 }
 
+// Assume single thread
 Logger &GetDefaultLogger() {
-  static std::once_flag flag;
   static Logger *default_logger = nullptr;
-
-  std::call_once(flag, []() {
+  if (default_logger == nullptr) {
     default_logger = new Logger({});
-  });
+  }
 
   return *default_logger;
 }

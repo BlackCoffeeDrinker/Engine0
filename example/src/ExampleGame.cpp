@@ -1,6 +1,11 @@
 
 #include "ExampleGame.hpp"
 
+#if defined(WIN31)
+// Platform.hpp lives in the engine private src tree; example CMake adds it on WIN31.
+#include "Platform.hpp"
+#endif
+
 ExampleGame::ExampleGame() : Engine() {
 }
 
@@ -13,6 +18,14 @@ std::string_view ExampleGame::Name() const noexcept {
 }
 
 std::error_code ExampleGame::OnInit() {
+#if defined(WIN31)
+  // Demonstrate native Win31 menu bar: File/Exit + Options/Dummy.
+  const platform::MenuItem menuItems[] = {
+      {"File/Exit", 0},
+      {"Options/About", 1},
+  };
+  platform::SetMenu(*this, menuItems);
+#endif
   return LoadWorld("helloworld");
 }
 

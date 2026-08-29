@@ -42,11 +42,13 @@ bool Widget::HasChild(const Widget &child) const {
 
 Widget *Widget::AddChild(OwnedWidgetPtrT child) {
   if (!child) {
-    throw std::invalid_argument("Cannot add a null child widget");
+    GetDefaultLogger().Error(source_location::current(), "Cannot add a null child widget");
+    abort();
   }
 
   if (child.get() == this) {
-    throw std::invalid_argument("Cannot add a widget as its own child");
+    GetDefaultLogger().Error(source_location::current(), "Cannot add a widget as its own child");
+    abort();
   }
 
   if (child->Parent() == this) {

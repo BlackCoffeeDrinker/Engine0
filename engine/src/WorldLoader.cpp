@@ -2,27 +2,9 @@
 #include "EngineError.hpp"
 #include "IniParser.hpp"
 
-#include <charconv>
-
 namespace {
 constexpr std::string_view kActorPrefix = "object:";
-
-template<typename RealType = e00::WorldCoordinateType>
-std::error_code ToSize(const std::string_view &str, size_t &size) {
-  if (const auto value = std::from_chars(str.data(), str.data() + str.size(), size);
-      value.ec != std::errc{}) {
-    return std::make_error_code(value.ec);
-  }
-
-  if (size > std::numeric_limits<RealType>::max()) {
-    return std::make_error_code(std::errc::invalid_argument);
-  }
-  if (size < std::numeric_limits<RealType>::min()) {
-    return std::make_error_code(std::errc::invalid_argument);
-  }
-
-  return {};
-}
+constexpr std::string_view kEntryPrefix = "entry:";
 
 struct MapSetParser {
   std::function<std::error_code(int num)> callback;
@@ -77,21 +59,36 @@ std::error_code WorldLoader::HandleActorData(std::string_view actor_name, std::s
     actor.source = std::string(value);
   } else if (key == "position") {
     // Position is <x>, <y> (spaces might be present or not)
-    actor.position.x = std::stoi(std::string(value.substr(0, value.find(','))));
-    actor.position.y = std::stoi(std::string(value.substr(value.find(',') + 1)));
-  } 
+    actor.position.x = static_cast<WorldCoordinateType>(std::stoi(std::string(value.substr(0, value.find(',')))));
+    actor.position.y = static_cast<WorldCoordinateType>(std::stoi(std::string(value.substr(value.find(',') + 1))));
+  } else {
+    actor.default_properties[std::string(key)] = std::string(value);
+  }
 
+  return {};
+}
+
+std::error_code WorldLoader::HandleEntryData(std::string_view entry_name, std::string_view key, std::string_view value) {
+  if (key != "position") {
+    return {};
+  }
+
+  // Position is <x>, <y> (spaces might be present or not)
+  const WorldPosition position{
+      static_cast<WorldCoordinateType>(std::stoi(std::string(value.substr(0, value.find(','))))),
+      static_cast<WorldCoordinateType>(std::stoi(std::string(value.substr(value.find(',') + 1))))};
+  currentLoadContext.entries[std::string(entry_name)] = position;
   return {};
 }
 
 std::error_code WorldLoader::HandleMapData(std::string_view key, std::string_view value) {
   if (key == "width") {
-    if (const auto size_ec = ToSize(value, currentLoadContext.width)) {
+    if (const auto size_ec = ToSize<WorldCoordinateType>(value, currentLoadContext.width)) {
       GetDefaultLogger().Error(source_location::current(), "Failed to parse width {}", value);
       return size_ec;
     }
   } else if (key == "height") {
-    if (const auto size_ec = ToSize(value, currentLoadContext.height)) {
+    if (const auto size_ec = ToSize<WorldCoordinateType>(value, currentLoadContext.height)) {
       GetDefaultLogger().Error(source_location::current(), "Failed to parse height {}", value);
       return size_ec;
     }
@@ -101,7 +98,7 @@ std::error_code WorldLoader::HandleMapData(std::string_view key, std::string_vie
     const auto tileset_name = value.substr(value.find(':') + 1);
 
     size_t start_tile_number;
-    if (const auto size_ec = ToSize(start_tile, start_tile_number)) {
+    if (const auto size_ec = ToSize<WorldCoordinateType>(start_tile, start_tile_number)) {
       GetDefaultLogger().Error(source_location::current(), "Failed to parse start tile number {}", start_tile);
       return size_ec;
     }
@@ -169,6 +166,7 @@ std::error_code WorldLoader::HandleWorldData(std::string_view category, std::str
   if (category == "set") return HandleSetData(key, value, false);
   if (category == "setaboveplayer") return HandleSetData(key, value, true);
   if (category.starts_with(kActorPrefix)) return HandleActorData(category.substr(kActorPrefix.size()), key, value);
+  if (category.starts_with(kEntryPrefix)) return HandleEntryData(category.substr(kEntryPrefix.size()), key, value);
 
   return {};
 }

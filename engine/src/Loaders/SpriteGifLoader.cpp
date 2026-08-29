@@ -16,12 +16,13 @@ public:
   explicit BitStreamReader(const std::vector<uint8_t> &data)
       : data_(data), byte_pos_(0), bit_pos_(0) {}
 
-  // Read the next 'num_bits' bits as an integer
-  uint16_t ReadBits(const int num_bits) {
-    uint16_t value = 0;
+  // Read the next 'num_bits' bits as an integer. Returns false (leaving `value` unspecified)
+  // if the stream ends before all bits could be read.
+  bool ReadBits(const int num_bits, uint16_t &value) {
+    value = 0;
     for (int i = 0; i < num_bits; ++i) {
       if (byte_pos_ >= data_.size()) {
-        throw std::runtime_error("Unexpected end of data");
+        return false;
       }
       const uint8_t current_byte = data_[byte_pos_];
       const uint8_t bit = (current_byte >> bit_pos_) & 1;
@@ -32,7 +33,7 @@ public:
         ++byte_pos_;
       }
     }
-    return value;
+    return true;
   }
 
   [[nodiscard]] bool EndOfStream() const {
@@ -95,10 +96,10 @@ struct GifContext {
 };
 
 // Helper function: Decode LZW compressed data
-std::vector<uint8_t> LZWDecompress(const std::vector<uint8_t> &compressedData, const uint8_t minCodeSize) {
-  std::vector<uint8_t> output;
+std::error_code LZWDecompress(const std::vector<uint8_t> &compressedData, const uint8_t minCodeSize, std::vector<uint8_t> &output) {
+  output.clear();
   if (minCodeSize < 2 || minCodeSize > 8) {
-    throw std::invalid_argument("Invalid minimum code size");
+    return std::make_error_code(std::errc::invalid_argument);
   }
 
   BitStreamReader bitReader(compressedData);
@@ -126,10 +127,8 @@ std::vector<uint8_t> LZWDecompress(const std::vector<uint8_t> &compressedData, c
       // So we stop adding new codes
     }
 
-    uint16_t currentCode;
-    try {
-      currentCode = bitReader.ReadBits(codeSize);
-    } catch (...) {
+    uint16_t currentCode = 0;
+    if (!bitReader.ReadBits(codeSize, currentCode)) {
       break;// Reached the end of data
     }
 
@@ -185,11 +184,11 @@ std::vector<uint8_t> LZWDecompress(const std::vector<uint8_t> &compressedData, c
       }
       previousCode = currentCode;
     } else {
-      throw std::runtime_error("Invalid LZW code encountered");
+      return std::make_error_code(std::errc::invalid_argument);
     }
   }
 
-  return output;
+  return {};
 }
 
 // Helper function: Apply interlacing
@@ -554,7 +553,9 @@ std::error_code ReadImage(e00::Stream &stream, GifContext &context, const std::u
 
     // Step 4: Decompress the LZW data
     // Handle LZW decompression (utilize a dedicated LZW decompression function)
-    decompressedData = LZWDecompress(compressedData, lzwMinCodeSize);
+    if (const auto ec = LZWDecompress(compressedData, lzwMinCodeSize, decompressedData)) {
+      return ec;
+    }
   }
 
   // Step 5: Apply interlacing if necessary

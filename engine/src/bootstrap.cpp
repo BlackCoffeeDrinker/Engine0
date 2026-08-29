@@ -5,6 +5,7 @@
 #include "Loaders/BitmapLoader.hpp"
 #include "Loaders/PaletteLoader.h"
 #include "Loaders/PngLoader.hpp"
+#include "Loaders/SpriteGifLoader.hpp"
 #include "Loaders/TilesetLoader.hpp"
 
 namespace {
@@ -50,6 +51,7 @@ std::error_code Init() {
   std::ignore = resource_manager.AddLoader<impl::PNGLoader>();
   std::ignore = resource_manager.AddLoader<impl::PaletteLoader>();
   std::ignore = resource_manager.AddLoader<impl::TilesetLoader>();
+  std::ignore = resource_manager.AddLoader<impl::GifSpriteLoader>();
 
   return {};
 }
@@ -65,6 +67,7 @@ void Run(Engine &engine) {
   {
     auto &resource_manager = ResourceManager::GlobalResourceManager();
     if (const auto palette = resource_manager.LoadResourceDirectly<FixedPalette>(default_palette_name)) {
+      e00::GetDefaultLogger().Info(e00::source_location::current(), "Using default palette: {}", default_palette_name);
       platform::GetMainSurface(engine).SetPalette(palette.Ref());
     }
   }
@@ -74,6 +77,7 @@ void Run(Engine &engine) {
     GetDefaultLogger().Error(source_location::current(), "Unable to start engine instance for {}: {}", engine.Name(), initError.message());
     return;
   }
+  
 
   // Do a default title
   platform::SetWindowTitle(engine, engine.Name());
@@ -84,11 +88,12 @@ void Run(Engine &engine) {
     return;
   }
 
-  auto last_time = std::chrono::steady_clock::now();
+  auto last_time = platform::system_clock::now();
   size_t i = 0;
 
+  e00::GetDefaultLogger().Info(source_location::current(), "Starting engine loop");
   while (engine.IsRunning()) {
-    const auto now = std::chrono::steady_clock::now();
+    const auto now = platform::system_clock::now();
     const auto delta = now - last_time;
     last_time = now;
     i++;

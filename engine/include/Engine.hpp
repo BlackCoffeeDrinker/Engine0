@@ -25,9 +25,12 @@
   CLASS_NAME &operator=(CLASS_NAME &&) = delete
 
 #include <Engine/Config.hpp>
+#include <Engine/Detail/Utils.hpp>
 
+#include <Engine/Detail/FixedItemContainer.hpp>
+#include <Engine/Detail/FixedMap.hpp>
+#include <Engine/Detail/FixedPriorityQueue.hpp>
 #include <Engine/Detail/Property.hpp>
-#include <Engine/Detail/PropertySet.hpp>
 #include <Engine/Detail/StringFormat.hpp>
 #include <Engine/Detail/TypeId.hpp>
 

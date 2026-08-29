@@ -4,10 +4,10 @@
 #include "Engine/Math/Color.hpp"
 #include "Engine/Math/Rect.hpp"
 #include "Engine/Math/Vec2D.hpp"
+#include "Engine/Platform/DrawableSurface.hpp"
 #include <span>
 
 namespace e00 {
-class DrawableSurface;
 
 /**
  * Painter provides highly optimized functions to do most of the drawing programs require. It can draw everything from
