@@ -177,7 +177,7 @@ void SetSettings(std::string_view key, std::string_view value) {
   }
 }
 
-std::error_code Init() {
+e00::error_code Init() {
   g_hInstance = GetModuleHandleA(nullptr);
   g_hasFocus = true;
   g_quitPosted = false;
@@ -189,7 +189,7 @@ std::error_code Init() {
 
   if (!RegisterWindowClass()) {
     MessageBoxA(nullptr, "RegisterWindowClass failed!", "ERROR", 0x00000000L);
-    return std::make_error_code(std::errc::not_supported);
+    return e00::make_error_code(e00::errc::not_supported);
   }
 
   g_mainSurface = std::make_unique<win31::Win31Surface>(g_windowWidth, g_windowHeight);
@@ -205,7 +205,7 @@ std::error_code Init() {
 
   if (!g_hwnd) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "CreateWindowA failed");
-    return std::make_error_code(std::errc::not_supported);
+    return e00::make_error_code(e00::errc::not_supported);
   }
 
   ShowWindow(g_hwnd, SW_SHOWNORMAL);

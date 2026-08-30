@@ -67,7 +67,7 @@ constexpr T CompressAndShiftChannel(uint8_t color_component, uint32_t shift, uin
 
 struct SoftwareBitmapHelper {
   DrawableSurface::BitDepth bit_depth;
-  
+
   // Only valid if bit_depth is 16 or 32
   DrawableSurface::RGBInfo shift{};
   DrawableSurface::RGBInfo mask{};
@@ -77,7 +77,7 @@ struct SoftwareBitmapHelper {
 
   SoftwareBitmapHelper();
   SoftwareBitmapHelper(DrawableSurface::BitDepth bit_depth, BitmapSizeType width, BitmapSizeType height);
-  SoftwareBitmapHelper(DrawableSurface::BitDepth bit_depth, const BitmapSize& size) : SoftwareBitmapHelper(bit_depth, size.x, size.y) {}
+  SoftwareBitmapHelper(DrawableSurface::BitDepth bit_depth, const BitmapSize &size) : SoftwareBitmapHelper(bit_depth, size.x, size.y) {}
 
   explicit operator bool() const { return bit_depth != DrawableSurface::BitDepth::DEPTH_INVALID && bytes_per_line != 0; }
 
@@ -231,7 +231,7 @@ struct SoftwareBitmapHelper {
     assert(valid_data_per_line != 0);
     assert(bytes_per_line != 0);
 #endif
-    
+
     return data.subspan(y * bytes_per_line, valid_data_per_line);
   }
 
@@ -241,7 +241,7 @@ struct SoftwareBitmapHelper {
     assert(valid_data_per_line != 0);
     assert(bytes_per_line != 0);
 #endif
-    
+
     return data.subspan(y * bytes_per_line, valid_data_per_line);
   }
 };

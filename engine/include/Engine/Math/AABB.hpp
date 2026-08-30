@@ -10,10 +10,9 @@ struct AABB {
 };
 
 template<typename T>
-AABB<T> merge(const AABB<T>& lhs, const AABB<T>& rhs) {
+AABB<T> merge(const AABB<T> &lhs, const AABB<T> &rhs) {
   return {
-    min(lhs.minimum, rhs.minimum),
-    max(lhs.maximum, rhs.maximum)
-  };
+      min(lhs.minimum, rhs.minimum),
+      max(lhs.maximum, rhs.maximum)};
 }
-}
+}// namespace e00

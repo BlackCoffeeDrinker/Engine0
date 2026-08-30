@@ -13,12 +13,12 @@ namespace win31 {
 class Win31Surface final : public platform::Surface {
   e00::Vec2D<e00::BitmapSizeType> _size{};
   e00::FixedPalette _palette;
-  e00::DrawableSurface::BitDepth _bitDepth = e00::DrawableSurface::BitDepth::DEPTH_8;
+  BitDepth _bitDepth = BitDepth::DEPTH_8;
 
   BITMAPINFO *_bmi = nullptr;
   HBITMAP _dib = nullptr;
   HDC _memDc = nullptr;
-  uint8_t *_bits = nullptr; // points into WinG/GDI bitmap; owned by GDI/WinG
+  uint8_t *_bits = nullptr;// points into WinG/GDI bitmap; owned by GDI/WinG
   size_t _stride = 0;
   bool _usingWinG = false;
 
@@ -31,7 +31,7 @@ class Win31Surface final : public platform::Surface {
 
 public:
   Win31Surface(e00::BitmapSizeType width, e00::BitmapSizeType height,
-               e00::DrawableSurface::BitDepth depth = e00::DrawableSurface::BitDepth::DEPTH_8);
+               BitDepth depth = BitDepth::DEPTH_8);
   ~Win31Surface() override;
 
   Win31Surface(const Win31Surface &) = delete;
@@ -48,7 +48,7 @@ public:
   void SetPalette(const e00::FixedPalette &palette) override;
 
   [[nodiscard]] std::unique_ptr<e00::Painter> BeginDraw() override;
-  [[nodiscard]] std::unique_ptr<e00::DrawableSurface> CreateOptimizedSurface(
+  [[nodiscard]] std::unique_ptr<DrawableSurface> CreateOptimizedSurface(
       const e00::Vec2D<e00::BitmapSizeType> &size, platform::MemoryPlacement where) override;
 
   void ReadLineInto(e00::BitmapSizeType line,
@@ -70,4 +70,4 @@ public:
   [[nodiscard]] e00::Bitmap *SoftwareBitmap() { return _bitmap.get(); }
 };
 
-} // namespace win31
+}// namespace win31

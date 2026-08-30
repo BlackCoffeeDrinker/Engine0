@@ -21,11 +21,11 @@ struct ActionCategory {
   friend bool operator==(const ActionCategory &left, const ActionCategory &right) noexcept {
     return &left == &right;
   }
-  
+
   friend bool operator!=(const ActionCategory &left, const ActionCategory &right) noexcept {
     return !(left == right);
   }
-  
+
   friend bool operator<(const ActionCategory &left, const ActionCategory &right) noexcept {
     return &left < &right;
   }
@@ -33,4 +33,4 @@ struct ActionCategory {
   ActionCategory &operator=(const ActionCategory &) = delete;
 };
 
-}
+}// namespace e00

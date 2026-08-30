@@ -35,4 +35,4 @@ bool EnsureWinGLoaded();
 const WinGApi &GetWinG();
 void UnloadWinG();
 
-} // namespace win31
+}// namespace win31

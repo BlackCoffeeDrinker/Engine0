@@ -15,7 +15,7 @@ void DOS::PlanarPainter::write_pixel_planar(int x, int y, uint8_t index) {
     outportb(0x3CF, 0x80 >> bit_index);
 
     const volatile uint8_t latch_prime = *pixel_addr;
-    (void)latch_prime;
+    (void) latch_prime;
 
     *pixel_addr = index & 0x0F;
   } else {
@@ -78,7 +78,7 @@ void DOS::PlanarPainter::DrawRect(const e00::RectT<e00::BitmapSizeType> &rect) {
   // 1. Process Solid Interior Fill Phase
   if (_brushStyle != BrushStyle::NoBrush) {
     if (_is_hardware) {
-      outportb(GRAPHICS_MODE_REGISTERS, 0x08); // Select Bit Mask register
+      outportb(GRAPHICS_MODE_REGISTERS, 0x08);// Select Bit Mask register
 
       for (int y = start_y; y < end_y; ++y) {
         uint8_t *vram_row = _vram_base + (y * _pitch);
@@ -93,7 +93,7 @@ void DOS::PlanarPainter::DrawRect(const e00::RectT<e00::BitmapSizeType> &rect) {
 
           outportb(0x3CF, mask);
           const volatile uint8_t dummy = vram_row[x >> 3];
-          (void)dummy;
+          (void) dummy;
           vram_row[x >> 3] = _brushIndex;
           x += count;
         }
@@ -114,7 +114,7 @@ void DOS::PlanarPainter::DrawRect(const e00::RectT<e00::BitmapSizeType> &rect) {
 
           outportb(0x3CF, mask);
           const volatile uint8_t dummy = vram_row[x >> 3];
-          (void)dummy;
+          (void) dummy;
           vram_row[x >> 3] = _brushIndex;
         }
       }
@@ -232,10 +232,10 @@ void DOS::PlanarPainter::DrawSurface(const e00::DrawableSurface &src, e00::RectT
 
     if (_is_hardware) {
       outportb(GRAPHICS_MODE_REGISTERS, 0x05);
-      outportb(0x3CF, 0x00); // Write Mode 0
+      outportb(0x3CF, 0x00);// Write Mode 0
 
       for (int plane = 0; plane < 4; ++plane) {
-        outportb(0x3C4, 0x02); // Map Mask
+        outportb(0x3C4, 0x02);// Map Mask
         outportb(0x3C5, 1 << plane);
 
         const uint8_t *src_plane = planar_src.GetPlaneAddress(plane);
@@ -247,7 +247,7 @@ void DOS::PlanarPainter::DrawSurface(const e00::DrawableSurface &src, e00::RectT
         }
       }
       outportb(GRAPHICS_MODE_REGISTERS, 0x05);
-      outportb(0x3CF, 0x02); // Back to Write Mode 2
+      outportb(0x3CF, 0x02);// Back to Write Mode 2
     } else {
       const size_t dst_plane_size = _pitch * _height;
       for (int plane = 0; plane < 4; ++plane) {
@@ -266,19 +266,19 @@ void DOS::PlanarPainter::DrawSurface(const e00::DrawableSurface &src, e00::RectT
 
   // 2. CHUNKY-TO-PLANAR PATH (Process one plane at a time)
   std::vector<uint8_t> rowBuffer(clip_width);
-  std::vector<uint8_t> planeRow( (clip_width + 7) / 8 );
+  std::vector<uint8_t> planeRow((clip_width + 7) / 8);
   e00::DrawableSurface::TargetInformation targetInfo{};
   targetInfo.bit_depth = e00::DrawableSurface::BitDepth::DEPTH_8;
   targetInfo.palette = &_palette;
 
   if (_is_hardware) {
     outportb(GRAPHICS_MODE_REGISTERS, 0x05);
-    outportb(0x3CF, 0x00); // Write Mode 0
+    outportb(0x3CF, 0x00);// Write Mode 0
     outportb(GRAPHICS_MODE_REGISTERS, 0x08);
-    outportb(0x3CF, 0xFF); // Bit Mask all pixels
+    outportb(0x3CF, 0xFF);// Bit Mask all pixels
 
     for (int plane = 0; plane < 4; ++plane) {
-      outportb(0x3C4, 0x02); // Map Mask
+      outportb(0x3C4, 0x02);// Map Mask
       outportb(0x3C5, 1 << plane);
 
       for (int y = start_y; y < end_y; ++y) {
@@ -299,15 +299,16 @@ void DOS::PlanarPainter::DrawSurface(const e00::DrawableSurface &src, e00::RectT
             const int dx = start_x + i;
             const uint8_t mask = 0x80 >> (dx & 7);
             outportb(0x3CF, mask);
-            const volatile uint8_t dummy = dst_row[dx >> 3]; (void)dummy;
+            const volatile uint8_t dummy = dst_row[dx >> 3];
+            (void) dummy;
             dst_row[dx >> 3] = (rowBuffer[i] & (1 << plane)) ? 0xFF : 0x00;
           }
-          outportb(0x3CF, 0xFF); // Reset bit mask
+          outportb(0x3CF, 0xFF);// Reset bit mask
         }
       }
     }
     outportb(GRAPHICS_MODE_REGISTERS, 0x05);
-    outportb(0x3CF, 0x02); // Back to Write Mode 2
+    outportb(0x3CF, 0x02);// Back to Write Mode 2
   } else {
     // RAM Destination
     const size_t plane_size = _pitch * _height;
@@ -322,7 +323,8 @@ void DOS::PlanarPainter::DrawSurface(const e00::DrawableSurface &src, e00::RectT
           uint8_t *ptr = dst_plane + (y * _pitch) + (dx >> 3);
           uint8_t bit = 0x80 >> (dx & 7);
           if (rowBuffer[i] & (1 << plane)) *ptr |= bit;
-          else *ptr &= ~bit;
+          else
+            *ptr &= ~bit;
         }
       }
     }

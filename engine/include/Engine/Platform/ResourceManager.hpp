@@ -5,11 +5,10 @@
 #include <expected>
 #include <memory>
 #include <string>
-#include <system_error>
 
 #include <Engine/Detail/FixedItemContainer.hpp>
-#include <Engine/Logging/SourceLocation.hpp>
 #include <Engine/Logging/Logger.hpp>
+#include <Engine/Logging/SourceLocation.hpp>
 #include <Engine/Platform/ResourceLoaderOptions.hpp>
 #include <Engine/Platform/Stream.hpp>
 #include <Engine/Platform/StreamFactory.hpp>
@@ -43,7 +42,7 @@ class ResourceManager {
   StreamFactory &_stream_factory;
 
   std::vector<AliasEntry> _aliases;
-  std::vector<std::unique_ptr<detail::ControlBlock>> _loaded_resources_cb;              // << A lightweight control block tracking system
+  std::vector<std::unique_ptr<detail::ControlBlock>> _loaded_resources_cb;         // << A lightweight control block tracking system
   FixedItemContainer<std::unique_ptr<ResourceLoader>, MaxResourceLoaders> _loaders;// << all the known loaders
 
   /**
@@ -87,7 +86,7 @@ class ResourceManager {
    * @param options The options to use when loading the resource
    * @return The loaded resource, or an error code if the resource could not be loaded
    */
-  std::expected<std::unique_ptr<Resource>, std::error_code> LoadResource(
+  std::expected<std::unique_ptr<Resource>, error_code> LoadResource(
       ResourceId resource_id,
       type_t resource_type,
       std::span<LoadOption *const> options);
@@ -143,13 +142,13 @@ class ResourceManager {
       }
 
     public:
-      std::error_code ForceUnload() override {
+      error_code ForceUnload() override {
         delete _resource;
         _resource = nullptr;
         return {};
       }
 
-      std::error_code OnLoadLazyResource() override {
+      error_code OnLoadLazyResource() override {
         if (auto resource = _owner->LoadResource(
                 id(),
                 type(),
@@ -158,7 +157,7 @@ class ResourceManager {
           _resource = resource.value().release();
           return {};
         }
-        return std::make_error_code(std::errc::no_such_file_or_directory);
+        return e00::make_error_code(errc::no_such_file_or_directory);
       }
     };
 
@@ -183,7 +182,7 @@ public:
    * @return A boolean indicating if the loader was successfully added.
    *         Returns true if the addition was successful, false otherwise.
    */
-  std::error_code AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd);
+  error_code AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd);
 
   /**
    * Sets an alias for a resource, allowing it to be accessed by resource id
@@ -214,7 +213,7 @@ public:
    * @return Errors, if any
    */
   template<typename T, typename... Args>
-  std::error_code AddLoader(Args &&...args) {
+  error_code AddLoader(Args &&...args) {
     auto loader = std::make_unique<T>(std::forward<Args>(args)...);
     return AddLoader(std::move(loader));
   }

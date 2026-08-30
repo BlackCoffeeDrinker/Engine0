@@ -13,7 +13,7 @@ constexpr e00::ResourceId default_palette_name = e00::HashName("defaultpalette")
 }// namespace
 
 namespace e00 {
-std::error_code Init() {
+error_code Init() {
   // Start platform code first
   if (const auto platformInitError = platform::Init()) {
     return platformInitError;
@@ -25,7 +25,7 @@ std::error_code Init() {
   const auto platform_prefix = std::string("platform:") + std::string(platform::PlatformName());
 
   if (const auto config = StreamFactory::GlobalStreamFactory().OpenStream("game.ini")) {
-    const auto iniEc = impl::IniParser::Parse(*config, [&](const impl::IniParser::Item &item) -> std::error_code {
+    const auto iniEc = impl::IniParser::Parse(*config, [&](const impl::IniParser::Item &item) -> error_code {
       if (item.category == "platform" || item.category == platform_prefix) {
         platform::SetSettings(item.key, item.value);
       } else if (item.category == "core") {
@@ -67,7 +67,7 @@ void Run(Engine &engine) {
   {
     auto &resource_manager = ResourceManager::GlobalResourceManager();
     if (const auto palette = resource_manager.LoadResourceDirectly<FixedPalette>(default_palette_name)) {
-      e00::GetDefaultLogger().Info(e00::source_location::current(), "Using default palette: {}", default_palette_name);
+      GetDefaultLogger().Info(source_location::current(), "Using default palette: {}", default_palette_name);
       platform::GetMainSurface(engine).SetPalette(palette.Ref());
     }
   }
@@ -77,7 +77,7 @@ void Run(Engine &engine) {
     GetDefaultLogger().Error(source_location::current(), "Unable to start engine instance for {}: {}", engine.Name(), initError.message());
     return;
   }
-  
+
 
   // Do a default title
   platform::SetWindowTitle(engine, engine.Name());
@@ -91,7 +91,7 @@ void Run(Engine &engine) {
   auto last_time = platform::system_clock::now();
   size_t i = 0;
 
-  e00::GetDefaultLogger().Info(source_location::current(), "Starting engine loop");
+  GetDefaultLogger().Info(source_location::current(), "Starting engine loop");
   while (engine.IsRunning()) {
     const auto now = platform::system_clock::now();
     const auto delta = now - last_time;

@@ -19,7 +19,7 @@ namespace {
 constexpr int kMaxKeys = 32;
 void *g_tss_values[kMaxKeys] = {};
 int g_next_key = 0;
-} // namespace
+}// namespace
 
 extern "C" {
 
@@ -28,7 +28,7 @@ using pthread_once_t = int;
 using pthread_mutex_t = int;
 
 int pthread_key_create(pthread_key_t *key, void (*destructor)(void *)) {
-  (void)destructor; // never called: process teardown is via ExitProcess
+  (void) destructor;// never called: process teardown is via ExitProcess
   if (key == nullptr || g_next_key >= kMaxKeys) {
     return 1;
   }
@@ -76,4 +76,4 @@ int pthread_mutex_lock(pthread_mutex_t *) { return 0; }
 int pthread_mutex_unlock(pthread_mutex_t *) { return 0; }
 int pthread_mutex_trylock(pthread_mutex_t *) { return 0; }
 
-} // extern "C"
+}// extern "C"

@@ -10,10 +10,10 @@ bool g_attempted = false;
 
 template<typename T>
 T LoadProc(HMODULE mod, const char *name) {
-  return reinterpret_cast<T>(GetProcAddress(mod, name));
+  return reinterpret_cast<T>(GetProcAddress(mod, name));  
 }
 
-} // namespace
+}// namespace
 
 bool EnsureWinGLoaded() {
   if (g_attempted) {
@@ -27,7 +27,7 @@ bool EnsureWinGLoaded() {
   }
   if (!mod) {
     MessageBoxA(nullptr, "WinG not found (WING32.DLL/WING.DLL); falling back to plain GDI DIB blits", "Hello", 0x00000000L);
-    
+
     e00::GetDefaultLogger().Warning(
         e00::source_location::current(),
         "WinG not found (WING32.DLL/WING.DLL); falling back to plain GDI DIB blits");
@@ -44,7 +44,7 @@ bool EnsureWinGLoaded() {
 
   if (!g_wing.Available()) {
     MessageBoxA(nullptr, "WinG loaded but required exports missing; falling back to plain GDI", "Hello", 0x00000000L);
-    
+
     e00::GetDefaultLogger().Warning(
         e00::source_location::current(),
         "WinG loaded but required exports missing; falling back to plain GDI");
@@ -69,4 +69,4 @@ void UnloadWinG() {
   // Keep g_attempted true so we don't spam reload failures every frame.
 }
 
-} // namespace win31
+}// namespace win31

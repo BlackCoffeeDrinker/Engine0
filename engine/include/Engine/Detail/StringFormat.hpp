@@ -377,7 +377,7 @@ void HandleFormattingArguments(
     std::string_view fmt_options,
     size_t &next_unnumbered_args,
     OutputIt out,
-    std::array<internal::format_arg, N> &fmt_args) {
+    std::array<format_arg, N> &fmt_args) {
 
   // Todo: split this into 2 methods ?
 

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <Engine/Detail/ErrorCode.hpp>
 #include <Engine/Math/Color.hpp>
 #include <Engine/Math/Vec2D.hpp>
 
@@ -99,25 +100,25 @@ bool ParseWorldPoint(const std::string_view &value, WorldPosition &out);
 bool ParseRGB(const std::string_view &sv, Color &color_out);
 
 template<typename RealType>
-std::error_code ToSize(const std::string_view &str, size_t &size) {
+error_code ToSize(const std::string_view &str, size_t &size) {
   const auto value = ParseChars(str, size);
 
   if (value.ec == ParseError::invalid_argument) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
   if (value.ec == ParseError::result_out_of_range) {
-    return std::make_error_code(std::errc::result_out_of_range);
+    return make_error_code(errc::result_out_of_range);
   }
   // Enforce full string consumption (reject partial matches like "123abc")
   if (value.ptr != str.data() + str.size()) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   if (size > std::numeric_limits<RealType>::max()) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
   if (size < std::numeric_limits<RealType>::min()) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   return {};

@@ -37,7 +37,7 @@ int g_lastX = 0;
 int g_lastY = 0;
 bool g_hasPos = false;
 
-} // namespace
+}// namespace
 
 void InitMouse() {
   g_hasPos = false;
@@ -89,7 +89,7 @@ void HandleMouseMessage(e00::Engine &engine, HWND hwnd, UINT msg, WPARAM /*wPara
     default: break;
   }
 
-  (void)hwnd;
+  (void) hwnd;
 }
 
 void PollMouse(e00::Engine &engine, HWND hwnd) {
@@ -127,4 +127,4 @@ void PollMouse(e00::Engine &engine, HWND hwnd) {
   g_hasPos = true;
 }
 
-} // namespace win31
+}// namespace win31

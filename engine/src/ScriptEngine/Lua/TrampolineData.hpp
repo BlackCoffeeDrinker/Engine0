@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Engine/Scripting/ProxyFunction.hpp>
 #include <memory>
 #include <string>
-#include <Engine/Scripting/ProxyFunction.hpp>
 
 #include "Lua.hpp"
 
@@ -16,7 +16,7 @@ class TrampolineData {
 
 public:
   TrampolineData(LuaScriptEngine *engine, std::unique_ptr<ProxyFunction> &&fn, std::string name)
-    : _engine(engine), _fn(std::move(fn)), _lua_name(std::move(name)) {}
+      : _engine(engine), _fn(std::move(fn)), _lua_name(std::move(name)) {}
 
   [[nodiscard]] const std::unique_ptr<ProxyFunction> &fn() const { return _fn; }
 };

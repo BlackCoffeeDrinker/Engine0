@@ -37,7 +37,7 @@ void HeapDeallocate(void *ptr) noexcept {
     HeapFree(heap, 0, ptr);
   }
 }
-} // namespace win31
+}// namespace win31
 
 void *operator new(std::size_t size) {
   void *p = win31::HeapAllocate(size);
@@ -51,7 +51,7 @@ void *operator new(std::size_t size) {
 }
 
 void *operator new[](std::size_t size) {
-  return ::operator new(size);
+  return operator new(size);
 }
 
 void *operator new(std::size_t size, const std::nothrow_t &) noexcept {
@@ -111,5 +111,4 @@ void *realloc(void *ptr, size_t size) {
 void free(void *ptr) {
   win31::HeapDeallocate(ptr);
 }
-
 }

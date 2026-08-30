@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Utils.hpp"
 #include "../ProxyFunction.hpp"
-#include "FunctionSignature.hpp"
-#include "CallUtils.hpp"
 #include "AttributeAccess.hpp"
+#include "CallUtils.hpp"
+#include "FunctionSignature.hpp"
+#include "Utils.hpp"
 
 namespace e00::scripting::detail {
 template<typename Obj, typename Param1, typename... Rest>
@@ -14,7 +14,7 @@ Param1 get_first_param(Function_Params<Param1, Rest...>, Obj &&obj) {
 
 template<typename Ret, typename... Params>
 std::vector<TypeInfo> build_param_type_list(Ret (*)(Params...)) {
-  return { user_type<Params>()... };
+  return {user_type<Params>()...};
 }
 
 template<typename Ret, typename... Params>
@@ -30,11 +30,11 @@ TypeInfo build_return_type_list(Ret (*)(Params...)) {
 template<typename Func, typename Callable>
 struct NativeFunctionMemberT final : ProxyFunction {
   explicit NativeFunctionMemberT(Callable f, size_t argcnt)
-    : ProxyFunction(
-      build_param_type_list(static_cast<Func *>(nullptr)),
-      build_return_type_list(static_cast<Func *>(nullptr)),
-      argcnt),
-      _f(std::move(f)) {
+      : ProxyFunction(
+            build_param_type_list(static_cast<Func *>(nullptr)),
+            build_return_type_list(static_cast<Func *>(nullptr)),
+            argcnt),
+        _f(std::move(f)) {
   }
 
   bool is_member() const noexcept override {
@@ -58,11 +58,11 @@ private:
 template<typename Func, typename Callable>
 struct NativeFunctionT final : ProxyFunction {
   explicit NativeFunctionT(Callable f, size_t argcnt)
-    : ProxyFunction(
-      build_param_type_list(static_cast<Func *>(nullptr)),
-      build_return_type_list(static_cast<Func *>(nullptr)),
-      argcnt),
-      _f(std::move(f)) {
+      : ProxyFunction(
+            build_param_type_list(static_cast<Func *>(nullptr)),
+            build_return_type_list(static_cast<Func *>(nullptr)),
+            argcnt),
+        _f(std::move(f)) {
   }
 
 protected:

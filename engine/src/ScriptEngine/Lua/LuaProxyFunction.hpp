@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <Engine/Scripting/ProxyFunction.hpp>
+#include <string>
 
 #include "Lua.hpp"
 
@@ -15,8 +15,8 @@ protected:
   lua_State *_l;
 
   LuaProxyFunction(std::string fn_name, lua_State *L, std::vector<TypeInfo> types, TypeInfo return_type, size_t args_cnt)
-    : ProxyFunction(std::forward<decltype(types)>(types), return_type, args_cnt),
-      _fn_name(std::move(fn_name)), _l(L) {}
+      : ProxyFunction(std::forward<decltype(types)>(types), return_type, args_cnt),
+        _fn_name(std::move(fn_name)), _l(L) {}
 
   BoxedValue call_lua_on_stack(const FunctionParams &params) const;
 

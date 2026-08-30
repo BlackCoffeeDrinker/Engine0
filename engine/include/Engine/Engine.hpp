@@ -4,10 +4,7 @@
  * Includes are here to keep the static analysis tool happy
  */
 #include <chrono>
-#include <map>
 #include <memory>
-#include <queue>
-#include <system_error>
 
 #include <Engine/Config.hpp>
 
@@ -74,7 +71,7 @@ protected:
    * Perform INIT code (maybe load the main menu, fonts, ...)
    * @return any error
    */
-  virtual std::error_code OnInit() { return {}; }
+  virtual error_code OnInit() { return {}; }
 
   /**
    * Executed on first tick
@@ -106,7 +103,7 @@ protected:
    * @param text the text
    * @return any errors
    */
-  std::error_code AddText(const std::string &locale, int textCode, const std::string &text);
+  error_code AddText(const std::string &locale, int textCode, const std::string &text);
 
 
 public:
@@ -134,7 +131,7 @@ public:
    *
    * @return any error code
    */
-  std::error_code Init() noexcept;
+  error_code Init() noexcept;
 
   /**
    * Sets this instance language code for text
@@ -166,7 +163,7 @@ public:
    * @param event the input event associated
    * @return error, if any
    */
-  std::error_code BindInputEventToAction(const Action &action, InputEvent event) noexcept;
+  error_code BindInputEventToAction(const Action &action, InputEvent event) noexcept;
 
   /**
    * Queries if this engine instance is valid
@@ -195,7 +192,7 @@ public:
    * @param entry_point optional named entry from the world file; empty keeps the {0,0} placeholder
    * @return any errors
    */
-  std::error_code LoadWorld(const std::string &world_name, const std::string &entry_point = "");
+  error_code LoadWorld(const std::string &world_name, const std::string &entry_point = "");
 
 
   /**

@@ -153,7 +153,7 @@ class Surface : public e00::DrawableSurface {
 public:
   virtual void SetPalette(const e00::FixedPalette &palette) = 0;
 
-  virtual std::unique_ptr<e00::DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, MemoryPlacement where) = 0;
+  virtual std::unique_ptr<DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, MemoryPlacement where) = 0;
 };
 
 std::string_view PlatformName();
@@ -161,7 +161,7 @@ std::string_view PlatformName();
 void SetSettings(std::string_view key,
                  std::string_view value);
 
-std::error_code Init();
+e00::error_code Init();
 void Exit();
 void Yield();
 
@@ -206,7 +206,7 @@ std::unique_ptr<e00::DrawableSurface> Optimize(const e00::DrawableSurface &sourc
 // Native menu bar (Win31 implements a real HMENU; other backends no-op).
 struct MenuItem {
   std::string label;
-  int actionId = 0; // 0 = BuiltInAction_Quit by convention on Win31
+  int actionId = 0;// 0 = BuiltInAction_Quit by convention on Win31
 };
 
 void SetMenu(e00::Engine &engine, std::span<const MenuItem> items);

@@ -10,7 +10,7 @@
 
 class SetupResourceManager : public Catch::EventListenerBase {
 public:
-  using Catch::EventListenerBase::EventListenerBase;
+  using EventListenerBase::EventListenerBase;
 
   void testRunStarting(Catch::TestRunInfo const &) override {
     e00::StreamFactory::GlobalStreamFactory().SetResourceDirectory("");

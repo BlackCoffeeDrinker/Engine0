@@ -168,19 +168,19 @@ void CreateCocoaWindow() {
 
 
 namespace platform {
-std::error_code Init() {
+e00::error_code Init() {
   @autoreleasepool {
     g_running = false;
     g_hasFocus = true;
 
     g_device = MTLCreateSystemDefaultDevice();
     if (!g_device) {
-      return std::make_error_code(std::errc::no_such_device);
+      return e00::make_error_code(e00::errc::no_such_device);
     }
 
    g_cmdQueue = [g_device newCommandQueue];
     if (!g_cmdQueue) {
-      return std::make_error_code(std::errc::no_such_device);
+      return e00::make_error_code(e00::errc::no_such_device);
     }
       
    RecreateMainSurface();

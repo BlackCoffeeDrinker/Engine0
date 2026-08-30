@@ -115,7 +115,7 @@ Engine::Engine()
 
 Engine::~Engine() = default;
 
-std::error_code Engine::AddText(const std::string &locale, int textCode, const std::string &text) {
+error_code Engine::AddText(const std::string &locale, int textCode, const std::string &text) {
   return {};
 }
 
@@ -160,7 +160,7 @@ InputEvent Engine::InputBindingForAction(const Action &action) const noexcept {
   return {};
 }
 
-std::error_code Engine::BindInputEventToAction(const Action &action, InputEvent event) noexcept {
+error_code Engine::BindInputEventToAction(const Action &action, InputEvent event) noexcept {
   _input_binding.erase(event);
   _input_binding.try_emplace(event, action);
 
@@ -175,7 +175,13 @@ bool Engine::IsPaused() const noexcept {
   return _state == EngineState::PAUSE;
 }
 
-std::error_code Engine::LoadWorld(const std::string &world_name, const std::string &entry_point) {
+error_code Engine::LoadWorld(const std::string &world_name, const std::string &entry_point) {
+  if (_current_world) {
+    // TODO: _script_engine->call<...>("world_unload")
+    OnWorldUnload(_current_world);
+    _current_world.reset();
+  }
+
   GetDefaultLogger().Info(source_location::current(), "Loading world {}", world_name);
 
   auto &resource_manager = ResourceManager::GlobalResourceManager();
@@ -184,21 +190,21 @@ std::error_code Engine::LoadWorld(const std::string &world_name, const std::stri
   const auto worldIni = resource_manager.FindStreamForResource(HashName(world_name));
   if (!worldIni) {
     GetDefaultLogger().Error(source_location::current(), "Failed to load world {}", world_name);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   const auto worldData = loader.Load(*worldIni);
   if (worldData.height == 0 || worldData.width == 0) {
     GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, invalid size", world_name);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
   if (worldData.tilesets.empty()) {
     GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, no tilesets", world_name);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
   if (worldData.groundSet.empty()) {
     GetDefaultLogger().Error(source_location::current(), "Failed to load world {}, no ground set", world_name);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   auto world = std::unique_ptr<World>(new World(
@@ -219,86 +225,60 @@ std::error_code Engine::LoadWorld(const std::string &world_name, const std::stri
         const auto &value = layers[layer]->at(i);
         const TilePosition position(i % worldData.width, i / worldData.width);
         if (!world->SetMapTile(layer, position, value)) {
-          return std::make_error_code(std::errc::invalid_argument);
+          return make_error_code(errc::invalid_argument);
         }
       }
     }
   }
 
-  // Make a list of used actors in this new world
-  std::vector<ActorId> actorsUsed;
-  actorsUsed.reserve(worldData.actors.size());
+  // Unload any loaded actors
+  {
+    for (const auto &entry: _actors) {
+      if (entry.second->HasSavableState()) {
+        // TODO: Save actor state
+      }
+    }
+
+    _actors.clear();
+  }
 
   // Do the actors
-  for (const auto &[name, def]: worldData.actors) {
-    GetDefaultLogger().Info(source_location::current(), "Loading actor {} ({})", name, def.source);
-    const auto actorId = ActorHashName(name);
-    actorsUsed.push_back(actorId);
+  for (const auto &[actorId, def]: worldData.actors) {
+    if (auto actor = MakeActorForType(def.source, def.default_properties)) {
+      if (actor->HasSavableState()) {
+        // TODO: Maybe load last state
+      }
 
-    if (const auto it = _actors.find(actorId);
-        it == _actors.end()) {
-      if (auto actor = MakeActorForType(def.source, def.default_properties)) {
-        if (actor->HasSavableState()) {
-          // TODO: Maybe load last state
-        }
-
-        if (auto [it, inserted] = _actors.try_emplace(actorId, std::move(actor)); inserted) {
-          world->Insert(
-              actorId,
-              it->second.get(),
-              def.position);
-        } else {
-          GetDefaultLogger().Error(source_location::current(), "Out of free slots for {}", name);
-          return std::make_error_code(std::errc::not_enough_memory);
-        }
-
+      if (auto [it, inserted] = _actors.try_emplace(actorId, std::move(actor)); inserted) {
+        world->Insert(
+            actorId,
+            it->second.get(),
+            def.position);
       } else {
-        GetDefaultLogger().Error(source_location::current(), "Failed to load actor {}", name);
-        return std::make_error_code(std::errc::invalid_argument);
+        GetDefaultLogger().Error(source_location::current(), "Out of free slots for {}", actorId);
+        return e00::make_error_code(errc::not_enough_memory);
       }
     } else {
-      // Loaded and need to be registered as `name`
-      world->Insert(
-          actorId,
-          it->second.get(),
-          def.position);
+      GetDefaultLogger().Error(source_location::current(), "Failed to load actor {}", actorId);
+      return make_error_code(errc::invalid_argument);
     }
+
+    GetDefaultLogger().Info(source_location::current(), "Loaded actor {} ({})", actorId, def.source);
   }
 
   for (const auto &[name, position]: worldData.entries) {
     // Enter/Exit points
+    if (name == entry_point) {
+      // Place player here
+    }
   }
 
   GetDefaultLogger().Info(source_location::current(), "Loading world complete, replacing current world");
-  
-  if (_current_world) {
-    // TODO: _script_engine->call<...>("world_unload")
-    OnWorldUnload(_current_world);
-
-    // TODO: Move the player to the new world
-
-    // Unload actors that aren't used in this new world
-    std::vector<ActorId> actorsToRemove;
-
-    for (const auto &entry: _actors) {
-      if (!std::ranges::contains(actorsUsed, entry.first)) {
-        if (entry.second->HasSavableState()) {
-          // TODO: Save actor state
-        }
-
-        actorsToRemove.push_back(entry.first);
-      }
-    }
-
-    for (auto &actorId: actorsToRemove) {
-      _actors.erase(actorId);
-    }
-
-    _current_world.reset();
-  }
 
   _current_world = std::move(world);
   OnWorldLoaded(_current_world);
+
+  GetDefaultLogger().Info(source_location::current(), "World loaded");
   return {};
 }
 
@@ -357,7 +337,7 @@ Widget *Engine::RootWidget() {
   return _root_widget.get();
 }
 
-std::error_code Engine::Init() noexcept {
+error_code Engine::Init() noexcept {
   _current_game_time = GameClock::time_point();
   _state = _old_state = EngineState::FIRST_TICK;
 

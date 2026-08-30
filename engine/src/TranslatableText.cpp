@@ -15,4 +15,4 @@ void TranslatableText::SetLocale(std::string_view locale) {
 }
 std::string TranslatableText::GetText(int textCode) {
 }
-} // e00
+}// namespace e00

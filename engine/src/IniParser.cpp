@@ -6,17 +6,17 @@
 
 namespace e00::impl {
 
-std::error_code IniParser::Parse(Stream &stream, const std::function<std::error_code(const Item &)>& fn) {
+error_code IniParser::Parse(Stream &stream, const std::function<error_code(const Item &)> &fn) {
   // Configure the reader
   const ini_reader reader = [](char *str, int num, void *streamuser) {
     auto *s = static_cast<Stream *>(streamuser);
-    return s->ReadLineInto( str, num);
+    return s->ReadLineInto(str, num);
   };
 
   // User data structure to pass to the handler
   struct HandlerUserData {
-    const std::function<std::error_code(const Item &)>& fn;
-    std::error_code errc;
+    const std::function<error_code(const Item &)> &fn;
+    error_code errc;
   };
 
   // Handler
@@ -36,10 +36,10 @@ std::error_code IniParser::Parse(Stream &stream, const std::function<std::error_
   };
 
   // Make user data struct
-  HandlerUserData hud { fn, {} };
+  HandlerUserData hud{fn, {}};
 
   // Parse
-  switch (ini_parse_stream(reader, (void *)&stream, handler, &hud)) {
+  switch (ini_parse_stream(reader, (void *) &stream, handler, &hud)) {
     case 0:// No error
       return {};
 

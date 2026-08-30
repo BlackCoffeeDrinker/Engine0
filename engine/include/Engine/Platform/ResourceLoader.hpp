@@ -24,7 +24,7 @@ public:
   virtual ~ResourceLoader() = default;
 
   struct Result {
-    std::error_code error;
+    error_code error;
     std::unique_ptr<Resource> resource;
 
     template<typename T>
@@ -32,7 +32,7 @@ public:
       static_assert(std::is_base_of_v<Resource, T>, "Class must be of type resource");
     }
 
-    Result(std::error_code ec) : error(ec), resource(nullptr) {}
+    Result(error_code ec) : error(ec), resource(nullptr) {}
     Result(std::unique_ptr<Resource> &&r) : resource(std::move(r)) {}
 
     //explicit operator bool() const { return error.operator bool(); }

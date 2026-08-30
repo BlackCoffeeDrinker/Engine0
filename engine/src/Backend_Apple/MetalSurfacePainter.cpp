@@ -52,7 +52,7 @@ void MetalSurfacePainter::DrawEllipse(const e00::RectT<unsigned short> &rect) {
   const long yc = rect.origin.y + ry;
   long x = 0, y = ry;
   const long rx2 = rx * rx, ry2 = ry * ry;
-  long p = e00::lrint(ry2 - rx2 * ry + 0.25 * rx2);
+  long p = lrint(ry2 - rx2 * ry + 0.25 * rx2);
   long dx = 2 * ry2 * x, dy = 2 * rx2 * y;
 
   auto plot_symmetrical = [&](long px, long py) {
@@ -87,7 +87,7 @@ void MetalSurfacePainter::DrawEllipse(const e00::RectT<unsigned short> &rect) {
       p += dx - dy + ry2;
     }
   }
-  p = e00::lrint(ry2 * (x + 0.5) * (x + 0.5) + rx2 * (y - 1) * (y - 1) - rx2 * ry2);
+  p = lrint(ry2 * (x + 0.5) * (x + 0.5) + rx2 * (y - 1) * (y - 1) - rx2 * ry2);
   while (y >= 0) {
     plot_symmetrical(x, y);
     if (p > 0) {

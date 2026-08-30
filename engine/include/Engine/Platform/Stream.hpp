@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Engine/Detail/ErrorCode.hpp>
+
 #include <cstring>
 #include <vector>
 
@@ -19,9 +21,8 @@ protected:
   explicit Stream(size_t stream_size)
       : _stream_size(stream_size) {}
 
-  virtual std::error_code real_read(size_t size, void *data) = 0;
-
-  virtual std::error_code real_seek(size_t position) = 0;
+  virtual error_code real_read(size_t size, void *data) = 0;
+  virtual error_code real_seek(size_t position) = 0;
 
 public:
   Stream(Stream &&other) noexcept = delete;
@@ -72,7 +73,7 @@ public:
    * @param new_position the absolute position to seek to
    * @return error code of any error that occurred, if any
    */
-  std::error_code SeekTo(size_t new_position) {
+  error_code SeekTo(size_t new_position) {
     if (new_position <= _stream_size) {
       if (const auto ec = real_seek(new_position)) {
         return ec;
@@ -81,7 +82,7 @@ public:
       return {};
     }
 
-    return std::make_error_code(std::errc::value_too_large);
+    return make_error_code(errc::value_too_large);
   }
 
   /**
@@ -91,13 +92,13 @@ public:
    * @param max_size The size, in bytes, to read from the stream.
    * @return an error code if any errors occurred
    */
-  std::error_code Read(size_t max_size, void *data) {
+  error_code Read(size_t max_size, void *data) {
     if (max_size == 0) {
-      return std::make_error_code(std::errc::invalid_argument);
+      return make_error_code(errc::invalid_argument);
     }
 
     if (max_size > AvailableToRead()) {
-      return std::make_error_code(std::errc::io_error);
+      return make_error_code(errc::io_error);
     }
 
     if (const auto ec = real_read(max_size, data)) {
@@ -109,17 +110,17 @@ public:
     _current_position += max_size;
     return {};
   }
-  
+
 
   template<typename T>
-  std::error_code Read(std::vector<T> &data) { return Read(data.size() * sizeof(T), data.data()); }
+  error_code Read(std::vector<T> &data) { return Read(data.size() * sizeof(T), data.data()); }
 
   template<typename T, size_t N>
-  std::error_code Read(std::array<T, N> &out) { return Read(out.size() * sizeof(T), out.data()); }
-  
+  error_code Read(std::array<T, N> &out) { return Read(out.size() * sizeof(T), out.data()); }
+
   template<typename T>
-  std::error_code Read(T &out) { return Read(sizeof(T), &out); }
-  
+  error_code Read(T &out) { return Read(sizeof(T), &out); }
+
   /**
    * Read a line into a char buffer
    *
@@ -175,12 +176,12 @@ protected:
   explicit WritableStream(size_t stream_size)
       : Stream(stream_size) {}
 
-  virtual std::error_code real_write(size_t size, const void *data) = 0;
+  virtual error_code real_write(size_t size, const void *data) = 0;
 
 public:
   ~WritableStream() override = default;
 
-  std::error_code Write(size_t size, const void *data) {
+  error_code Write(size_t size, const void *data) {
     if (size == 0) {
       return {};
     }
@@ -200,10 +201,10 @@ public:
   }
 
   template<typename T, size_t N>
-  std::error_code Write(const std::array<T, N> &data) { return Write(data.size() * sizeof(T), data.data()); }
+  error_code Write(const std::array<T, N> &data) { return Write(data.size() * sizeof(T), data.data()); }
 
   template<typename T>
-  std::error_code Write(const std::vector<T> &data) { return Write(data.size() * sizeof(T), data.data()); }
+  error_code Write(const std::vector<T> &data) { return Write(data.size() * sizeof(T), data.data()); }
 
   template<typename T>
   bool WriteLittleEndian(const T &data) { return !Write(sizeof(T), &data); }

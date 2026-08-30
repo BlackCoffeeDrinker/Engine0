@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "LuaProxyFunction.hpp"
 #include "Lua.hpp"
+#include "LuaProxyFunction.hpp"
 
 namespace e00::scripting::lua {
 class NamedFunction final : public LuaProxyFunction {

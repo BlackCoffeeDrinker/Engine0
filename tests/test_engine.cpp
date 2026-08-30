@@ -2,14 +2,14 @@
 
 using namespace e00;
 
-class TestResource : public e00::Resource {
+class TestResource : public Resource {
 public:
-  TestResource(e00::Vec2D<uint16_t>, e00::DrawableSurface::BitDepth) {}
-  [[nodiscard]] e00::type_t Type() const override { return e00::type_id<TestResource>(); }
+  TestResource(Vec2D<uint16_t>, DrawableSurface::BitDepth) {}
+  [[nodiscard]] type_t Type() const override { return e00::type_id<TestResource>(); }
   [[nodiscard]] size_t SizeUsage() override { return 0; }
 };
 
-class AnEngine : public e00::Engine {
+class AnEngine : public Engine {
 public:
   explicit AnEngine() {
     AddText("en", 1, "Hello World");
@@ -31,7 +31,7 @@ protected:
 };
 
 
-static std::unique_ptr<e00::Engine> CreateGameEngine() {
+static std::unique_ptr<Engine> CreateGameEngine() {
   auto ptr = std::make_unique<AnEngine>();
   if (ptr->Init()) {
     return nullptr;
@@ -57,19 +57,19 @@ TEST_CASE("Engine can return it's name") {
 TEST_CASE("Resource PTR", "[core]") {
 
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
-        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
+    auto res = ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
-        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
+    auto res = ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
-        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
+    auto res = ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), DrawableSurface::BitDepth::DEPTH_8));
   }
   {
-    auto res = e00::ResourceManager::GlobalResourceManager().TakeOwnership(
-        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), e00::DrawableSurface::BitDepth::DEPTH_8));
+    auto res = ResourceManager::GlobalResourceManager().TakeOwnership(
+        std::make_unique<TestResource>(e00::Vec2D<uint16_t>(120, 120), DrawableSurface::BitDepth::DEPTH_8));
   }
 }

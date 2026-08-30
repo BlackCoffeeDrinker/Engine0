@@ -4,21 +4,21 @@
 #include <memory>
 
 #include "../BoxedValue.hpp"
-#include "Utils.hpp"
 #include "NativeFunctionT.hpp"
+#include "Utils.hpp"
 
 namespace e00::scripting::detail {
 /// Used internally for handling a return value from a Proxy_Function call
 template<typename Ret>
 struct Handle_Return {
   template<typename T,
-    typename = std::enable_if_t<std::is_pod_v<std::decay_t<T>>>>
+           typename = std::enable_if_t<std::is_pod_v<std::decay_t<T>>>>
   static BoxedValue handle(T r) {
     return BoxedValue(std::move(r), true);
   }
 
   template<typename T,
-    typename = std::enable_if_t<!std::is_pod_v<std::decay_t<T>>>>
+           typename = std::enable_if_t<!std::is_pod_v<std::decay_t<T>>>>
   static BoxedValue handle(T &&r) {
     return BoxedValue(std::forward<T>(r), true);
   }
@@ -129,7 +129,7 @@ template<typename Ret>
 struct Handle_Return_Ref<Ret, true> {
   template<typename T>
   static BoxedValue handle(T &&r) {
-    return BoxedValue(typename std::remove_reference<decltype(r)>::type{ r }, true);
+    return BoxedValue(typename std::remove_reference<decltype(r)>::type{r}, true);
   }
 };
 

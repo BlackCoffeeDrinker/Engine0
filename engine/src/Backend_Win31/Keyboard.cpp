@@ -82,7 +82,7 @@ e00::input_value_t MapVirtualKey(WPARAM vk) {
   return static_cast<e00::input_value_t>(vk);
 }
 
-} // namespace
+}// namespace
 
 void InitKeyboard() {}
 void QuitKeyboard() {}
@@ -108,4 +108,4 @@ void HandleKeyboardMessage(e00::Engine &engine, UINT msg, WPARAM wParam, LPARAM 
   }
 }
 
-} // namespace win31
+}// namespace win31

@@ -18,4 +18,4 @@ void QueueAudioSamples(std::span<const int16_t> /*pcmMono16*/, uint32_t /*sample
   // macOS audio not wired through this minimal PCM push API yet.
 }
 
-} // namespace platform
+}// namespace platform

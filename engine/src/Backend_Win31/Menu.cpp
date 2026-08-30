@@ -10,7 +10,7 @@ HMENU g_menu = nullptr;
 // Parallel array of action ids matching AppendMenu item IDs (1-based).
 std::vector<int> g_actionIds;
 
-} // namespace
+}// namespace
 
 void ClearMenu(HWND hwnd) {
   if (hwnd && g_menu) {
@@ -48,9 +48,9 @@ void ApplyMenu(HWND hwnd, std::span<const platform::MenuItem> items) {
 
   UINT_PTR id = 1;
   g_actionIds.clear();
-  g_actionIds.push_back(0); // dummy at index 0 so ids are 1-based
+  g_actionIds.push_back(0);// dummy at index 0 so ids are 1-based
 
-  for (const auto &item : items) {
+  for (const auto &item: items) {
     if (item.label.empty()) {
       continue;
     }
@@ -100,4 +100,4 @@ bool HandleMenuCommand(e00::Engine &engine, WPARAM wParam) {
   return true;
 }
 
-} // namespace win31
+}// namespace win31

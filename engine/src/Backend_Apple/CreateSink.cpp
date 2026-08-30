@@ -21,4 +21,4 @@ std::unique_ptr<e00::LoggerSink> CreateSink(const std::string &name) {
   };
   return std::make_unique<Sink>(name);
 }
-}
+}// namespace platform

@@ -74,13 +74,13 @@ public:
                                     BitmapSizeType startX, BitmapSizeType endX,
                                     const std::span<uint8_t> &targetBuffer) const override;
 
-  [[nodiscard]] std::error_code SetPaletteColor(std::size_t index, const Color &color) {
+  [[nodiscard]] error_code SetPaletteColor(std::size_t index, const Color &color) {
     if (index < _palette.size()) [[likely]] {
       _palette[index] = color;
       return {};
     }
 
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   [[nodiscard]] std::unique_ptr<Painter> BeginDraw() override;

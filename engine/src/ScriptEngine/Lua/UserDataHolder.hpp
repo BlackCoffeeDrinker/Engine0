@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <Engine/Scripting/BoxedValue.hpp>
+#include <cstdint>
 
 #include "Lua.hpp"
 

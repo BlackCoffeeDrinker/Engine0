@@ -34,26 +34,26 @@ std::unique_ptr<StdFile> StdFile::CreateFromFilename(const std::string_view &fil
   return std::make_unique<StdFile>(handle, size);
 }
 
-std::error_code StdFile::real_write(size_t size, const void *data) {
+e00::error_code StdFile::real_write(size_t size, const void *data) {
   DWORD written = 0;
   if (!WriteFile(_handle, data, static_cast<DWORD>(size), &written, nullptr) || written != size) {
-    return std::make_error_code(std::errc::io_error);
+    return e00::make_error_code(e00::errc::io_error);
   }
   return {};
 }
 
-std::error_code StdFile::real_read(size_t size, void *data) {
+e00::error_code StdFile::real_read(size_t size, void *data) {
   DWORD read = 0;
   if (!ReadFile(_handle, data, static_cast<DWORD>(size), &read, nullptr) || read != size) {
-    return std::make_error_code(std::errc::io_error);
+    return e00::make_error_code(e00::errc::io_error);
   }
   return {};
 }
 
-std::error_code StdFile::real_seek(size_t position) {
+e00::error_code StdFile::real_seek(size_t position) {
   const DWORD rc = SetFilePointer(_handle, static_cast<LONG>(position), nullptr, FILE_BEGIN);
   if (rc == INVALID_FILE_SIZE && GetLastError() != 0) {
-    return std::make_error_code(std::errc::io_error);
+    return e00::make_error_code(e00::errc::io_error);
   }
   return {};
 }

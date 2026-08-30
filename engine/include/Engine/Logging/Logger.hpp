@@ -28,7 +28,7 @@ struct LogMessage {
 class LoggerSink {
 protected:
   // sink log level - default is all
-  LoggingSeverity _level{LoggingSeverity::L_VERBOSE};
+  LoggingSeverity _level{L_VERBOSE};
 
 public:
   virtual ~LoggerSink() = default;

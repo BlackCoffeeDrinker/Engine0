@@ -7,11 +7,11 @@ constexpr std::string_view kActorPrefix = "object:";
 constexpr std::string_view kEntryPrefix = "entry:";
 
 struct MapSetParser {
-  std::function<std::error_code(int num)> callback;
+  std::function<e00::error_code(int num)> callback;
   int current = -1;
 };
 
-std::error_code Parse(MapSetParser &context, char c) {
+e00::error_code Parse(MapSetParser &context, char c) {
   if (c >= '0' && c <= '9') {
     if (context.current == -1) {
       context.current = 0;
@@ -30,7 +30,7 @@ std::error_code Parse(MapSetParser &context, char c) {
   return {};
 }
 
-std::error_code ParseEnd(MapSetParser &context) {
+e00::error_code ParseEnd(MapSetParser &context) {
   if (context.current != -1) {
     if (const auto ec = context.callback(context.current)) {
       return ec;
@@ -45,16 +45,18 @@ namespace e00::impl {
 WorldLoader::WorldLoader(ResourceManager *manager) : _engine(manager) {}
 WorldLoader::~WorldLoader() = default;
 
-std::error_code WorldLoader::HandleActorData(std::string_view actor_name, std::string_view key, std::string_view value) {
-  if (!currentLoadContext.actors.contains(std::string(actor_name))) {
-    currentLoadContext.actors[std::string(actor_name)] = {};
+error_code WorldLoader::HandleActorData(std::string_view actor_name, std::string_view key, std::string_view value) {
+  const auto actorId = ActorHashName(actor_name);
+
+  if (!currentLoadContext.actors.contains(actorId)) {
+    currentLoadContext.actors[actorId] = {.actorId = actorId};
   }
 
-  auto &actor = currentLoadContext.actors[std::string(actor_name)];
+  auto &actor = currentLoadContext.actors[actorId];
   if (key == "source") {
     if (!actor.source.empty()) {
       GetDefaultLogger().Error(source_location::current(), "Actor {} already has a source! Duplicate name ?", actor_name);
-      return std::make_error_code(std::errc::invalid_argument);
+      return e00::make_error_code(errc::invalid_argument);
     }
     actor.source = std::string(value);
   } else if (key == "position") {
@@ -68,7 +70,7 @@ std::error_code WorldLoader::HandleActorData(std::string_view actor_name, std::s
   return {};
 }
 
-std::error_code WorldLoader::HandleEntryData(std::string_view entry_name, std::string_view key, std::string_view value) {
+error_code WorldLoader::HandleEntryData(std::string_view entry_name, std::string_view key, std::string_view value) {
   if (key != "position") {
     return {};
   }
@@ -81,7 +83,7 @@ std::error_code WorldLoader::HandleEntryData(std::string_view entry_name, std::s
   return {};
 }
 
-std::error_code WorldLoader::HandleMapData(std::string_view key, std::string_view value) {
+error_code WorldLoader::HandleMapData(std::string_view key, std::string_view value) {
   if (key == "width") {
     if (const auto size_ec = ToSize<WorldCoordinateType>(value, currentLoadContext.width)) {
       GetDefaultLogger().Error(source_location::current(), "Failed to parse width {}", value);
@@ -110,11 +112,11 @@ std::error_code WorldLoader::HandleMapData(std::string_view key, std::string_vie
   return {};
 }
 
-std::error_code WorldLoader::HandleSetData(std::string_view key, std::string_view value, bool layer) {
+error_code WorldLoader::HandleSetData(std::string_view key, std::string_view value, bool layer) {
   MapSetParser ctx;
   if (layer) {
     currentLoadContext.aboveSet.resize(currentLoadContext.width * currentLoadContext.height);
-    ctx.callback = [&](int tilevalue) -> std::error_code {
+    ctx.callback = [&](int tilevalue) -> error_code {
       currentLoadContext.aboveSet[currentLoadContext.setAbovePos] = tilevalue;
       currentLoadContext.setAbovePos++;
       return {};
@@ -122,10 +124,10 @@ std::error_code WorldLoader::HandleSetData(std::string_view key, std::string_vie
   } else {
     currentLoadContext.groundSet.resize(currentLoadContext.width * currentLoadContext.height);
 
-    ctx.callback = [&](int tilevalue) -> std::error_code {
+    ctx.callback = [&](int tilevalue) -> error_code {
       if (tilevalue == 0) {
         GetDefaultLogger().Error(source_location::current(), "Invalid tile value: {}", tilevalue);
-        return std::make_error_code(std::errc::invalid_argument);
+        return e00::make_error_code(errc::invalid_argument);
       }
       currentLoadContext.groundSet[currentLoadContext.setDataPos] = tilevalue;
       currentLoadContext.setDataPos++;
@@ -144,7 +146,7 @@ std::error_code WorldLoader::HandleSetData(std::string_view key, std::string_vie
       return ParseEnd(ctx);
     }
     GetDefaultLogger().Error(source_location::current(), "Failed to FindStreamForResource set {}", value);
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(errc::invalid_argument);
   }
 
   if (key == "data") {
@@ -160,7 +162,7 @@ std::error_code WorldLoader::HandleSetData(std::string_view key, std::string_vie
   return {};
 }
 
-std::error_code WorldLoader::HandleWorldData(std::string_view category, std::string_view key, std::string_view value) {
+error_code WorldLoader::HandleWorldData(std::string_view category, std::string_view key, std::string_view value) {
   // We have a map here!
   if (category == "map") return HandleMapData(key, value);
   if (category == "set") return HandleSetData(key, value, false);
@@ -174,7 +176,7 @@ std::error_code WorldLoader::HandleWorldData(std::string_view category, std::str
 WorldLoader::CurrentLoadContext WorldLoader::Load(Stream &stream) {
   currentLoadContext = {};
 
-  const auto ec = IniParser::Parse(stream, [&](const IniParser::Item &item) -> std::error_code {
+  const auto ec = IniParser::Parse(stream, [&](const IniParser::Item &item) -> error_code {
     return this->HandleWorldData(item.category, item.key, item.value);
   });
 

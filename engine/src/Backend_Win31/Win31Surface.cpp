@@ -15,12 +15,12 @@ size_t DibStride(e00::BitmapSizeType width) {
 
 BITMAPINFO *AllocBmi(e00::BitmapSizeType width, e00::BitmapSizeType height) {
   const size_t bytes = sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256;
-  auto *raw = static_cast<uint8_t *>(::operator new(bytes));
+  auto *raw = static_cast<uint8_t *>(operator new(bytes));
   std::memset(raw, 0, bytes);
   auto *bmi = reinterpret_cast<BITMAPINFO *>(raw);
   bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
   bmi->bmiHeader.biWidth = width;
-  bmi->bmiHeader.biHeight = -static_cast<LONG>(height); // top-down preferred for our software buffer
+  bmi->bmiHeader.biHeight = -static_cast<LONG>(height);// top-down preferred for our software buffer
   bmi->bmiHeader.biPlanes = 1;
   bmi->bmiHeader.biBitCount = 8;
   bmi->bmiHeader.biCompression = BI_RGB;
@@ -37,7 +37,7 @@ void FillIdentityPalette(BITMAPINFO *bmi) {
     bmi->bmiColors[i].rgbReserved = 0;
   }
 }
-} // namespace
+}// namespace
 
 bool Win31Surface::CreatePresentResources() {
   DestroyPresentResources();
@@ -122,7 +122,7 @@ void Win31Surface::DestroyPresentResources() {
     _dib = nullptr;
   }
   if (_bmi) {
-    ::operator delete(_bmi);
+    operator delete(_bmi);
     _bmi = nullptr;
   }
   _bits = nullptr;
@@ -131,7 +131,7 @@ void Win31Surface::DestroyPresentResources() {
 }
 
 Win31Surface::Win31Surface(e00::BitmapSizeType width, e00::BitmapSizeType height,
-                           e00::DrawableSurface::BitDepth depth)
+                           BitDepth depth)
     : _size{width == 0 ? kDefaultW : width, height == 0 ? kDefaultH : height},
       _palette(256),
       _bitDepth(depth == BitDepth::DEPTH_INVALID ? BitDepth::DEPTH_8 : depth) {
@@ -219,7 +219,7 @@ void Win31Surface::SyncDibFromBitmap() {
   }
 
   std::vector<uint8_t> line(static_cast<size_t>(_size.x));
-  e00::DrawableSurface::TargetInformation info{
+  TargetInformation info{
       .bit_depth = BitDepth::DEPTH_8,
       .palette = &_palette,
   };
@@ -273,4 +273,4 @@ void Win31Surface::Present(HDC windowDc, int destX, int destY, int destW, int de
   }
 }
 
-} // namespace win31
+}// namespace win31

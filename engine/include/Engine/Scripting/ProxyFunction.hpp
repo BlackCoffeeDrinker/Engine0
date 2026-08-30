@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <limits>
+#include <vector>
 
 #include "BoxedValue.hpp"
 #include "FunctionParams.hpp"
@@ -23,10 +23,10 @@ protected:
   static constexpr size_t VARIABLE_ARGUMENTS = std::numeric_limits<decltype(_param_count)>::max();
 
   ProxyFunction(std::vector<TypeInfo> types, TypeInfo return_type, size_t args_cnt)
-    : _valid(true),
-      _param_count(args_cnt),
-      _params(std::move(types)),
-      _return_type(return_type) {
+      : _valid(true),
+        _param_count(args_cnt),
+        _params(std::move(types)),
+        _return_type(return_type) {
   }
 
   /* Actually do the call */
@@ -34,10 +34,10 @@ protected:
 
 public:
   ProxyFunction()
-    : _valid(false),
-      _param_count(0),
-      _params({}),
-      _return_type(TypeInfo()) {}
+      : _valid(false),
+        _param_count(0),
+        _params({}),
+        _return_type(TypeInfo()) {}
 
   virtual ~ProxyFunction() = default;
 
@@ -76,7 +76,7 @@ public:
   template<typename... Args>
   inline BoxedValue operator()(Args &&...args) const {
     std::array<BoxedValue, sizeof...(Args)> boxed_args = {
-      BoxedValue(std::forward<Args>(args))...,
+        BoxedValue(std::forward<Args>(args))...,
     };
 
     return call(FunctionParams(boxed_args));

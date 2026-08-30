@@ -1,5 +1,5 @@
-#include <Engine.hpp>
 #include "Lua/LuaScriptEngine.hpp"
+#include <Engine.hpp>
 
 namespace e00 {
 ScriptEngine::ScriptEngine() {
@@ -12,7 +12,7 @@ std::unique_ptr<ScriptEngine> ScriptEngine::Create() {
   return std::unique_ptr<ScriptEngine>(new scripting::lua::LuaScriptEngine());
 }
 
-std::error_code ScriptEngine::parse(const std::unique_ptr<e00::Stream> &stream) {
+error_code ScriptEngine::parse(const std::unique_ptr<Stream> &stream) {
   std::string script;
   if (stream) {
     script.resize(stream->Size());
@@ -27,7 +27,7 @@ std::error_code ScriptEngine::parse(const std::unique_ptr<e00::Stream> &stream) 
 }
 
 namespace scripting {
-  const TypeInfo ProxyFunction::_end = TypeInfo();
+const TypeInfo ProxyFunction::_end = TypeInfo();
 }
 
 }// namespace e00

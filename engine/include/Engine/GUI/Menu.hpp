@@ -6,6 +6,5 @@
 
 namespace e00 {
 class Menu {
-
 };
-}
+}// namespace e00

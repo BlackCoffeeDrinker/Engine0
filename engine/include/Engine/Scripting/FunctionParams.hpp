@@ -11,27 +11,27 @@ namespace e00::scripting {
  */
 struct FunctionParams {
   constexpr FunctionParams(const BoxedValue *const t_begin, const BoxedValue *const t_end)
-    : m_begin(t_begin), m_end(t_end) {
+      : m_begin(t_begin), m_end(t_end) {
   }
 
   explicit FunctionParams(const BoxedValue &bv)
-    : m_begin(&bv), m_end(m_begin + 1) {
+      : m_begin(&bv), m_end(m_begin + 1) {
   }
 
   explicit FunctionParams(const std::vector<BoxedValue> &vec)
-    : m_begin(vec.empty() ? nullptr : &vec.front()),
-      m_end(vec.empty() ? nullptr : &vec.front() + vec.size()) {
+      : m_begin(vec.empty() ? nullptr : &vec.front()),
+        m_end(vec.empty() ? nullptr : &vec.front() + vec.size()) {
   }
 
   constexpr FunctionParams() : m_begin(nullptr), m_end(nullptr) {}
 
   template<size_t Size>
   constexpr explicit FunctionParams(const std::array<BoxedValue, Size> &a)
-    : m_begin(a.data()), m_end(a.data() + a.size()) {
+      : m_begin(a.data()), m_end(a.data() + a.size()) {
   }
 
   constexpr explicit FunctionParams(const std::array<BoxedValue, 0> &)
-    : m_begin(nullptr), m_end(nullptr) {
+      : m_begin(nullptr), m_end(nullptr) {
   }
 
   [[nodiscard]] constexpr const BoxedValue &operator[](const std::size_t t_i) const noexcept {
@@ -55,7 +55,7 @@ struct FunctionParams {
   }
 
   std::vector<BoxedValue> to_vector() const {
-    return std::vector<BoxedValue>{ m_begin, m_end };
+    return std::vector<BoxedValue>{m_begin, m_end};
   }
 
   [[nodiscard]] constexpr bool empty() const noexcept {

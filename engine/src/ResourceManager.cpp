@@ -20,18 +20,18 @@ ResourceLoader &ResourceManager::InvalidLoader() {
   public:
     [[nodiscard]] bool SupportsType(type_t type) const override { return false; }
     bool CanLoad(const LoadContext &context) override { return false; }
-    Result ReadLoad(const LoadContext &context) override { return {std::make_error_code(std::errc::invalid_argument)}; }
+    Result ReadLoad(const LoadContext &context) override { return {make_error_code(errc::invalid_argument)}; }
     explicit operator bool() const override { return false; }
   };
   static InvalidLoader invalidLoader;
   return invalidLoader;
 }
 
-std::error_code ResourceManager::AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd) {
+error_code ResourceManager::AddLoader(std::unique_ptr<ResourceLoader> &&loaderToAdd) {
   loaderToAdd->SetResourceLoader(this);
   if (!_loaders.push_back(std::move(loaderToAdd))) {
     GetDefaultLogger().Error(source_location::current(), "Unable to add loader: no more free slots ({})", MaxResourceLoaders);
-    return std::make_error_code(std::errc::not_enough_memory);
+    return e00::make_error_code(errc::not_enough_memory);
   }
   return {};
 }
@@ -88,8 +88,8 @@ detail::ControlBlock *ResourceManager::MakeMemoryContainer(ResourceId id, type_t
 
     ~R() override { _owner->EraseControlBlock(this); }
 
-    std::error_code OnLoadLazyResource() override { return std::make_error_code(std::errc::not_supported); }
-    std::error_code ForceUnload() override { return std::make_error_code(std::errc::not_supported); }
+    error_code OnLoadLazyResource() override { return make_error_code(errc::not_supported); }
+    error_code ForceUnload() override { return make_error_code(errc::not_supported); }
 
   protected:
     void OnZeroShared() noexcept override {
@@ -130,7 +130,7 @@ bool ResourceManager::CanLoad(ResourceId id, type_t type) {
   return false;
 }
 
-std::expected<std::unique_ptr<Resource>, std::error_code> ResourceManager::LoadResource(ResourceId resource_id, type_t resource_type, std::span<LoadOption *const> options) {
+std::expected<std::unique_ptr<Resource>, error_code> ResourceManager::LoadResource(ResourceId resource_id, type_t resource_type, std::span<LoadOption *const> options) {
   // Find the stream
   if (const auto stream = FindStreamForResource(resource_id, resource_type)) {
     GetDefaultLogger().Info(source_location::current(), "Loading resource {} of type {}", resource_id, resource_type);
@@ -154,11 +154,11 @@ std::expected<std::unique_ptr<Resource>, std::error_code> ResourceManager::LoadR
 
     // No loader was able to load this resource
     GetDefaultLogger().Error(source_location::current(), "No loader was able to load resource {}", resource_id);
-    return std::unexpected(std::make_error_code(std::errc::not_supported));
+    return std::unexpected(make_error_code(errc::not_supported));
   }
 
   GetDefaultLogger().Error(source_location::current(), "Unable to load resource {}", resource_id);
-  return std::unexpected(std::make_error_code(std::errc::no_such_file_or_directory));
+  return std::unexpected(e00::make_error_code(errc::no_such_file_or_directory));
 }
 
 bool ResourceManager::EraseControlBlock(detail::ControlBlock *cb) {

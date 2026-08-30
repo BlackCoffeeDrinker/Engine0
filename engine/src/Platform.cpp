@@ -7,11 +7,11 @@ std::unique_ptr<e00::DrawableSurface> Optimize(const e00::DrawableSurface &sourc
   std::unique_ptr<e00::DrawableSurface> surf;
 
   if (preferHW) {
-    surf = mainSurface.CreateOptimizedSurface(source.Size(), platform::MemoryPlacement::VideoMemOnly);
+    surf = mainSurface.CreateOptimizedSurface(source.Size(), MemoryPlacement::VideoMemOnly);
   }
 
   if (!surf) {
-    surf = mainSurface.CreateOptimizedSurface(source.Size(), platform::MemoryPlacement::SystemMemory);
+    surf = mainSurface.CreateOptimizedSurface(source.Size(), MemoryPlacement::SystemMemory);
   }
 
   if (surf) {

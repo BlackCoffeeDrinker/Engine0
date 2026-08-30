@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Platform.hpp"
 #include "Engine/Platform/InputSystem.hpp"
+#include "Platform.hpp"
 
 #include <string>
 

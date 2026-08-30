@@ -6,7 +6,7 @@ namespace win31 {
 namespace {
 
 constexpr int kNumBuffers = 2;
-constexpr DWORD kBufferBytes = 2048; // ~1024 mono int16 samples
+constexpr DWORD kBufferBytes = 2048;// ~1024 mono int16 samples
 
 struct AudioBuffer {
   WAVEHDR hdr{};
@@ -65,7 +65,7 @@ bool EnsureDevice(uint32_t sampleRateHz) {
   return true;
 }
 
-} // namespace
+}// namespace
 
 void InitAudio() {
   g_ready = false;
@@ -148,4 +148,4 @@ void QueuePcmMono16(std::span<const int16_t> samples, uint32_t sampleRateHz) {
   }
 }
 
-} // namespace win31
+}// namespace win31

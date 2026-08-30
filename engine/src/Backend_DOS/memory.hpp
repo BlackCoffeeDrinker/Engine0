@@ -68,5 +68,4 @@ void *DOS_AllocateDMAMemory(int len, _go32_dpmi_seginfo *seginfo);
 void DOS_FreeConventionalMemory(_go32_dpmi_seginfo *seginfo);
 
 char *DOS_GetFarPtrCString(uint32_t segoffset);
-
 }

@@ -41,7 +41,7 @@ public:
     return nullptr;// Out of high-speed hardware VRAM space
   }
 
-  [[nodiscard]] std::unique_ptr<e00::DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, platform::MemoryPlacement where) override {
+  [[nodiscard]] std::unique_ptr<DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, platform::MemoryPlacement where) override {
     const size_t bpl = (size.x + 7) / 8;
     const size_t total_bytes = bpl * size.y;
     uint8_t *allocated_addr = nullptr;

@@ -1,6 +1,6 @@
 
-#include "PlanarPainter.hpp"
 #include "PlanarSurfaceHw.hpp"
+#include "PlanarPainter.hpp"
 
 #include <Engine/DefaultBitmapHelpers.hpp>
 #include <Engine/Resource/Bitmap.hpp>
@@ -11,9 +11,9 @@
 
 namespace DOS {
 void PlanarSurfaceHw::ReadLineInto(e00::BitmapSizeType line,
-                                     e00::BitmapSizeType startX, e00::BitmapSizeType endX,
-                                     const TargetInformation &targetInformation,
-                                     std::span<uint8_t> targetBuffer) const {
+                                   e00::BitmapSizeType startX, e00::BitmapSizeType endX,
+                                   const TargetInformation &targetInformation,
+                                   std::span<uint8_t> targetBuffer) const {
 
   // Safety bounds clipping check
   if (line >= _height || startX >= endX) return;
@@ -30,8 +30,8 @@ void PlanarSurfaceHw::ReadLineInto(e00::BitmapSizeType line,
     const uint8_t *p3_row = _ram_fallback.data() + (3 * plane_size) + (line * _bytes_per_line);
 
     size_t out_pixel_count = 0;
-    const size_t start_byte = std::min(_bytes_per_line, (size_t)(startX >> _pixels_per_byte_shift));
-    const size_t end_byte = std::min(_bytes_per_line, (size_t)((endX + (1 << _pixels_per_byte_shift) - 1) >> _pixels_per_byte_shift));
+    const size_t start_byte = std::min(_bytes_per_line, (size_t) (startX >> _pixels_per_byte_shift));
+    const size_t end_byte = std::min(_bytes_per_line, (size_t) ((endX + (1 << _pixels_per_byte_shift) - 1) >> _pixels_per_byte_shift));
 
     for (size_t b = start_byte; b < end_byte; ++b) {
       uint8_t p0 = p0_row[b], p1 = p1_row[b], p2 = p2_row[b], p3 = p3_row[b];
@@ -79,8 +79,8 @@ void PlanarSurfaceHw::ReadLineInto(e00::BitmapSizeType line,
   size_t out_pixel_count = 0;
 
   // Calculate byte boundary alignments for column spans inside VRAM rows
-  const size_t start_byte = std::min(_bytes_per_line, (size_t)(startX >> _pixels_per_byte_shift));
-  const size_t end_byte = std::min(_bytes_per_line, (size_t)((endX + (1 << _pixels_per_byte_shift) - 1) >> _pixels_per_byte_shift));
+  const size_t start_byte = std::min(_bytes_per_line, (size_t) (startX >> _pixels_per_byte_shift));
+  const size_t end_byte = std::min(_bytes_per_line, (size_t) ((endX + (1 << _pixels_per_byte_shift) - 1) >> _pixels_per_byte_shift));
 
   for (size_t b = start_byte; b < end_byte; ++b) {
     uint8_t p0 = 0, p1 = 0, p2 = 0, p3 = 0;
@@ -164,13 +164,13 @@ void PlanarSurfaceHw::SetPalette(const e00::FixedPalette &palette) {
   if (IsHardwareAccelerated() && _pixels_per_byte_shift == 3) {
     // FIX: VGA Attribute Controller mapping for 16-color modes (e.g., Mode 12h).
     // Force direct 1:1 mapping (index 0-15 -> DAC 0-15).
-    (void)inportb(0x3DA); // Reset flip-flop
+    (void) inportb(0x3DA);// Reset flip-flop
     for (uint8_t i = 0; i < 16; ++i) {
-      outportb(0x3C0, i); // Index
-      outportb(0x3C0, i); // Data
+      outportb(0x3C0, i);// Index
+      outportb(0x3C0, i);// Data
     }
-    (void)inportb(0x3DA); // Reset again before enabling
-    outportb(0x3C0, 0x20); // Enable display
+    (void) inportb(0x3DA);// Reset again before enabling
+    outportb(0x3C0, 0x20);// Enable display
   }
 
   if (IsHardwareAccelerated()) {
@@ -181,7 +181,7 @@ void PlanarSurfaceHw::SetPalette(const e00::FixedPalette &palette) {
       outportb(0x3C9, newColor.red >> 2);
       outportb(0x3C9, newColor.green >> 2);
       outportb(0x3C9, newColor.blue >> 2);
-      
+
       _palette.set(i, newColor);
     }
   } else {

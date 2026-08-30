@@ -17,7 +17,7 @@ std::string_view ExampleGame::Name() const noexcept {
   return "Example Bad Game";
 }
 
-std::error_code ExampleGame::OnInit() {
+e00::error_code ExampleGame::OnInit() {
 #if defined(WIN31)
   // Demonstrate native Win31 menu bar: File/Exit + Options/Dummy.
   const platform::MenuItem menuItems[] = {

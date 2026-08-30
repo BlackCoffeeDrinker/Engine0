@@ -16,15 +16,14 @@ struct Vec2D {
   }
 
   constexpr Vec2D() noexcept : x{0}, y{0} {}
-  constexpr Vec2D(T x_, T y_) noexcept : x{ x_ }, y{ y_ } {}
+  constexpr Vec2D(T x_, T y_) noexcept : x{x_}, y{y_} {}
 
   [[nodiscard]] constexpr auto Area() const { return x * y; }
 
   [[nodiscard]] constexpr Vec2D Clamp(const Vec2D &maximums) const {
     return {
-      x > maximums.x ? maximums.x : x,
-      y > maximums.y ? maximums.y : y
-    };
+        x > maximums.x ? maximums.x : x,
+        y > maximums.y ? maximums.y : y};
   }
 
   [[nodiscard]] T DistanceTo(const Vec2D &other) const {
@@ -53,17 +52,15 @@ struct Vec2D {
 template<typename T, typename Tag>
 constexpr Vec2D<T, Tag> min(const Vec2D<T, Tag> &lhs, const Vec2D<T, Tag> &rhs) {
   return {
-    lhs.x < rhs.x ? lhs.x : rhs.x,
-    lhs.y < rhs.y ? lhs.y : rhs.y
-  };
+      lhs.x < rhs.x ? lhs.x : rhs.x,
+      lhs.y < rhs.y ? lhs.y : rhs.y};
 }
 
 template<typename T, typename Tag>
 constexpr Vec2D<T, Tag> max(const Vec2D<T, Tag> &lhs, const Vec2D<T, Tag> &rhs) {
   return {
-    lhs.x > rhs.x ? lhs.x : rhs.x,
-    lhs.y > rhs.y ? lhs.y : rhs.y
-  };
+      lhs.x > rhs.x ? lhs.x : rhs.x,
+      lhs.y > rhs.y ? lhs.y : rhs.y};
 }
 
 template<typename T, typename Tag>
@@ -81,21 +78,21 @@ T distance(const Vec2D<T, Tag> &a, const Vec2D<T, Tag> &b) {
 struct PixelTag {};
 struct TileTag {};
 
-using TilePosition = Vec2D<WorldCoordinateType, TileTag>; //< Tiles
-using WorldPosition = Vec2D<WorldCoordinateType, PixelTag>; //< Pixels
-using BitmapPosition = Vec2D<BitmapSizeType, PixelTag>; //< Pixels
-using BitmapSize = Vec2D<BitmapSizeType>; //< Untagged extent (pixels or tiles depending on use)
+using TilePosition = Vec2D<WorldCoordinateType, TileTag>;  //< Tiles
+using WorldPosition = Vec2D<WorldCoordinateType, PixelTag>;//< Pixels
+using BitmapPosition = Vec2D<BitmapSizeType, PixelTag>;    //< Pixels
+using BitmapSize = Vec2D<BitmapSizeType>;                  //< Untagged extent (pixels or tiles depending on use)
 
 constexpr WorldPosition ToWorldPosition(const TilePosition &tile, const BitmapSize &tileSizeInPixels) {
   return WorldPosition{
-    static_cast<WorldCoordinateType>(tile.x * tileSizeInPixels.x),
-    static_cast<WorldCoordinateType>(tile.y * tileSizeInPixels.y)};
+      static_cast<WorldCoordinateType>(tile.x * tileSizeInPixels.x),
+      static_cast<WorldCoordinateType>(tile.y * tileSizeInPixels.y)};
 }
 
 constexpr TilePosition ToTilePosition(const WorldPosition &pixel, const BitmapSize &tileSizeInPixels) {
   return TilePosition{
-    static_cast<WorldCoordinateType>(pixel.x / tileSizeInPixels.x),
-    static_cast<WorldCoordinateType>(pixel.y / tileSizeInPixels.y)};
+      static_cast<WorldCoordinateType>(pixel.x / tileSizeInPixels.x),
+      static_cast<WorldCoordinateType>(pixel.y / tileSizeInPixels.y)};
 }
 
 }// namespace e00

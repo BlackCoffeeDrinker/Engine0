@@ -11,8 +11,8 @@ public:
 
   bool SupportsType(type_t type) const override { return type == type_id<Bitmap>(); }
 
-  bool CanLoad(const LoadContext& context) override;
+  bool CanLoad(const LoadContext &context) override;
 
-  Result ReadLoad(const LoadContext& context) override;
+  Result ReadLoad(const LoadContext &context) override;
 };
 }// namespace e00::impl

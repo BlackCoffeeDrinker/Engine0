@@ -5,6 +5,5 @@ namespace e00 {
  * a single monochrome font character
  */
 class FontGlyph {
-
 };
-}
+}// namespace e00

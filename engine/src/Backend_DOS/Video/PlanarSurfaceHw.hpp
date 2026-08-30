@@ -36,8 +36,8 @@ public:
   [[nodiscard]] size_t GetNumberOfColorsInPalette() const override { return _palette.size(); }
   [[nodiscard]] e00::Color GetColorFromPalette(size_t index) const override { return _palette[index]; }
   [[nodiscard]] uint8_t GetClosestColor(const e00::Color &color) const override { return _palette.findClosestColorIndex(color); }
-  
-  void DiscardPalette() override { }
+
+  void DiscardPalette() override {}
   void SetPalette(const e00::FixedPalette &palette) override;
 
   void ReadLineInto(
@@ -61,7 +61,7 @@ public:
     return _ram_fallback.data() + (plane * _bytes_per_line * _height);
   }
 
-  [[nodiscard]] std::unique_ptr<e00::DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, platform::MemoryPlacement where) override;
+  [[nodiscard]] std::unique_ptr<DrawableSurface> CreateOptimizedSurface(const e00::Vec2D<e00::BitmapSizeType> &size, platform::MemoryPlacement where) override;
 };
 
 }// namespace DOS

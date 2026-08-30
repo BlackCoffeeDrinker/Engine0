@@ -1,13 +1,12 @@
 #pragma once
 
-#include <system_error>
 #include <map>
 
 #include <Engine.hpp>
 
 extern "C" {
-#include "lua.h"
 #include "lauxlib.h"
+#include "lua.h"
 #include "lualib.h"
 }
 
@@ -38,10 +37,10 @@ protected:
 public:
   void log_from_lua(int level, const std::string_view &str);
 
-  std::error_code parse(const std::string &code) override;
+  error_code parse(const std::string &code) override;
 
   std::unique_ptr<ProxyFunction> get_function(const std::string &fn_name, TypeInfo preferred_return_type) override;
-  std::error_code parse(const std::unique_ptr<Stream> &stream) override;
+  error_code parse(const std::unique_ptr<Stream> &stream) override;
   const std::unique_ptr<ProxyFunction> &get_method_for_type(const TypeInfo &type, const std::string &method_name) const;
 };
 }// namespace e00::scripting::lua

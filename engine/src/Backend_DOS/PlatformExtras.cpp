@@ -18,4 +18,4 @@ void QueueAudioSamples(std::span<const int16_t> /*pcmMono16*/, uint32_t /*sample
   // DOS audio backend not wired through this API yet.
 }
 
-} // namespace platform
+}// namespace platform

@@ -12,4 +12,4 @@ void ClearMenu(HWND hwnd);
 // Handle WM_COMMAND from the menu; returns true if consumed.
 bool HandleMenuCommand(e00::Engine &engine, WPARAM wParam);
 
-} // namespace win31
+}// namespace win31

@@ -1,11 +1,10 @@
 #pragma once
 
-#include <memory>
-#include <system_error>
-#include <string_view>
 #include <functional>
+#include <memory>
+#include <string_view>
 
-#include <../include/Engine/Platform/Stream.hpp>
+#include <Engine/Platform/Stream.hpp>
 
 namespace e00::impl {
 struct IniParser {
@@ -15,6 +14,6 @@ struct IniParser {
     std::string_view value;
   };
 
-  static std::error_code Parse(Stream& stream, const std::function<std::error_code(const Item&)>&);
+  static error_code Parse(Stream &stream, const std::function<error_code(const Item &)> &);
 };
-}
+}// namespace e00::impl

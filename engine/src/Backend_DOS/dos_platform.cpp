@@ -95,7 +95,7 @@ void SetSettings(std::string_view key,
   // Called before init
 }
 
-std::error_code Init() {
+e00::error_code Init() {
   /* make sure djgpp won't move our memory around */
   _crt0_startup_flags &= ~_CRT0_FLAG_UNIX_SBRK;
   _crt0_startup_flags |= _CRT0_FLAG_NONMOVE_SBRK;
@@ -122,7 +122,7 @@ std::error_code Init() {
   hasNearPtr = __djgpp_nearptr_enable() != 0;
   if (!hasNearPtr) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "Unable to enable nearptr");
-    return std::make_error_code(std::errc::not_supported);
+    return e00::make_error_code(e00::errc::not_supported);
   }
 
   e00::GetDefaultLogger().Info(e00::source_location::current(), "Using VGA 12h mode");

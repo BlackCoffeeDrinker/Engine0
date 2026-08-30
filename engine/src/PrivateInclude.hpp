@@ -4,4 +4,3 @@
 #include "EngineError.hpp"
 #include "IniParser.hpp"
 #include "TranslatableText.hpp"
-

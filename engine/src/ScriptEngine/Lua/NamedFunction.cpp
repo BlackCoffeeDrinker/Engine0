@@ -10,7 +10,7 @@
 namespace e00::scripting::lua {
 
 NamedFunction::NamedFunction(lua_State *L, std::string lua_fn_name, TypeInfo return_fn)
-  : LuaProxyFunction(std::move(lua_fn_name), L, {}, return_fn, VARIABLE_ARGUMENTS) {
+    : LuaProxyFunction(std::move(lua_fn_name), L, {}, return_fn, VARIABLE_ARGUMENTS) {
 }
 
 NamedFunction::~NamedFunction() = default;

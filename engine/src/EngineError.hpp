@@ -1,6 +1,6 @@
 #pragma once
 
-#include <system_error>
+#include <Engine/Detail/ErrorCode.hpp>
 
 namespace e00::impl {
 enum class EngineErrorCode {
@@ -13,10 +13,10 @@ enum class EngineErrorCode {
   out_of_memory,
 };
 
-std::error_code make_error_code(EngineErrorCode);
+error_code make_error_code(EngineErrorCode);
 }// namespace e00::impl
 
-namespace std {
+namespace e00 {
 template<>
-struct is_error_code_enum<e00::impl::EngineErrorCode> : true_type {};
-}// namespace std
+struct is_error_code_enum<impl::EngineErrorCode> : std::true_type {};
+}// namespace e00

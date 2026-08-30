@@ -60,25 +60,25 @@ template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) volatile &) -> FunctionSignature<Ret, Function_Params<volatile Class &, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) volatile &noexcept) -> FunctionSignature<Ret, Function_Params<volatile Class &, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) volatile & noexcept) -> FunctionSignature<Ret, Function_Params<volatile Class &, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) volatile const &) -> FunctionSignature<Ret, Function_Params<volatile const Class &, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) volatile const &noexcept) -> FunctionSignature<Ret, Function_Params<volatile const Class &, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) volatile const & noexcept) -> FunctionSignature<Ret, Function_Params<volatile const Class &, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) &) -> FunctionSignature<Ret, Function_Params<Class &, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) &noexcept) -> FunctionSignature<Ret, Function_Params<Class &, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) & noexcept) -> FunctionSignature<Ret, Function_Params<Class &, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) const &) -> FunctionSignature<Ret, Function_Params<const Class &, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) const &noexcept) -> FunctionSignature<Ret, Function_Params<const Class &, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) const & noexcept) -> FunctionSignature<Ret, Function_Params<const Class &, Param...>, true, true>;
 
 // && reference specifier
 
@@ -86,36 +86,36 @@ template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) volatile &&) -> FunctionSignature<Ret, Function_Params<volatile Class &&, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) volatile &&noexcept) -> FunctionSignature<Ret, Function_Params<volatile Class &&, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) volatile && noexcept) -> FunctionSignature<Ret, Function_Params<volatile Class &&, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) volatile const &&) -> FunctionSignature<Ret, Function_Params<volatile const Class &&, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) volatile const &&noexcept) -> FunctionSignature<Ret, Function_Params<volatile const Class &&, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) volatile const && noexcept) -> FunctionSignature<Ret, Function_Params<volatile const Class &&, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) &&) -> FunctionSignature<Ret, Function_Params<Class &&, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) &&noexcept) -> FunctionSignature<Ret, Function_Params<Class &&, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) && noexcept) -> FunctionSignature<Ret, Function_Params<Class &&, Param...>, true, true>;
 
 template<typename Ret, typename Class, typename... Param>
 FunctionSignature(Ret (Class::*f)(Param...) const &&) -> FunctionSignature<Ret, Function_Params<const Class &&, Param...>, false, true>;
 
 template<typename Ret, typename Class, typename... Param>
-FunctionSignature(Ret (Class::*f)(Param...) const &&noexcept) -> FunctionSignature<Ret, Function_Params<const Class &&, Param...>, true, true>;
+FunctionSignature(Ret (Class::*f)(Param...) const && noexcept) -> FunctionSignature<Ret, Function_Params<const Class &&, Param...>, true, true>;
 
 template<typename Ret, typename Class>
 FunctionSignature(Ret(Class::*f)) -> FunctionSignature<Ret, Function_Params<Class &>, true, true, true>;
 
 template<typename Func>
 FunctionSignature(Func &&) -> FunctionSignature<
-  typename decltype(FunctionSignature{ &std::decay_t<Func>::operator() })::Return_Type,
-  typename decltype(FunctionSignature{ &std::decay_t<Func>::operator() })::Param_Types,
-  decltype(FunctionSignature{ &std::decay_t<Func>::operator() })::is_noexcept,
-  false,
-  false,
-  true>;
+    typename decltype(FunctionSignature{&std::decay_t<Func>::operator()})::Return_Type,
+    typename decltype(FunctionSignature{&std::decay_t<Func>::operator()})::Param_Types,
+    decltype(FunctionSignature{&std::decay_t<Func>::operator()})::is_noexcept,
+    false,
+    false,
+    true>;
 
 }// namespace e00::scripting::detail

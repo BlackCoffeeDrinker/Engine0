@@ -82,6 +82,7 @@ add_library(Engine00 STATIC
          src/Actors/ActorDecoration.cpp
          src/Actors/ActorDecoration.hpp
         src/Utils.cpp
+        src/ErrorCode.cpp
 )
 
 target_include_directories(Engine00

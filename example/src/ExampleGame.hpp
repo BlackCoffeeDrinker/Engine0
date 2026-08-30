@@ -10,7 +10,7 @@ class ExampleGame : public e00::Engine {
 protected:
   void ExecuteAction(const e00::Action &action) override;
 
-  std::error_code OnInit() override;
+  e00::error_code OnInit() override;
   void OnFirstTick() override;
   void OnPause() override;
   void OnResume() override;

@@ -20,7 +20,7 @@ public:
   void ClearLocale(std::string_view locale);
 
   bool AddText(std::string_view locale, int textCode, std::string_view text);
-  
+
   void SetLocale(std::string_view locale);
 
   std::string GetText(int textCode);

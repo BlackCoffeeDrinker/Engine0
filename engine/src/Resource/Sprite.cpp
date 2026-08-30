@@ -120,21 +120,21 @@ void Sprite::ReadTransparencyMaskLineInto(BitmapSizeType line, BitmapSizeType st
   }
 }
 
-std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::milliseconds duration) {
+error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::milliseconds duration) {
   if (!data) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   // The frame must match the sprite format so all frames can be rendered through
   // the same DrawableSurface interface.
   if (data->GetBitDepth() != GetBitDepth()) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   // Find the first null frame
   auto it = std::ranges::find_if(_images, [](const auto &frame) { return !frame; });
   if (it == _images.end()) {
-    return std::make_error_code(std::errc::not_enough_memory);
+    return e00::make_error_code(errc::not_enough_memory);
   }
 
   auto frame = std::make_unique<Image>();
@@ -177,7 +177,7 @@ std::error_code Sprite::AddFrame(ResourcePtrT<Bitmap> data, std::chrono::millise
   return {};
 }
 
-std::error_code Sprite::AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration) {
+error_code Sprite::AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration) {
   return AddFrame(ResourceManager::GlobalResourceManager().TakeOwnership(std::move(data)), duration);
 }
 

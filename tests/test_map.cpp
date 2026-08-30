@@ -5,19 +5,19 @@ using namespace e00;
 extern unsigned char testMap_160_by_50[];
 
 TEST_CASE("PaintMap does not crash when tile size was never configured", "[map]") {
-  e00::ResourceManager::GlobalResourceManager().SetAlias("labeled_overworldtiles.png"_id, "tests/labeled_overworldtiles.png");
+  ResourceManager::GlobalResourceManager().SetAlias("labeled_overworldtiles.png"_id, "tests/labeled_overworldtiles.png");
 
-  auto map = e00::ResourceManager::GlobalResourceManager().TakeOwnership(std::make_unique<e00::Map>(4, 4));
-  for (e00::WorldCoordinateType y = 0; y < map->Height(); y++) {
-    for (e00::WorldCoordinateType x = 0; x < map->Width(); x++) {
+  auto map = ResourceManager::GlobalResourceManager().TakeOwnership(std::make_unique<e00::Map>(4, 4));
+  for (WorldCoordinateType y = 0; y < map->Height(); y++) {
+    for (WorldCoordinateType x = 0; x < map->Width(); x++) {
       REQUIRE(map->Set(e00::TilePosition(x, y), 1));
     }
   }
 
-  map->SetTileset(e00::ResourceManager::GlobalResourceManager().LazyResource<e00::Bitmap>("labeled_overworldtiles.png"_id));
+  map->SetTileset(ResourceManager::GlobalResourceManager().LazyResource<Bitmap>("labeled_overworldtiles.png"_id));
   // Note: map->SetTileSize(...) is intentionally NOT called here.
 
-  auto target = e00::Bitmap::Create({64, 64}, e00::DrawableSurface::BitDepth::DEPTH_32);
+  auto target = Bitmap::Create({64, 64}, DrawableSurface::BitDepth::DEPTH_32);
   auto painter = target->BeginDraw();
 
   REQUIRE_NOTHROW(map->Paint({{0, 0}, {4, 4}}, *painter, {0, 0}));

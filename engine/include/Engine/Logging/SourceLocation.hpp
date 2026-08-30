@@ -8,8 +8,8 @@ namespace experimental {
  */
 struct source_location {
   static constexpr source_location current(
-    uint_least32_t line = __builtin_LINE(),
-    const char *const file = __builtin_FILE()) noexcept {
+      uint_least32_t line = __builtin_LINE(),
+      const char *const file = __builtin_FILE()) noexcept {
     source_location ret;
     ret._line = line;
     ret._file = file;

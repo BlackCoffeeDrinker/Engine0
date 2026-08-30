@@ -25,9 +25,9 @@ public:
   }
 
 protected:
-  std::error_code real_write(size_t size, const void *data) override;
-  std::error_code real_read(size_t size, void *data) override;
-  std::error_code real_seek(size_t position) override;
+  e00::error_code real_write(size_t size, const void *data) override;
+  e00::error_code real_read(size_t size, void *data) override;
+  e00::error_code real_seek(size_t position) override;
 };
 
-} // namespace platform
+}// namespace platform

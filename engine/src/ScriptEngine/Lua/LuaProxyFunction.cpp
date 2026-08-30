@@ -11,9 +11,9 @@ BoxedValue LuaProxyFunction::call_lua_on_stack(const FunctionParams &params) con
   int stack_size = lua_gettop(_l);
 
   // Push our arguments into the stack
-  for (const auto &p : params) {
+  for (const auto &p: params) {
     if (boxed_to_lua(_l, p) != 1) {
-      e00::GetDefaultLogger().Error(e00::source_location::current(),
+      GetDefaultLogger().Error(source_location::current(),
                                     "Error calling {}: don't know how to push arg", _fn_name);
       return BoxedValue();
     }
@@ -21,7 +21,7 @@ BoxedValue LuaProxyFunction::call_lua_on_stack(const FunctionParams &params) con
 
   // Call the lua function and accept up to 1 return argument
   if (lua_pcall(_l, static_cast<int>(params.size()), 1 /*LUA_MULTRET*/, 0)) {
-    e00::GetDefaultLogger().Error(e00::source_location::current(),
+    GetDefaultLogger().Error(source_location::current(),
                                   "Error calling {}: {}", _fn_name, lua_error(_l));
     return BoxedValue();
   }

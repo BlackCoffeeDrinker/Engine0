@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <Engine/Scripting/ProxyFunction.hpp>
 #include "Lua.hpp"
+#include <Engine/Scripting/ProxyFunction.hpp>
+#include <vector>
 
 extern "C" int lua_trampoline(lua_State *L);
 

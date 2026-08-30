@@ -11,4 +11,4 @@ void QuitKeyboard();
 // Translate a WM_KEY* message into an engine InputEvent and dispatch it.
 void HandleKeyboardMessage(e00::Engine &engine, UINT msg, WPARAM wParam, LPARAM lParam);
 
-} // namespace win31
+}// namespace win31

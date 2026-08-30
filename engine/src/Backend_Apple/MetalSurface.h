@@ -28,8 +28,7 @@ public:
   [[nodiscard]] e00::type_t Type() const override { return e00::type_id<MetalSurface>(); }
 
   void SetScale(uint16_t scale);
-  
-  
+
 
   void DiscardPalette() override { /* No-op */ }
 
@@ -54,7 +53,7 @@ public:
       e00::BitmapSizeType line,
       e00::BitmapSizeType startX, e00::BitmapSizeType endX,
       const TargetInformation &targetInformation, const std::span<uint8_t> &targetBuffer) const override;
-  
+
   void ReadTransparencyMaskLineInto(e00::BitmapSizeType line, e00::BitmapSizeType startX, e00::BitmapSizeType endX, const std::span<uint8_t> &targetBuffer) const override;
 
   id<MTLTexture> PresentTexture() const { return _presentTexture; }

@@ -1,8 +1,8 @@
 #include <Engine.hpp>
 
-#include "LuaToNativeTrampoline.hpp"
 #include "BoxedToLuaConverter.hpp"
 #include "LuaToBoxedConverter.hpp"
+#include "LuaToNativeTrampoline.hpp"
 #include "TrampolineData.hpp"
 
 using namespace e00::scripting;
@@ -19,7 +19,7 @@ extern "C" int lua_trampoline(lua_State *L) {
   return boxed_to_lua(L, ctx->fn()->call(FunctionParams(values)));
 }
 
-std::vector<BoxedValue> extract_lua_arguments_for_proxyfunction(lua_State *L, const std::unique_ptr<e00::scripting::ProxyFunction> &func) {
+std::vector<BoxedValue> extract_lua_arguments_for_proxyfunction(lua_State *L, const std::unique_ptr<ProxyFunction> &func) {
   const auto args_count = lua_gettop(L);
 
   // TODO: Varargs support

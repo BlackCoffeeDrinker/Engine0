@@ -10,9 +10,9 @@
 namespace e00::scripting::detail {
 template<typename Callable, typename Ret, typename... Params, size_t... I>
 Ret call_func1(Ret (*)(Params...),
-  std::index_sequence<I...>,
-  const Callable &f,
-  [[maybe_unused]] const FunctionParams &params) {
+               std::index_sequence<I...>,
+               const Callable &f,
+               [[maybe_unused]] const FunctionParams &params) {
   return f(params[I].template cast<Params>()...);
 }
 

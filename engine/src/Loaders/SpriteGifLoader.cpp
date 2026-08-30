@@ -96,10 +96,10 @@ struct GifContext {
 };
 
 // Helper function: Decode LZW compressed data
-std::error_code LZWDecompress(const std::vector<uint8_t> &compressedData, const uint8_t minCodeSize, std::vector<uint8_t> &output) {
+e00::error_code LZWDecompress(const std::vector<uint8_t> &compressedData, const uint8_t minCodeSize, std::vector<uint8_t> &output) {
   output.clear();
   if (minCodeSize < 2 || minCodeSize > 8) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   BitStreamReader bitReader(compressedData);
@@ -184,7 +184,7 @@ std::error_code LZWDecompress(const std::vector<uint8_t> &compressedData, const 
       }
       previousCode = currentCode;
     } else {
-      return std::make_error_code(std::errc::invalid_argument);
+      return e00::make_error_code(e00::errc::invalid_argument);
     }
   }
 
@@ -222,7 +222,7 @@ std::vector<uint8_t> ApplyInterlace(const std::vector<uint8_t> &data, const uint
  * @param output the output palette
  * @return any errors
  */
-std::error_code ReadPalette(e00::Stream &stream, const uint32_t numColors, e00::FixedPalette &output) {
+e00::error_code ReadPalette(e00::Stream &stream, const uint32_t numColors, e00::FixedPalette &output) {
   if (numColors > 0 && numColors <= 256) {
     output.resize(static_cast<int>(numColors));
 
@@ -275,14 +275,14 @@ LogicalScreenDescriptor ReadLogicalScreenDescriptor(e00::Stream &file) {
  * @param context 
  * @return 
  */
-std::error_code ReadGraphicControlExtension(e00::Stream &stream, GifContext &context) {
+e00::error_code ReadGraphicControlExtension(e00::Stream &stream, GifContext &context) {
   uint8_t block_size = 0;
   if (const auto ec = stream.Read(block_size)) {
     return ec;
   }
 
   if (block_size != 4) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   // Include terminator block
@@ -315,7 +315,7 @@ std::error_code ReadGraphicControlExtension(e00::Stream &stream, GifContext &con
   context.transparentColorIndex = gceBlock[3];
 
   if (gceBlock[4] != 0) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   return {};
@@ -327,7 +327,7 @@ std::error_code ReadGraphicControlExtension(e00::Stream &stream, GifContext &con
  * @param context 
  * @return 
  */
-std::error_code ReadCommentExtension(e00::Stream &stream, GifContext &context) {
+e00::error_code ReadCommentExtension(e00::Stream &stream, GifContext &context) {
   while (true) {
     uint8_t block_size = 0;
     if (const auto ec = stream.Read(block_size)) {
@@ -350,7 +350,7 @@ std::error_code ReadCommentExtension(e00::Stream &stream, GifContext &context) {
   return {};
 }
 
-std::error_code ReadApplicationExtension(e00::Stream &stream, GifContext &context) {
+e00::error_code ReadApplicationExtension(e00::Stream &stream, GifContext &context) {
   uint8_t extBlockSize = 0;
   if (const auto ec = stream.Read(extBlockSize)) {
     return ec;
@@ -362,7 +362,7 @@ std::error_code ReadApplicationExtension(e00::Stream &stream, GifContext &contex
   }
 
   if (extBlockSize < 11) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   ApplicationExtension ext;
@@ -406,7 +406,7 @@ std::error_code ReadApplicationExtension(e00::Stream &stream, GifContext &contex
  * @param stream the GIF stream
  * @return any errors
  */
-std::error_code SkipExtension(e00::Stream &stream) {
+e00::error_code SkipExtension(e00::Stream &stream) {
   uint8_t blockSize = 0;
   if (const auto ec = stream.Read(blockSize)) {
     return ec;
@@ -431,7 +431,7 @@ std::error_code SkipExtension(e00::Stream &stream) {
  * @param context the image context
  * @return any error
  */
-std::error_code ReadGifExtensionBlock(e00::Stream &stream, GifContext &context) {
+e00::error_code ReadGifExtensionBlock(e00::Stream &stream, GifContext &context) {
   // Read the label of the extension
   uint8_t extensionLabel = 0;
   if (const auto ec = stream.Read(extensionLabel)) {
@@ -460,7 +460,7 @@ std::error_code ReadGifExtensionBlock(e00::Stream &stream, GifContext &context) 
  * @param image the image context to put the data in
  * @return any errors
  */
-std::error_code ReadImageDescriptor(e00::Stream &stream, GifImageContext &image) {
+e00::error_code ReadImageDescriptor(e00::Stream &stream, GifImageContext &image) {
   // Image Descriptor is 8 bytes + 1 for termination
   std::array<uint8_t, 9> imgDescriptor{};
   if (const auto ec = stream.Read(imgDescriptor)) {
@@ -530,7 +530,7 @@ std::vector<uint8_t> ReadCompressedImageData(e00::Stream &stream) {
  * @param finalSprite the sprite to put the images in
  * @return any errors
  */
-std::error_code ReadImage(e00::Stream &stream, GifContext &context, const std::unique_ptr<e00::Sprite> &finalSprite) {
+e00::error_code ReadImage(e00::Stream &stream, GifContext &context, const std::unique_ptr<e00::Sprite> &finalSprite) {
   GifImageContext imageContext{};
 
   // Step 1: Read and decode the image descriptor
@@ -566,7 +566,7 @@ std::error_code ReadImage(e00::Stream &stream, GifContext &context, const std::u
   // Step 6: make the final frame
   if (imageContext.dirtyRect.size.Area() != decompressedData.size()) {
     // Decompression failed?
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   auto image = e00::Bitmap::Create(
@@ -621,7 +621,7 @@ ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext &context) {
   }
 
   if (header != GIF87a && header != GIF89a) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   GifContext gif_context;
@@ -639,7 +639,7 @@ ResourceLoader::Result GifSpriteLoader::ReadLoad(const LoadContext &context) {
   /* Validate */
   if (gif_context.lsd.width > std::numeric_limits<uint16_t>::max() ||
       gif_context.lsd.height > std::numeric_limits<uint16_t>::max()) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   /* The final sprite */

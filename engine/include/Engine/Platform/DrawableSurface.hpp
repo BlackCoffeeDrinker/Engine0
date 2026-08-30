@@ -1,10 +1,12 @@
 #pragma once
-#include "Engine/Config.hpp"
-#include "Engine/Math/Vec2D.hpp"
-#include "Engine/Resource/Palette.hpp"
+
+#include <Engine/Config.hpp>
+#include <Engine/Math/Vec2D.hpp>
+#include <Engine/Resource/Palette.hpp>
+#include <Engine/Detail/ErrorCode.hpp>
+
 #include <memory>
 #include <span>
-#include <system_error>
 
 namespace e00 {
 class WritableStream;
@@ -145,7 +147,7 @@ public:
       const std::span<uint8_t> &targetBuffer) const = 0;
 
   // For debugging
-  std::error_code SaveToBMP(WritableStream &writableStream) const;
+  error_code SaveToBMP(WritableStream &writableStream) const;
 };
 
 inline uint16_t DepthEnumToBits(DrawableSurface::BitDepth depth) {

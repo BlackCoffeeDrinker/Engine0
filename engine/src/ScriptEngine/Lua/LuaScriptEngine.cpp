@@ -111,7 +111,7 @@ void LuaScriptEngine::add_function(const std::string &fn_name, std::unique_ptr<P
   lua_setglobal(_state, fn_name.c_str());
 }
 
-void LuaScriptEngine::add_variable(const std::string &var_name, scripting::BoxedValue val) {
+void LuaScriptEngine::add_variable(const std::string &var_name, BoxedValue val) {
   auto ret = boxed_to_lua(_state, val);
   if (ret == 1) {
     lua_setglobal(_state, var_name.c_str());
@@ -124,7 +124,7 @@ void LuaScriptEngine::add_type(const TypeInfo &type) {
   }
 }
 
-std::error_code LuaScriptEngine::parse(const std::string &code) {
+error_code LuaScriptEngine::parse(const std::string &code) {
   struct ReaderState {
     const std::string_view &data;
     size_t read_pos;
@@ -151,10 +151,10 @@ std::error_code LuaScriptEngine::parse(const std::string &code) {
   return lua_ret_to_error_code(lua_pcall(_state, 0, 0, 0));
 }
 
-std::error_code LuaScriptEngine::parse(const std::unique_ptr<e00::Stream> &stream) {
+error_code LuaScriptEngine::parse(const std::unique_ptr<Stream> &stream) {
   struct ReaderState {
     char buffer[256];
-    const std::unique_ptr<e00::Stream> &stream;
+    const std::unique_ptr<Stream> &stream;
   };
 
   lua_Reader reader = [](lua_State *, void *ud, size_t *sz) -> const char * {
@@ -183,7 +183,7 @@ std::error_code LuaScriptEngine::parse(const std::unique_ptr<e00::Stream> &strea
   return lua_ret_to_error_code(lua_pcall(_state, 0, 0, 0));
 }
 
-std::unique_ptr<scripting::ProxyFunction> LuaScriptEngine::get_function(const std::string &fn_name, TypeInfo preferred_return_type) {
+std::unique_ptr<ProxyFunction> LuaScriptEngine::get_function(const std::string &fn_name, TypeInfo preferred_return_type) {
   // Get a global of the function name
   lua_getglobal(_state, fn_name.c_str());
 
@@ -197,7 +197,7 @@ std::unique_ptr<scripting::ProxyFunction> LuaScriptEngine::get_function(const st
   return std::make_unique<RefFunction>(fn_name, _state, luaL_ref(_state, LUA_REGISTRYINDEX), preferred_return_type);
 }
 
-const std::unique_ptr<scripting::ProxyFunction> &LuaScriptEngine::get_method_for_type(const TypeInfo &type, const std::string &method_name) const {
+const std::unique_ptr<ProxyFunction> &LuaScriptEngine::get_method_for_type(const TypeInfo &type, const std::string &method_name) const {
   if (const auto it = _methods.find(type.bare_id()); it != _methods.end()) {
     const auto mit = it->second.find(method_name);
     if (mit != it->second.end()) {

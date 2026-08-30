@@ -17,4 +17,4 @@ struct LoadOptionT : LoadOption {
 // Default known load options
 struct DiscardPalette : LoadOptionT<DiscardPalette> {};
 
-}
+}// namespace e00

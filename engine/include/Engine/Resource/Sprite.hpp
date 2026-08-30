@@ -89,8 +89,8 @@ public:
    * @param duration the duration this frame should be shown
    * @return any errors (if the bitmap is different depth as the rest, ...)
    */
-  std::error_code AddFrame(ResourcePtrT<Bitmap> data, std::chrono::milliseconds duration);
-  std::error_code AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration);
+  error_code AddFrame(ResourcePtrT<Bitmap> data, std::chrono::milliseconds duration);
+  error_code AddFrame(std::unique_ptr<Bitmap> &&data, std::chrono::milliseconds duration);
 
   /**
    * Convenience helper that paints the sprite's current frame at `position`, mirroring

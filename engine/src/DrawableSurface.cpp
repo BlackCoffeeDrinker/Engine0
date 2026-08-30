@@ -3,7 +3,7 @@
 namespace e00 {
 DrawableSurface::~DrawableSurface() = default;
 
-std::error_code DrawableSurface::SaveToBMP(WritableStream &writableStream) const {
+error_code DrawableSurface::SaveToBMP(WritableStream &writableStream) const {
   constexpr std::array magic = {'B', 'M'};
   const auto bitDepth = GetBitDepth();
   const auto numBits = DepthEnumToBits(bitDepth);
@@ -11,7 +11,7 @@ std::error_code DrawableSurface::SaveToBMP(WritableStream &writableStream) const
   const auto height = Size().y;
 
   if (width == 0 || height == 0) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   // Calculate row tracking constraints (BMP rows must align to 4-byte boundaries)

@@ -27,4 +27,4 @@ struct OSInfo {
 };
 
 OSInfo DetectOS();
-}
+}// namespace DOS

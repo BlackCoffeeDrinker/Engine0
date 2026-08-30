@@ -39,9 +39,9 @@ public:
     line.append(msg.payload.data(), msg.payload.size());
     line.push_back('\r');
     line.push_back('\n');
-    
+
     HANDLE file = CreateFileA("LOG.TXT", GENERIC_WRITE, FILE_SHARE_READ, nullptr,
-                               OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+                              OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == nullptr || file == INVALID_HANDLE_VALUE) {
       MessageBoxA(nullptr, "Failed to open log file", "Error", 0x00000000L);
       return;
@@ -55,10 +55,10 @@ public:
   void flush() override {}
 };
 
-} // namespace
+}// namespace
 
 namespace platform {
 std::unique_ptr<e00::LoggerSink> CreateSink(const std::string &name) {
   return std::make_unique<LogFileSink>(name);
 }
-} // namespace platform
+}// namespace platform

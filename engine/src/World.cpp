@@ -40,6 +40,7 @@ void World::PaintLayer(const Layer &layer,
 ActorId World::Insert(ActorId actorId, Actor *actor, const WorldPosition &position) {
   // Is this actor in this world ?
   if (WorldPixelSize() < position) {
+    GetDefaultLogger().Error(source_location::current(), "Actor {} is out of world bounds", actorId);
     return InvalidNodeID;
   }
 
@@ -47,6 +48,7 @@ ActorId World::Insert(ActorId actorId, Actor *actor, const WorldPosition &positi
     return actorId;
   }
 
+  GetDefaultLogger().Error(source_location::current(), "Actor {} already exists in world", actorId);
   return InvalidNodeID;
 }
 
@@ -145,7 +147,7 @@ void World::Paint(Painter &painter, const WorldPosition &start, const WorldPosit
       const auto tileId = PositionToLinear(tilePos + tileStart);
       if (const auto tile = _ground_layer.map_tiles[tileId];
           tile != 0) {
-        const auto& tileset_source = GetTilesetSource(tileId);
+        const auto &tileset_source = GetTilesetSource(tileId);
         tileset_source.tileset->Paint(painter, tile - tileset_source.firstStartTileId, bitmapPos + painterOrigin);
       }
     }
@@ -167,7 +169,7 @@ void World::Paint(Painter &painter, const WorldPosition &start, const WorldPosit
       const auto tileId = PositionToLinear(tilePos + tileStart);
       if (const auto tile = _above_actors_layer.map_tiles[tileId];
           tile != 0) {
-        const auto& tileset_source = GetTilesetSource(tileId);
+        const auto &tileset_source = GetTilesetSource(tileId);
         tileset_source.tileset->Paint(painter, tile - tileset_source.firstStartTileId, bitmapPos + painterOrigin);
       }
     }

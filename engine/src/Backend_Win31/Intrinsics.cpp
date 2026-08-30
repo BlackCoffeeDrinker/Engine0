@@ -1,7 +1,9 @@
+#include "Engine/Detail/StringFormat.hpp"
 #include "Win32Types.hpp"
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 // Minimal C runtime pieces still emitted by gcc/libstdc++ under -ffreestanding/-nostdlib.
 
@@ -166,7 +168,65 @@ void __cxa_guard_release(long long *guard) {
   *guard = 1;
 }
 
-void __cxa_guard_abort(long long * /*guard*/) {
+void __cxa_guard_abort(long long * /*guard*/) {}
+
+void *__cxa_allocate_exception(size_t) noexcept { return nullptr; }
+void __cxa_free_exception(void *) noexcept {}
+void __cxa_throw(void *, void *, void *) { for (;;); }
+void *__cxa_begin_catch(void *) noexcept { return nullptr; }
+void __cxa_end_catch() {}
+void __cxa_rethrow() { for (;;); }
+
+// Global C++ constructor runner.
+//
+// -nostartfiles/-nodefaultlibs (see build-scripts/i686-w64-mingw32-win31.cmake)
+// means crtbegin.o/crtend.o and the usual CRT startup that walks the ".ctors"
+// section are never linked in, so without this, every namespace-scope object
+// with a non-trivial constructor (e.g. Font.cpp's ascii_data/ascii_default
+// glyph tables) is left as raw zeroed memory: its constructor is simply never
+// called. This mostly "degrades gracefully" for things like empty
+// std::vector/std::unique_ptr (a zeroed one is a valid empty one), but it is
+// undefined behaviour and a ticking time bomb for anything else (e.g. any
+// global std::string, or a vector/map that later gets copied into,
+// destroyed, or otherwise assumes it went through its constructor).
+//
+// GNU ld's default PE/COFF linker script (i.e. what we get since we don't
+// supply a custom one) still emits a "__CTOR_LIST__" symbol even without
+// crtbegin.o: a LONG(-1) sentinel, followed by the actual constructor
+// function pointers pulled in from every TU's ".ctors" section, followed by
+// a LONG(0) terminator. RunGlobalConstructors() below walks that list and
+// must be called once, before any other engine/game code, from
+// WinMainCRTStartup (see EntryPoint.cpp).
+using ctor_fn = void (*)();
+extern ctor_fn __CTOR_LIST__[];
+
+void RunGlobalConstructors() {
+  int n = 0;
+  while (__CTOR_LIST__[n] != static_cast<ctor_fn>(0)) {
+    n++;
+  }
+
+  {
+    std::string out;
+    out = e00::fmt_lite::format("There are {} constructors", n);
+    MessageBoxA(nullptr, out.c_str(), "Constructors", 0x00000000L);
+  }
+
+  // Call constructors in reverse order (skip the dummy/marker elements at index 0)
+  for (int i = n - 1; i >= 1; i--) {
+
+    {
+      std::string out;
+      out = e00::fmt_lite::format("Calling {} at {:x}", i);
+      MessageBoxA(nullptr, out.c_str(), "Constructors", 0x00000000L);
+    }
+
+    if (__CTOR_LIST__[i] != reinterpret_cast<ctor_fn>(-1)) {
+      __CTOR_LIST__[i]();
+    }
+  }
+
+  MessageBoxA(nullptr, "Constructors complete", "Constructors", 0x00000000L);
 }
 
-} // extern "C"
+}// extern "C"

@@ -43,21 +43,20 @@ void DOS_CallOriginalInterrupt(DOS_InterruptHook *hook) {
     uint16_t selector;
   } __attribute__((packed)) far_ptr;
 
-  far_ptr.offset   = hook->original_irq_handler_seginfo.pm_offset;
+  far_ptr.offset = hook->original_irq_handler_seginfo.pm_offset;
   far_ptr.selector = hook->original_irq_handler_seginfo.pm_selector;
 
-  
+
   // We need to simulate an interrupt call to the original handler.
   // Interrupt handlers expect flags to be on the stack, and they end with IRET.
   // A far call (lcall) followed by IRET in the handler will correctly return here
   // because IRET will pop EIP, CS, and FLAGS.
   __asm__ __volatile__(
-      "pushfl\n\t"       // Satisfies the IRETD of the original handler
-      "lcall *%0"        // Execute a completely safe, alignment-verified 32-bit far call
+      "pushfl\n\t"// Satisfies the IRETD of the original handler
+      "lcall *%0" // Execute a completely safe, alignment-verified 32-bit far call
       :
-      : "m" (far_ptr)
-      : "eax", "ecx", "edx", "memory", "cc"
-  );
+      : "m"(far_ptr)
+      : "eax", "ecx", "edx", "memory", "cc");
 }
 
 void DOS_UnhookInterrupt(DOS_InterruptHook *hook, bool disable_interrupt) {

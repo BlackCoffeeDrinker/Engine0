@@ -2,7 +2,7 @@
 #include "Lua.hpp"
 
 namespace {
-struct LuaErrorCategory : std::error_category {
+struct LuaErrorCategory : e00::error_category {
   const char *name() const noexcept override;
   std::string message(int ev) const override;
 };
@@ -25,11 +25,11 @@ const LuaErrorCategory luaErrorCategory{};
 }// namespace
 
 namespace e00::scripting::lua {
-std::error_code make_error_code(Error r) {
-  return std::error_code(static_cast<int>(r), luaErrorCategory);
+error_code make_error_code(Error r) {
+  return error_code(static_cast<int>(r), luaErrorCategory);
 }
 
-std::error_code lua_ret_to_error_code(int lua_rc) {
+error_code lua_ret_to_error_code(int lua_rc) {
   switch (lua_rc) {
     case LUA_OK: return {};
     case LUA_ERRRUN: return make_error_code(Error::RuntimeError);

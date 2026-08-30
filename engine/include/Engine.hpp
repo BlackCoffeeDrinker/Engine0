@@ -13,7 +13,6 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -25,6 +24,7 @@
   CLASS_NAME &operator=(CLASS_NAME &&) = delete
 
 #include <Engine/Config.hpp>
+#include <Engine/Detail/ErrorCode.hpp>
 #include <Engine/Detail/Utils.hpp>
 
 #include <Engine/Detail/FixedItemContainer.hpp>
@@ -89,7 +89,7 @@ namespace e00 {
  * Must be called first, initializes the global variables and starts platform code
  * @return Any errors starting the platform
  */
-std::error_code Init();
+error_code Init();
 
 /**
  * Called to clean up what was done in Init()
@@ -100,5 +100,5 @@ void Exit();
  * Run engine
  * @param engine the engine to execute
  */
-void Run(e00::Engine &engine);
+void Run(Engine &engine);
 }// namespace e00

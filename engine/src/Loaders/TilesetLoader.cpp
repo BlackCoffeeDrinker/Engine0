@@ -9,7 +9,7 @@ constexpr std::string_view kTileIdPrefix = "id:";
 }// namespace
 
 namespace e00::impl {
-std::error_code TilesetLoader::HandleTilesetSection(std::string_view key, std::string_view value) {
+error_code TilesetLoader::HandleTilesetSection(std::string_view key, std::string_view value) {
   if (key == "source") {
     _sourceAtlas = _engine->LazyResource<Bitmap>(HashName(value));
   }
@@ -45,7 +45,7 @@ std::error_code TilesetLoader::HandleTilesetSection(std::string_view key, std::s
   return {};
 }
 
-std::error_code TilesetLoader::HandleTileSpecificSection(TileIdType tileId, std::string_view key, std::string_view value) {
+error_code TilesetLoader::HandleTileSpecificSection(TileIdType tileId, std::string_view key, std::string_view value) {
   if (!_tileProperties.contains(tileId)) {
     _tileProperties[tileId] = {};
   }
@@ -54,7 +54,7 @@ std::error_code TilesetLoader::HandleTileSpecificSection(TileIdType tileId, std:
 }
 
 ResourceLoader::Result TilesetLoader::ReadLoad(const LoadContext &context) {
-  const auto ec = IniParser::Parse(context.stream, [&](const IniParser::Item &item) -> std::error_code {
+  const auto ec = IniParser::Parse(context.stream, [&](const IniParser::Item &item) -> error_code {
     if (item.category == "tileset") {
       return HandleTilesetSection(item.key, item.value);
     }

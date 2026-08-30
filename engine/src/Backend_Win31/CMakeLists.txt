@@ -40,7 +40,7 @@ add_library(Win31LibC STATIC
         LibcShim.cpp
         PthreadStubs.cpp
 )
-target_compile_options(Win31LibC PRIVATE -m32 -fno-exceptions -fno-rtti -ffreestanding)
+target_compile_options(Win31LibC PRIVATE -m32 -fno-exceptions -fno-rtti -ffreestanding -ffunction-sections -fdata-sections)
 
 # Ensure Win32 import libs are on every consumer of Engine00 (executables).
 # msvcrt-os / real msvcrt.dll is NOT linked here anymore: LibcShim.cpp (plus
@@ -79,6 +79,8 @@ target_link_libraries(Engine00 PUBLIC
         -Wl,--start-group
         $<TARGET_FILE:Win31LibC> mingwex mingw32 stdc++ gcc_eh gcc
         -Wl,--end-group
+        -Wl,-Map,app.map
+        -Wl,--gc-sections
 )
 
 # Only pure CRT/heap stubs are compiled freestanding. Other backend TUs include

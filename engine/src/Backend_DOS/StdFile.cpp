@@ -10,4 +10,4 @@ std::unique_ptr<e00::WritableStream> OpenStreamForWrite(const std::string_view &
   return StdFile::CreateFromFilename(name, true);
 }
 
-}
+}// namespace platform

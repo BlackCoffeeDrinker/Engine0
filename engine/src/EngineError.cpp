@@ -1,7 +1,8 @@
 #include "EngineError.hpp"
+#include <string>
 
 namespace {
-struct EngineErrorCategory : std::error_category {
+struct EngineErrorCategory : e00::error_category {
   [[nodiscard]] const char *name() const noexcept override { return "E00 Error"; }
   [[nodiscard]] std::string message(int ev) const override {
     switch (static_cast<e00::impl::EngineErrorCode>(ev)) {
@@ -21,7 +22,7 @@ const EngineErrorCategory engine_err_category{};
 }// namespace
 
 namespace e00::impl {
-std::error_code make_error_code(EngineErrorCode e) {
+error_code make_error_code(EngineErrorCode e) {
   return {static_cast<int>(e), engine_err_category};
 }
 }// namespace e00::impl

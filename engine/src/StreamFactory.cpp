@@ -1,5 +1,5 @@
-#include "PrivateInclude.hpp"
 #include "Platform.hpp"
+#include "PrivateInclude.hpp"
 
 namespace {
 std::unique_ptr<e00::StreamFactory> _streamFactory;

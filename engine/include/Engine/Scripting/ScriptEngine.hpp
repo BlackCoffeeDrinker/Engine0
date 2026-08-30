@@ -1,13 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <type_traits>
-#include <system_error>
 #include <utility>
-#include <memory>
 
-#include "detail/NativeFunctionT.hpp"
 #include "BoxedCast.hpp"
+#include "detail/NativeFunctionT.hpp"
 
 namespace e00 {
 class ScriptEngine {
@@ -37,8 +36,8 @@ public:
   template<typename Fn>
   void register_function(const std::string &fn_name, Fn fn) {
     if (valid_fn_name(fn_name)) {
-      auto function_t = scripting::detail::make_function_t(fn, scripting::detail::FunctionSignature{ fn });
-      for (const auto &i : function_t->parameters()) {
+      auto function_t = scripting::detail::make_function_t(fn, scripting::detail::FunctionSignature{fn});
+      for (const auto &i: function_t->parameters()) {
         add_type(i);
       }
       add_type(function_t->return_type());
@@ -71,9 +70,9 @@ public:
   }
 
   // Default implementation reads everything and calls the string version
-  virtual std::error_code parse(const std::unique_ptr<e00::Stream> &stream);
+  virtual error_code parse(const std::unique_ptr<Stream> &stream);
 
-  virtual std::error_code parse(const std::string &code) = 0;
+  virtual error_code parse(const std::string &code) = 0;
 };
 
 }// namespace e00

@@ -70,7 +70,7 @@ struct PNGChunk {
     return crc != 0 && size > 0;
   }
 
-  std::error_code skip(e00::Stream &stream) const {
+  e00::error_code skip(e00::Stream &stream) const {
     return stream.SeekTo(streamDataPositon + size + 4);
   }
 
@@ -175,15 +175,15 @@ PNGChunk ReadChunk(e00::Stream &stream) {
   return chunk;
 }
 
-std::error_code ProcessPLTEData(e00::Stream &stream, e00::Bitmap &bitmap, const uint32_t size) {
+e00::error_code ProcessPLTEData(e00::Stream &stream, e00::Bitmap &bitmap, const uint32_t size) {
   if (size % 3 != 0) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "Palette of size of {} is not divisible by 3 !", size);
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   if (size > 256 * 3) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "Palette of size {} is too big!", size / 3);
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   e00::FixedPalette colors(size / 3u);
@@ -198,9 +198,9 @@ std::error_code ProcessPLTEData(e00::Stream &stream, e00::Bitmap &bitmap, const 
   return {};
 }
 
-std::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const uint32_t size) {
+e00::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const uint32_t size) {
   if (!context.initialized) {
-    return std::make_error_code(std::errc::not_enough_memory);
+    return e00::make_error_code(e00::errc::not_enough_memory);
   }
 
   std::vector<uint8_t> compressedData;
@@ -227,7 +227,7 @@ std::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const 
       context.strm.next_out = nullptr;
       context.strm.next_in = nullptr;
 
-      return std::make_error_code(std::errc::invalid_argument);
+      return e00::make_error_code(e00::errc::invalid_argument);
     }
 
     const auto produced = outputBuffer.size() - context.strm.avail_out;
@@ -240,7 +240,7 @@ std::error_code ProcessIDATData(e00::Stream &stream, PNGContext &context, const 
 
   if (context.strm.avail_in != 0) {
     e00::GetDefaultLogger().Error(e00::source_location::current(), "Failed to inflate all IDAT data ({} bytes remaining)", context.strm.avail_in);
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   context.strm.next_out = nullptr;
@@ -266,7 +266,7 @@ uint8_t PaethPredictor(uint8_t left, uint8_t above, uint8_t upperLeft) {
   return upperLeft;
 }
 
-std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &bitmap) {
+e00::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &bitmap) {
   const auto size = bitmap.Size();
   const auto rowBytes = static_cast<size_t>(size.x);
 
@@ -278,7 +278,7 @@ std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &
         context.decompressedData.size(),
         expectedSize);
 
-    return std::make_error_code(std::errc::invalid_argument);
+    return e00::make_error_code(e00::errc::invalid_argument);
   }
 
   std::vector<uint8_t> previousRow(rowBytes, 0);
@@ -340,7 +340,7 @@ std::error_code ApplyPNGFiltersToBitmap(const PNGContext &context, e00::Bitmap &
             "Unsupported PNG filter type {}",
             static_cast<int>(filterType));
 
-        return std::make_error_code(std::errc::invalid_argument);
+        return e00::make_error_code(e00::errc::invalid_argument);
     }
 
     if (const auto painter = bitmap.BeginDraw()) {
@@ -416,7 +416,7 @@ ResourceLoader::Result PNGLoader::ReadLoad(const LoadContext &context) {
   }
 
   if (!CanLoad(context)) {
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   if (const auto ec = context.stream.SeekTo(8)) {
@@ -426,7 +426,7 @@ ResourceLoader::Result PNGLoader::ReadLoad(const LoadContext &context) {
   // The first chunk needs to be IHDR
   const auto IHDR = ReadChunk(context.stream);
   if (IHDR.StrType() != "IHDR") {// TODO: Remove this check since CanLoad does this ?
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   const auto width = ReadPNGUint32(context.stream);
@@ -435,7 +435,7 @@ ResourceLoader::Result PNGLoader::ReadLoad(const LoadContext &context) {
   // Make sure the size is okay
   if (width > std::numeric_limits<BitmapSizeType>::max() || height > std::numeric_limits<BitmapSizeType>::max()) {
     GetDefaultLogger().Error(source_location::current(), "Bitmap size ({} x {}) is too large", width, height);
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   // Read IHDR
@@ -451,7 +451,7 @@ ResourceLoader::Result PNGLoader::ReadLoad(const LoadContext &context) {
   // TODO: Support other formats
   if (colorType != 3 || bitDepth != 8) {
     GetDefaultLogger().Error(source_location::current(), "Unsupported PNG format (for now)");
-    return std::make_error_code(std::errc::invalid_argument);
+    return make_error_code(errc::invalid_argument);
   }
 
   // png state
@@ -494,7 +494,7 @@ ResourceLoader::Result PNGLoader::ReadLoad(const LoadContext &context) {
         break;
       }
       GetDefaultLogger().Error(source_location::current(), "Failed to read PNG chunk");
-      return std::make_error_code(std::errc::invalid_argument);
+      return make_error_code(errc::invalid_argument);
     }
   }
 

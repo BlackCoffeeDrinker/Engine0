@@ -1,15 +1,15 @@
-#include <Engine.hpp>
 #include "RefFunction.hpp"
+#include <Engine.hpp>
 
 namespace e00::scripting::lua {
 RefFunction::RefFunction(lua_State *L, int ref_, TypeInfo return_type_hint)
-  : LuaProxyFunction("<lambda>", L, {}, return_type_hint, VARIABLE_ARGUMENTS),
-    _ref(ref_) {
+    : LuaProxyFunction("<lambda>", L, {}, return_type_hint, VARIABLE_ARGUMENTS),
+      _ref(ref_) {
 }
 
 RefFunction::RefFunction(std::string fn_name, lua_State *L, int ref_, TypeInfo return_type_hint)
-  : LuaProxyFunction(std::forward<std::string>(fn_name), L, {}, return_type_hint, VARIABLE_ARGUMENTS),
-    _ref(ref_) {
+    : LuaProxyFunction(std::forward<std::string>(fn_name), L, {}, return_type_hint, VARIABLE_ARGUMENTS),
+      _ref(ref_) {
 }
 
 RefFunction::~RefFunction() {

@@ -12,8 +12,8 @@
 //
 #include "Win32Types.hpp"
 
-#include <cstddef>
 #include <cstdarg>
+#include <cstddef>
 #include <cstdint>
 
 extern "C" {
@@ -117,7 +117,7 @@ int digit_value(char c) {
   if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
   return -1;
 }
-} // namespace
+}// namespace
 
 unsigned long strtoul(const char *nptr, char **endptr, int base) {
   const char *s = nptr;
@@ -220,7 +220,7 @@ double strtod(const char *nptr, char **endptr) {
     if (exp_digits) {
       exponent = exp_neg ? -exp_value : exp_value;
     } else {
-      s = exp_start; // no valid exponent digits; rewind
+      s = exp_start;// no valid exponent digits; rewind
     }
   }
 
@@ -234,7 +234,7 @@ double strtod(const char *nptr, char **endptr) {
   if (endptr) {
     *endptr = const_cast<char *>(s);
   }
-  (void)start;
+  (void) start;
   return neg ? -result : result;
 }
 
@@ -256,7 +256,7 @@ void swap_bytes(unsigned char *a, unsigned char *b, size_t size) {
     b[i] = t;
   }
 }
-} // namespace
+}// namespace
 
 void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *)) {
   if (base == nullptr || nmemb < 2 || size == 0 || compar == nullptr) {
@@ -280,8 +280,8 @@ namespace {
 
 struct OutBuf {
   char *buf;
-  size_t cap;   // total capacity of buf, including room for the null terminator (0 = unbounded query)
-  size_t count; // number of characters "written" so far (what the return value reports)
+  size_t cap;  // total capacity of buf, including room for the null terminator (0 = unbounded query)
+  size_t count;// number of characters "written" so far (what the return value reports)
 };
 
 void out_char(OutBuf &ob, char c) {
@@ -337,20 +337,22 @@ struct FormatSpec {
   bool alt_form = false;
   bool zero_pad = false;
   int width = 0;
-  int precision = -1; // -1 = not specified
-  char length_mod = '\0'; // 'h', 'H' (hh), 'l', 'L' (ll), 'q' (long double)
+  int precision = -1;    // -1 = not specified
+  char length_mod = '\0';// 'h', 'H' (hh), 'l', 'L' (ll), 'q' (long double)
 };
 
 void emit_integer(OutBuf &ob, const FormatSpec &spec, bool is_signed, unsigned long long uval, bool negative,
-                   int base, bool uppercase) {
+                  int base, bool uppercase) {
   char digits[64];
   const int ndigits = uint_to_chars(uval, base, uppercase, digits, static_cast<int>(sizeof(digits)));
 
   char sign = '\0';
   if (is_signed) {
     if (negative) sign = '-';
-    else if (spec.force_sign) sign = '+';
-    else if (spec.space_sign) sign = ' ';
+    else if (spec.force_sign)
+      sign = '+';
+    else if (spec.space_sign)
+      sign = ' ';
   }
 
   int prec_pad = 0;
@@ -428,8 +430,10 @@ void format_double(OutBuf &ob, const FormatSpec &spec, double value, char conv) 
 
   char sign = '\0';
   if (neg) sign = '-';
-  else if (spec.force_sign) sign = '+';
-  else if (spec.space_sign) sign = ' ';
+  else if (spec.force_sign)
+    sign = '+';
+  else if (spec.space_sign)
+    sign = ' ';
 
   // Render the numeric body into a small local buffer first so width/padding
   // can be applied uniformly.
@@ -445,8 +449,14 @@ void format_double(OutBuf &ob, const FormatSpec &spec, double value, char conv) 
     int exp10 = 0;
     double v = value;
     if (v != 0.0) {
-      while (v >= 10.0) { v *= 0.1; ++exp10; }
-      while (v < 1.0) { v *= 10.0; --exp10; }
+      while (v >= 10.0) {
+        v *= 0.1;
+        ++exp10;
+      }
+      while (v < 1.0) {
+        v *= 10.0;
+        --exp10;
+      }
     }
     const int prec = precision < 0 ? 6 : precision;
     format_fixed(tmp, v, prec, false);
@@ -459,13 +469,19 @@ void format_double(OutBuf &ob, const FormatSpec &spec, double value, char conv) 
       out_char(tmp, '0');
     }
     out_str(tmp, ebuf, static_cast<size_t>(en));
-  } else { // 'g' / 'G'
+  } else {// 'g' / 'G'
     int prec = precision < 0 ? 6 : (precision == 0 ? 1 : precision);
     int exp10 = 0;
     double v = value;
     if (v != 0.0) {
-      while (v >= 10.0) { v *= 0.1; ++exp10; }
-      while (v < 1.0) { v *= 10.0; --exp10; }
+      while (v >= 10.0) {
+        v *= 0.1;
+        ++exp10;
+      }
+      while (v < 1.0) {
+        v *= 10.0;
+        --exp10;
+      }
     }
     if (exp10 < -4 || exp10 >= prec) {
       const int mant_prec = prec - 1;
@@ -518,7 +534,7 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
       out_char(ob, *fmt++);
       continue;
     }
-    ++fmt; // consume '%'
+    ++fmt;// consume '%'
     if (*fmt == '%') {
       out_char(ob, '%');
       ++fmt;
@@ -530,11 +546,26 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
     bool flags_done = false;
     while (!flags_done) {
       switch (*fmt) {
-        case '-': spec.left_align = true; ++fmt; break;
-        case '+': spec.force_sign = true; ++fmt; break;
-        case ' ': spec.space_sign = true; ++fmt; break;
-        case '#': spec.alt_form = true; ++fmt; break;
-        case '0': spec.zero_pad = true; ++fmt; break;
+        case '-':
+          spec.left_align = true;
+          ++fmt;
+          break;
+        case '+':
+          spec.force_sign = true;
+          ++fmt;
+          break;
+        case ' ':
+          spec.space_sign = true;
+          ++fmt;
+          break;
+        case '#':
+          spec.alt_form = true;
+          ++fmt;
+          break;
+        case '0':
+          spec.zero_pad = true;
+          ++fmt;
+          break;
         default: flags_done = true; break;
       }
     }
@@ -577,11 +608,11 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
     // Length modifiers.
     while (*fmt == 'h' || *fmt == 'l' || *fmt == 'L' || *fmt == 'j' || *fmt == 'z' || *fmt == 't' || *fmt == 'q') {
       if (*fmt == 'h' && spec.length_mod == 'h') {
-        spec.length_mod = 'H'; // hh
+        spec.length_mod = 'H';// hh
       } else if (*fmt == 'l' && spec.length_mod == 'l') {
-        spec.length_mod = 'q'; // ll
+        spec.length_mod = 'q';// ll
       } else if (*fmt == 'j' || *fmt == 'z' || *fmt == 't') {
-        spec.length_mod = 'l'; // treat as long-sized
+        spec.length_mod = 'l';// treat as long-sized
       } else {
         spec.length_mod = *fmt;
       }
@@ -597,8 +628,10 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
       case 'i': {
         long long v;
         if (spec.length_mod == 'q') v = va_arg(ap, long long);
-        else if (spec.length_mod == 'l') v = va_arg(ap, long);
-        else v = va_arg(ap, int);
+        else if (spec.length_mod == 'l')
+          v = va_arg(ap, long);
+        else
+          v = va_arg(ap, int);
         const bool negative = v < 0;
         const unsigned long long uv = negative ? static_cast<unsigned long long>(-v) : static_cast<unsigned long long>(v);
         emit_integer(ob, spec, true, uv, negative, 10, false);
@@ -610,8 +643,10 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
       case 'o': {
         unsigned long long v;
         if (spec.length_mod == 'q') v = va_arg(ap, unsigned long long);
-        else if (spec.length_mod == 'l') v = va_arg(ap, unsigned long);
-        else v = va_arg(ap, unsigned int);
+        else if (spec.length_mod == 'l')
+          v = va_arg(ap, unsigned long);
+        else
+          v = va_arg(ap, unsigned int);
         const int base = conv == 'o' ? 8 : (conv == 'u' ? 10 : 16);
         emit_integer(ob, spec, false, v, false, base, conv == 'X');
         break;
@@ -664,7 +699,7 @@ int vformat(OutBuf &ob, const char *fmt, va_list ap) {
   return static_cast<int>(ob.count);
 }
 
-} // namespace
+}// namespace
 
 int vsnprintf(char *str, size_t size, const char *format, va_list ap) {
   OutBuf ob{str, size, 0};
@@ -720,7 +755,7 @@ double fmod(double x, double y) {
     return 0.0;
   }
   const double q = x / y;
-  const auto iq = static_cast<long long>(q); // truncate toward zero
+  const auto iq = static_cast<long long>(q);// truncate toward zero
   return x - static_cast<double>(iq) * y;
 }
 
@@ -754,11 +789,17 @@ double shim_exp(double x) {
 // Natural log via range reduction to [1,2) using frexp-like scaling, then a
 // series on (m-1)/(m+1).
 double shim_log(double x) {
-  if (x <= 0.0) return 0.0; // pragmatic: no NaN/-inf machinery here
+  if (x <= 0.0) return 0.0;// pragmatic: no NaN/-inf machinery here
   int exponent = 0;
   double m = x;
-  while (m >= 2.0) { m *= 0.5; ++exponent; }
-  while (m < 1.0) { m *= 2.0; --exponent; }
+  while (m >= 2.0) {
+    m *= 0.5;
+    ++exponent;
+  }
+  while (m < 1.0) {
+    m *= 2.0;
+    --exponent;
+  }
 
   const double t = (m - 1.0) / (m + 1.0);
   const double t2 = t * t;
@@ -771,7 +812,7 @@ double shim_log(double x) {
   constexpr double kLn2 = 0.6931471805599453;
   return 2.0 * sum + static_cast<double>(exponent) * kLn2;
 }
-} // namespace
+}// namespace
 
 double frexp(double value, int *exp) {
   if (value == 0.0 || exp == nullptr) {
@@ -781,8 +822,14 @@ double frexp(double value, int *exp) {
   bool neg = value < 0.0;
   double m = neg ? -value : value;
   int e = 0;
-  while (m >= 1.0) { m *= 0.5; ++e; }
-  while (m < 0.5) { m *= 2.0; --e; }
+  while (m >= 1.0) {
+    m *= 0.5;
+    ++e;
+  }
+  while (m < 0.5) {
+    m *= 2.0;
+    --e;
+  }
   *exp = e;
   return neg ? -m : m;
 }
@@ -793,7 +840,7 @@ double pow(double base, double exponent) {
   if (base < 0.0) {
     const auto ie = static_cast<long long>(exponent);
     if (static_cast<double>(ie) != exponent) {
-      return 0.0; // undefined for non-integer exponent with negative base; pragmatic fallback
+      return 0.0;// undefined for non-integer exponent with negative base; pragmatic fallback
     }
     const double magnitude = pow(-base, exponent);
     return (ie % 2 != 0) ? -magnitude : magnitude;
@@ -839,7 +886,7 @@ double shim_atan(double x) {
   double result = reciprocal ? (kPi * 0.5 - sum) : sum;
   return neg ? -result : result;
 }
-} // namespace
+}// namespace
 
 double atan2(double y, double x) {
   constexpr double kPi = 3.14159265358979323846;
@@ -852,7 +899,7 @@ double atan2(double y, double x) {
   // x == 0
   if (y > 0.0) return kPi * 0.5;
   if (y < 0.0) return -kPi * 0.5;
-  return 0.0; // undefined, pragmatic fallback
+  return 0.0;// undefined, pragmatic fallback
 }
 
 long lround(double x) {
@@ -912,7 +959,7 @@ extern "C" void OutputDebugStringA(const char *lpOutputString);
 // logging convention, and reads as always-EOF (Win32s has no console stdin).
 // ---------------------------------------------------------------------------
 
-} // extern "C"
+}// extern "C"
 
 struct FILE {
   HANDLE handle = nullptr;
@@ -940,7 +987,7 @@ void debug_write(const char *data, size_t len) {
     chunk = 0;
   }
 }
-} // namespace
+}// namespace
 
 extern "C" {
 
@@ -952,7 +999,7 @@ void **__acrt_iob_func(unsigned index) {
   }
 }
 
-using __acrt_iob_func_t = void *(*)(unsigned);
+using __acrt_iob_func_t = void *(*) (unsigned);
 __acrt_iob_func_t _imp____acrt_iob_func = reinterpret_cast<__acrt_iob_func_t>(&__acrt_iob_func);
 
 FILE *fopen(const char *path, const char *mode) {
@@ -965,9 +1012,9 @@ FILE *fopen(const char *path, const char *mode) {
   if (for_read_write) {
     access = GENERIC_READ | GENERIC_WRITE;
   }
-  const DWORD disposition = strchr(mode, 'w') != nullptr ? CREATE_ALWAYS
-                             : strchr(mode, 'a') != nullptr ? OPEN_ALWAYS
-                                                             : OPEN_EXISTING;
+  const DWORD disposition = strchr(mode, 'w') != nullptr   ? CREATE_ALWAYS
+                            : strchr(mode, 'a') != nullptr ? OPEN_ALWAYS
+                                                           : OPEN_EXISTING;
   HANDLE handle = CreateFileA(path, access, FILE_SHARE_READ, nullptr, disposition,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
   if (handle == nullptr || handle == reinterpret_cast<HANDLE>(static_cast<long>(-1))) {
@@ -1111,7 +1158,7 @@ void clearerr(FILE *stream) {
 }
 
 int fflush(FILE *) {
-  return 0; // nothing buffered on our side
+  return 0;// nothing buffered on our side
 }
 
 int fputc(int c, FILE *stream) {
@@ -1169,7 +1216,7 @@ char *fgets(char *buf, int size, FILE *stream) {
 
 int remove(const char *path) {
   (void) path;
-  return -1; // unsupported: not exercised by the engine's actual code paths
+  return -1;// unsupported: not exercised by the engine's actual code paths
 }
 
 int rename(const char *oldpath, const char *newpath) {
@@ -1190,7 +1237,7 @@ char *tmpnam(char *buf) {
 }
 
 int setvbuf(FILE *, char *, int, size_t) {
-  return 0; // no buffering to configure
+  return 0;// no buffering to configure
 }
 
 // ---------------------------------------------------------------------------
@@ -1204,12 +1251,12 @@ int setvbuf(FILE *, char *, int, size_t) {
 
 namespace {
 int g_errno_storage = 0;
-} // namespace
+}// namespace
 
 int *_errno() {
   return &g_errno_storage;
 }
-using errno_fn_t = int *(*)();
+using errno_fn_t = int *(*) ();
 errno_fn_t _imp___errno = &_errno;
 
 struct lconv {
@@ -1239,16 +1286,16 @@ char g_decimal_point[] = ".";
 lconv g_lconv{g_decimal_point, g_empty_str, g_empty_str, g_empty_str, g_empty_str,
               g_empty_str, g_empty_str, g_empty_str, g_empty_str, g_empty_str,
               127, 127, 127, 127, 127, 127, 127, 127};
-} // namespace
+}// namespace
 
 lconv *localeconv() {
   return &g_lconv;
 }
-using localeconv_fn_t = lconv *(*)();
+using localeconv_fn_t = lconv *(*) ();
 localeconv_fn_t _imp__localeconv = &localeconv;
 
 char *setlocale(int, const char *) {
-  return const_cast<char *>("C"); // only the "C" locale is supported
+  return const_cast<char *>("C");// only the "C" locale is supported
 }
 
 int isspace(int c) {
@@ -1266,7 +1313,7 @@ int isalpha(int c) {
 }
 
 int strcoll(const char *s1, const char *s2) {
-  return strcmp(s1, s2); // "C" locale: byte-wise comparison
+  return strcmp(s1, s2);// "C" locale: byte-wise comparison
 }
 using strcoll_fn_t = int (*)(const char *, const char *);
 strcoll_fn_t _imp__strcoll = &strcoll;
@@ -1275,7 +1322,7 @@ char *strerror(int) {
   static char msg[] = "error";
   return msg;
 }
-using strerror_fn_t = char *(*)(int);
+using strerror_fn_t = char *(*) (int);
 strerror_fn_t _imp__strerror = &strerror;
 
 int rand_s(unsigned int *out) {
@@ -1349,11 +1396,11 @@ longjmp_fn_t _imp__longjmp = &longjmp;
 // ---------------------------------------------------------------------------
 
 char *getenv(const char *) {
-  return nullptr; // Win32s: no meaningful process environment to expose
+  return nullptr;// Win32s: no meaningful process environment to expose
 }
 
 int read(int, void *, unsigned int) {
-  return -1; // no POSIX file descriptors on this target
+  return -1;// no POSIX file descriptors on this target
 }
 
 void exit(int code) {
@@ -1454,4 +1501,4 @@ size_t wcrtomb(char *out, wchar_t wc, void *) {
   return 1;
 }
 
-} // extern "C"
+}// extern "C"

@@ -58,4 +58,3 @@ char *DOS_GetFarPtrCString(const uint32_t segoffset) {
   }
   return retval;
 }
-
