@@ -206,27 +206,12 @@ void RunGlobalConstructors() {
     n++;
   }
 
-  {
-    std::string out;
-    out = e00::fmt_lite::format("There are {} constructors", n);
-    MessageBoxA(nullptr, out.c_str(), "Constructors", 0x00000000L);
-  }
-
   // Call constructors in reverse order (skip the dummy/marker elements at index 0)
   for (int i = n - 1; i >= 1; i--) {
-
-    {
-      std::string out;
-      out = e00::fmt_lite::format("Calling {} at {:x}", i);
-      MessageBoxA(nullptr, out.c_str(), "Constructors", 0x00000000L);
-    }
-
     if (__CTOR_LIST__[i] != reinterpret_cast<ctor_fn>(-1)) {
       __CTOR_LIST__[i]();
     }
   }
-
-  MessageBoxA(nullptr, "Constructors complete", "Constructors", 0x00000000L);
 }
 
 }// extern "C"
